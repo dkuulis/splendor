@@ -4,6 +4,7 @@ import tkinter as tk
 import unittest
 from unittest.mock import patch
 
+from ai import GreedyAI
 from app.app import App
 from app.assets import load_image
 from game.constants import RUBY, GOLD
@@ -13,12 +14,13 @@ from game.initialize import create_initial_state
 @unittest.skipUnless(os.environ.get('SPLENDOR_GUI_TESTS') == '1', 'Requires a GUI session')
 class PersistentUITests(unittest.TestCase):
     def setUp(self):
+        self.create_app(None)
+
+    def create_app(self, strategy):
         self.root = tk.Tk()
         self.callback_errors = []
         self.root.report_callback_exception = lambda kind, error, traceback: self.callback_errors.append(error)
-        self.app = App(self.root, create_initial_state())
-        self.app.control.set('Manual')
-        self.app.change_control()
+        self.app = App(self.root, create_initial_state(), strategy)
         self.root.update()
 
     def tearDown(self):
@@ -117,26 +119,23 @@ class PersistentUITests(unittest.TestCase):
                          ['0', '0'])
         self.assertTrue(all(slot.winfo_ismapped() for slot in app.market.slots[1]))
 
-    def test_control_changes_disable_callbacks_and_cancel_ai(self):
+    def test_ai_blocks_manual_actions_and_new_game_cancels_callback(self):
+        self.root.destroy()
+        strategy = GreedyAI()
+        self.create_app(strategy)
         app = self.app
         app.perform_action()
-        app.control.set('Greedy AI')
-        app.change_control()
         self.assertIsNotNone(app.pending_ai)
         app.supply.pick(RUBY)
         self.assertEqual(app.state.selected_tokens, {})
         self.assertFalse(app.selection.can_go)
         app.market.slots[1][0].select(None)
         self.assertIsNone(app.state.selected_card)
-        app.control.set('Manual')
-        app.change_control()
+        pending = app.pending_ai
+        app.header.new_game_button.invoke()
         self.assertIsNone(app.pending_ai)
-        app.supply.pick(RUBY)
-        self.assertEqual(app.state.selected_tokens, {RUBY: 1})
-        app.control.set('Greedy AI')
-        app.change_control()
-        app.new_game()
-        self.assertIsNone(app.pending_ai)
+        self.assertNotIn(pending, self.root.tk.call('after', 'info'))
+        self.assertIs(app.strategy, strategy)
         app.perform_action()
         app.cancel_ai()
         app.run_ai()
@@ -411,8 +410,8 @@ class PersistentUITests(unittest.TestCase):
         self.assertIn(cards[-1], player.cards[cards[-1].token])
         self.assertEqual(app.state.market, market)
         self.assertEqual(app.state.decks, decks)
-        app.control.set('Greedy AI')
-        app.change_control()
+        app.strategy = GreedyAI()
+        app.refresh()
         stack = app.computer.reserved.stack
         stack.event_generate('<Motion>', x=75, y=100)
         stack.event_generate('<Button-1>', x=75, y=100)

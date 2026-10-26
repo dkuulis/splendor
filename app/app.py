@@ -1,9 +1,8 @@
 """Assemble the game UI components."""
 
-from tkinter import StringVar, messagebox, ttk
+from tkinter import messagebox, ttk
 
 from game.initialize import create_initial_state
-from ai import STRATEGIES, GreedyAI
 
 from .supply_panel import SupplyPanel
 from .background import Background
@@ -18,11 +17,10 @@ from .styles import MARKET_CARD_HEIGHT, MARKET_ROW_PADDING, WINDOW_MIN_WIDTH, co
 
 
 class App:
-    def __init__(self, root, state):
+    def __init__(self, root, state, strategy):
         self.state = state
         self.root = root
-        self.control = StringVar(master=root, value="Greedy AI")
-        self.strategy = GreedyAI()
+        self.strategy = strategy
         self.pending_ai = None
         root.bind("<Destroy>", self.on_destroy, add="+")
         configure_styles(root)
@@ -41,8 +39,7 @@ class App:
         self.field.grid(row=0, column=0, sticky="nsew")
         sidebar = ttk.Frame(body)
         sidebar.grid(row=0, column=1, sticky="nsew", padx=(16, 0))
-        self.header = Header(sidebar, self.new_game, self.control,
-                             ("Manual", *STRATEGIES), self.change_control)
+        self.header = Header(sidebar, self.new_game)
         self.header.pack(fill="x", padx=10, pady=(0, 12))
         self.scores = ScorePanel(sidebar, self.state.players)
         self.scores.pack(fill="x", padx=10, pady=(0, 12))
@@ -107,12 +104,6 @@ class App:
         if self.pending_ai is not None:
             self.root.after_cancel(self.pending_ai)
             self.pending_ai = None
-
-    def change_control(self):
-        strategy_class = STRATEGIES.get(self.control.get())
-        self.strategy = strategy_class() if strategy_class else None
-        self.state.clear_selection()
-        self.refresh()
 
     def run_ai(self):
         self.pending_ai = None
