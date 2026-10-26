@@ -10,7 +10,7 @@ from .log import Log
 from .header import Header
 from .market_panel import MarketPanel
 from .player_panel import PlayerPanel
-from .styles import configure_styles
+from .styles import WINDOW_MIN_WIDTH, configure_styles
 
 
 class App:
@@ -26,7 +26,6 @@ class App:
         self.shell = ttk.Frame(root, padding=20)
         self.shell.pack(fill="both", expand=True)
         self.create_ui()
-        self.size_window(root)
 
     def create_ui(self):
         state = self.state
@@ -72,6 +71,7 @@ class App:
         self.player.pack(fill="x")
 
         self.log.refresh()
+        self.size_window(self.root)
         if self.ai_turn:
             self.pending_ai = self.root.after(500, self.run_ai)
 
@@ -150,7 +150,7 @@ class App:
         # Measure the complete layout using the current platform's fonts and
         # widget sizes, including the log, before setting window bounds.
         root.update_idletasks()
-        width = max(1100, root.winfo_reqwidth())
+        width = max(WINDOW_MIN_WIDTH, root.winfo_reqwidth())
         height = root.winfo_reqheight()
         root.minsize(width, height)
-        root.geometry(f"{width}x{height}")
+        root.geometry(f"{max(width, root.winfo_width())}x{max(height, root.winfo_height())}")

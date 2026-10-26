@@ -2,11 +2,12 @@ import tkinter as tk
 
 from game.constants import COLORS
 
-from .drawing import draw_gem
+from .drawing import draw_cost, draw_gem
 from .styles import (
     CARD_BACKGROUND,
     CARD_BORDER_WIDTH,
     CARD_DETAIL_FONT,
+    CARD_POINTS_PADDING,
     COST_GEM_RADIUS,
     COST_GEM_SPACING,
     DISABLED_CARD_BORDER,
@@ -45,7 +46,7 @@ class CardPanel(tk.Canvas):
         canvas.create_rectangle(x, y, right, y + 62,
                                 fill=palette[card.color], outline="")
         if card.points:
-            canvas.create_text(x + 11, y + 34, text=str(card.points), anchor="w",
+            canvas.create_text(x + CARD_POINTS_PADDING, y + 34, text=str(card.points), anchor="w",
                                fill=TEXT_PALETTE[card.color], font=POINTS_FONT)
         draw_gem(canvas, card.color, right - 11 - GEM_RADIUS, y + 31, GEM_RADIUS,
                  outline=TEXT_PALETTE[card.color], width=2)
@@ -55,7 +56,7 @@ class CardPanel(tk.Canvas):
         cost_top = bottom - 7 - len(costs) * COST_GEM_SPACING
         for index, (color, amount) in enumerate(costs):
             cost_y = cost_top + (index + 0.5) * COST_GEM_SPACING
-            draw_gem(canvas, color, cost_x, cost_y, COST_GEM_RADIUS)
+            draw_cost(canvas, color, cost_x, cost_y, COST_GEM_RADIUS)
             canvas.create_text(cost_x, cost_y, text=str(amount),
                                fill=TEXT_PALETTE[color], font=CARD_DETAIL_FONT)
 

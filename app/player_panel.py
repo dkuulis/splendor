@@ -7,6 +7,7 @@ from .player_column import PlayerColumn
 
 from .styles import (
     ACTIVE_PLAYER_BORDER,
+    PLAYER_COLUMN_GAP,
     PLAYER_PANEL_BACKGROUND,
     POINTS_FONT,
 )
@@ -25,7 +26,7 @@ class PlayerPanel(tk.Frame):
         for color in COLORS:
             cards = [card for card in player.cards.values() if card.color == color]
             column = PlayerColumn(self.panel, color, cards, player.gems.get(color, 0))
-            column.pack(side="left", expand=True, fill="x")
+            column.pack(side="left", expand=True, fill="x", padx=(0, PLAYER_COLUMN_GAP))
             self.columns[color] = column
 
         ttk.Label(self.panel, text=f"{sum(player.gems.values())} gems", justify="right", style="Player.TLabel").pack(side="right")
