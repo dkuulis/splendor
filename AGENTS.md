@@ -26,6 +26,18 @@ The human starts; the computer can use manual control or AI.
 - `main.py`: creates Tk and explicitly passes `create_initial_state()` to App.
 - `game/`: plain Python model objects, legal actions, turn transitions, and
   initialization. Keep this package independent of Tkinter.
+- `game/state.py`: owns shared game state, selection, action validation and
+  execution, and market replacement. Keep validation beside its action.
+  `State.finish_turn()` coordinates noble awards, selection clearing, and
+  turn progression.
+- `game/player.py`: owns player holdings and derived calculations: points,
+  discounts, `max_take`, `card_cost(card)`, and `card_payment(card)`.
+  Call these through the relevant player, usually `state.current_player`.
+- `game/noble.py`: defines Noble and `assign_noble(player, nobles)`. The helper
+  transfers the first qualifying noble and returns a log message or `None`;
+  the caller appends the message to the log.
+- `game/turn.py`: defines Turn and `advance_turn(state)`, which handles final
+  round detection, game completion, tie-breaking, and player/round advancement.
 - `game/initialize.py`: all 90 card definitions, ten noble definitions, and
   shuffled initial setup.
 - `ai/`: strategies implementing `play_turn(state)`. Each performs one legal
@@ -49,17 +61,26 @@ The human starts; the computer can use manual control or AI.
 - Prefer simple objects, dictionaries, and lists. Do not introduce dataclasses
   or typing imports for these models. Keep abstractions small and direct.
 - `TOKENS` in `game/constants.py` defines canonical order. Use it for
-  rendering, costs, selections, and log output.
+  rendering, cost display, selections, and log output. Payment calculations
+  iterate over cost entries directly; they do not need display ordering.
 - `State.supply` contains available token counts;
 - `Player.tokens` contains holdings.
 - `State.selected_tokens` contains pending counts, currently one per selected
   type. Selection does not change supply until `take_tokens()` succeeds.
   Finishing a turn clears selection.
-- Missing dictionary entries mean zero.
+- Missing entries in sparse count dictionaries (tokens, costs, selections)
+  mean zero. Use direct indexing for guaranteed gem keys in `Player.cards`
+  and `Player.discounts`, and tier keys in market/decks.
 - `Card.token` identifies its permanent discount type. `Card.cost` is a token
   count dictionary. `Player.cards` maps each gem color (excluding Gold) to a
-  list of owned cards, initialized empty. Discounts are derived
-  only from owned cards; points include owned cards and nobles.
+  list of owned cards, initialized empty. `Player.discounts` includes every
+  gem color, with zero for empty lists. Discounts are derived only from owned
+  cards; points include owned cards and nobles.
+- `Player.max_take` limits collection by remaining token capacity and the
+  per-turn maximum; State separately validates supply and selected types.
+  `Player.card_payment(card)` uses matching gems before gold and returns only
+  nonzero payment entries. `State.can_buy(card)` checks affordability, card
+  availability, and whether the game has ended.
 - `State.nobles` is a list of available nobles; `Player.nobles` is a list of
   owned nobles. `Noble.requirements` counts permanent card bonuses, not tokens.
   Qualifying for a noble does not spend cards or tokens.

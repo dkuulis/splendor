@@ -1,7 +1,8 @@
 from .constants import (GOLD, TOKENS, TOKEN_LIMIT, MAX_TAKE,
                         INITIAL_GOLD_SUPPLY, INITIAL_GEM_SUPPLY, MAX_RESERVATIONS)
 from .player import Player
-from .turn import Turn, assign_noble, advance_turn
+from .noble import assign_noble
+from .turn import Turn, advance_turn
 
 
 def format_cost(cost):
@@ -28,10 +29,6 @@ class State:
     @property
     def current_player(self):
         return self.players[self.turn.active_player]
-
-    @property
-    def max_take(self):
-        return min(MAX_TAKE, max(0, TOKEN_LIMIT - sum(self.current_player.tokens.values())))
 
     def select_card(self, card):
         if self.turn.finished or not self.card_available(card):
@@ -106,7 +103,7 @@ class State:
         if any(token not in TOKENS or token == GOLD or self.supply.get(token, 0) < 1
                for token in self.selected_tokens):
             return "A selected gem is not available."
-        if len(self.selected_tokens) > self.max_take:
+        if len(self.selected_tokens) > self.current_player.max_take:
             return f"You cannot hold more than {TOKEN_LIMIT} gems."
         return None
 
@@ -215,7 +212,9 @@ class State:
             self.log.append(f"Revealed: {revealed.points}-point {revealed.token} card (level {revealed.tier}), costing {revealed_cost}.")
 
     def finish_turn(self):
-        assign_noble(self)
+        message = assign_noble(self.current_player, self.nobles)
+        if message:
+            self.log.append(message)
         self.clear_selection()
         advance_turn(self)
 

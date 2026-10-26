@@ -11,19 +11,6 @@ class Turn:
         self.winner = None  # None also means a draw when finished.
 
 
-def assign_noble(state):
-    """Award the first qualifying available noble, at most one per turn."""
-    player = state.current_player
-    discounts = player.discounts
-    for noble in state.nobles:
-        if all(discounts[token] >= count
-               for token, count in noble.requirements.items()):
-            state.nobles.remove(noble)
-            player.nobles.append(noble)
-            state.log.append(f"{player.name} received noble for {noble.points} points.")
-            break
-
-
 def advance_turn(state):
     """Check game completion and advance to the next player when play continues."""
     if not state.turn.final_round and state.current_player.points >= TARGET_POINTS:

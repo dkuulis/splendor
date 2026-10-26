@@ -26,7 +26,7 @@ class GreedyAI:
 
     def take_tokens(self, state, cards):
         """Collect useful gems and report whether an action was taken."""
-        capacity = state.max_take
+        capacity = state.current_player.max_take
         if capacity == 0:
             return False
 

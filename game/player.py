@@ -1,4 +1,4 @@
-from .constants import GEMS, GOLD
+from .constants import GEMS, GOLD, MAX_TAKE, TOKEN_LIMIT
 
 
 class Player:
@@ -13,6 +13,10 @@ class Player:
     def add_card(self, card):
         self.cards[card.token].append(card)
         return card
+
+    @property
+    def max_take(self):
+        return min(MAX_TAKE, max(0, TOKEN_LIMIT - sum(self.tokens.values())))
 
     @property
     def points(self):
