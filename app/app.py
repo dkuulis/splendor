@@ -10,6 +10,7 @@ from .log import Log
 from .header import Header
 from .market_panel import MarketPanel
 from .player_panel import PlayerPanel
+from .score_panel import ScorePanel
 from .styles import WINDOW_MIN_WIDTH, configure_styles
 
 
@@ -41,6 +42,8 @@ class App:
         self.header = Header(sidebar, self.new_game, self.control,
                              ("Manual", *STRATEGIES), self.change_control)
         self.header.pack(fill="x", padx=10, pady=(0, 12))
+        self.scores = ScorePanel(sidebar, state.players)
+        self.scores.pack(fill="x", padx=10, pady=(0, 12))
         self.log = Log(sidebar, state.log)
         self.log.pack(fill="both", expand=True)
 
@@ -70,6 +73,7 @@ class App:
                                   active=state.player_status(state.players[0]) == "active")
         self.player.pack(fill="x")
 
+        self.scores.refresh()
         self.log.refresh()
         self.size_window(self.root)
         if self.ai_turn:
