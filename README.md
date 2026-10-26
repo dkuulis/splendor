@@ -10,7 +10,9 @@ Select one to three different gems and use Go! to collect them. The button is
 disabled when the selection is invalid.
 The 10-gem inventory limit is enforced. Click any market card to move it into
 the selection panel; click it again to deselect it. Buy is enabled only when
-you have enough gems after owned-card discounts. Buying returns payment to the bank.
+you have enough gems after owned-card discounts, using owned gold as a wildcard
+for missing colors. Buying spends matching gems first and returns the actual
+gem and gold payment to the bank.
 Select a card and then gold to enable Reserve. This takes the card and one gold,
 subject to the three-reservation and 10-token limits. Reserved cards appear in
 the last player-panel block; purchasing them is not implemented yet.

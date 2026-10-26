@@ -129,7 +129,22 @@ class State:
         if self.turn.finished or card not in self.market.get(card.tier, []):
             return False
         return all(self.current_player.tokens.get(token, 0) >= amount
-                   for token, amount in self.card_cost(card).items())
+                   for token, amount in self.card_payment(card).items())
+
+    def card_payment(self, card):
+        """Use matching gems first, then gold for discounted cost shortfalls."""
+        cost = self.card_cost(card)
+        payment = {}
+        gold = 0
+        for token in TOKENS:
+            amount = cost.get(token, 0)
+            matching = min(amount, self.current_player.tokens.get(token, 0))
+            if matching:
+                payment[token] = matching
+            gold += amount - matching
+        if gold:
+            payment[GOLD] = payment.get(GOLD, 0) + gold
+        return payment
 
     def buy_card_error(self):
         """Return why a purchase is illegal, or None when it is legal."""
@@ -150,7 +165,7 @@ class State:
             raise ValueError(error)
         player = self.current_player
         card = self.selected_card
-        cost = self.card_cost(card)
+        cost = self.card_payment(card)
         for token, amount in cost.items():
             if amount:
                 player.tokens[token] -= amount

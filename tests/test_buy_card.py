@@ -1,11 +1,61 @@
 import copy
 import unittest
 
-from game.constants import DIAMOND, SAPPHIRE, EMERALD, RUBY, ONYX
+from game.constants import DIAMOND, SAPPHIRE, EMERALD, RUBY, ONYX, GOLD
 from game import Card, State
 
 
 class BuyCardTests(unittest.TestCase):
+    def test_gold_covers_shortfalls_after_discounts_and_returns_actual_payment(self):
+        state = State()
+        player = state.current_player
+        player.add_card(Card('discount', 1, RUBY, 0, {}))
+        player.tokens = {RUBY: 1, GOLD: 3, ONYX: 1}
+        card = Card('wild', 2, EMERALD, 2, {RUBY: 3, SAPPHIRE: 2})
+        state.market[2] = [card]
+        supply = dict(state.supply)
+        self.assertTrue(state.can_buy(card))
+        self.assertEqual(state.card_payment(card), {RUBY: 1, GOLD: 3})
+        self.assertEqual(player.tokens, {RUBY: 1, GOLD: 3, ONYX: 1})
+        state.select_card(card)
+        self.assertIsNone(state.action_error)
+        state.perform_action()
+        self.assertEqual(player.tokens, {ONYX: 1})
+        supply[RUBY] += 1
+        supply[GOLD] += 3
+        self.assertEqual(state.supply, supply)
+        self.assertEqual(player.cards[EMERALD], [card])
+        self.assertIn('for 3 Gold, 1 Ruby.', state.log[0])
+
+    def test_matching_gems_and_free_cards_preserve_gold(self):
+        for price in (0, 2):
+            with self.subTest(price=price):
+                state = State()
+                player = state.current_player
+                player.tokens = {RUBY: 3, GOLD: 2}
+                card = Card('matching', 1, EMERALD, 0, {RUBY: price})
+                state.market[1] = [card]
+                state.select_card(card)
+                state.buy_card()
+                self.assertEqual(player.tokens, {RUBY: 3 - price, GOLD: 2})
+
+    def test_gold_cannot_be_reused_for_multiple_missing_colors(self):
+        state = State()
+        card = Card('short', 1, EMERALD, 0, {RUBY: 1, SAPPHIRE: 1})
+        state.market[1] = [card]
+        player = state.current_player
+        player.tokens = {GOLD: 1}
+        state.select_card(card)
+        supply = dict(state.supply)
+        self.assertFalse(state.can_buy(card))
+        with self.assertRaises(ValueError):
+            state.buy_card()
+        self.assertEqual(player.tokens, {GOLD: 1})
+        self.assertEqual(state.supply, supply)
+        self.assertEqual(state.market[1], [card])
+        self.assertEqual(state.turn.active_player, 0)
+        self.assertEqual(state.log, [])
+
     def test_purchase_appends_to_color_and_preserves_other_holdings(self):
         state = State()
         player = state.current_player

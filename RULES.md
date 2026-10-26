@@ -43,6 +43,11 @@ spent. For each color, pay `max(0, cost - owned cards of that color)`.
 For example, a card costing three Ruby and two Sapphire costs one Ruby and
 two Sapphire if you already own two Ruby cards.
 
+Gold is a wildcard: after discounts, spend matching colored gems first, then
+one gold for each missing gem of any color. Gold must cover the combined
+shortfall across all colors. Return the actual colored gems and gold paid to
+the bank.
+
 Return payment to the bank and add the card to your inventory. Its points
 count immediately; its discount applies to later purchases. A free card
 still uses your turn. Refill the market from the matching deck; an exhausted
@@ -83,8 +88,8 @@ strategy priorities and control options.
 - **Nobles:** when several qualify, the first in displayed order is awarded
   automatically rather than letting the player choose.
 - **Reservations and gold:** reservations require taking one available gold
-  without exceeding the token limit. Blind reservations, purchasing reserved
-  cards, and gold wildcard payments are not implemented yet.
+  without exceeding the token limit. Blind reservations and purchasing reserved
+  cards are not implemented yet.
 - **Two matching gems:** omitted for now; the full game permits this only
   when at least four gems of that color are available before taking them.
 - **Player count:** only two players; no three- or four-player setup.

@@ -1,7 +1,7 @@
 import unittest
 
 from ai.greedy import GreedyAI
-from game.constants import DIAMOND, SAPPHIRE, EMERALD, RUBY, ONYX
+from game.constants import DIAMOND, SAPPHIRE, EMERALD, RUBY, ONYX, GOLD
 from game import Card, State
 
 
@@ -37,6 +37,14 @@ class GreedyAITests(unittest.TestCase):
         self.assertEqual(self.player.cards[EMERALD], [valuable])
         self.assertEqual(self.player.tokens, {})
         self.assertEqual(self.state.turn.active_player, 1)
+
+    def test_buys_card_affordable_with_gold(self):
+        card = Card('wild', 2, EMERALD, 3, {DIAMOND: 1, RUBY: 1})
+        self.state.market[2] = [card]
+        self.player.tokens = {GOLD: 2}
+        GreedyAI().play_turn(self.state)
+        self.assertEqual(self.player.cards[EMERALD], [card])
+        self.assertEqual(self.player.tokens, {})
 
     def test_equal_points_use_discounted_payment(self):
         self.player.add_card(Card("owned", 1, RUBY, 0, {}))

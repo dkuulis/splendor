@@ -135,6 +135,22 @@ class PersistentUITests(unittest.TestCase):
         self.assertEqual(app.state.players[0].tokens, {})
         self.assertEqual(app.state.turn.active_player, 1)
 
+    def test_owned_gold_enables_buy_and_clears_disabled_overlay(self):
+        app = self.app
+        card = app.state.market[1][0]
+        card.cost = {RUBY: 2}
+        app.select_card(card)
+        self.assertTrue(app.selection.go_button.instate(['disabled']))
+        app.state.current_player.tokens[GOLD] = 2
+        app.state.supply[GOLD] -= 2
+        app.refresh()
+        self.assertEqual(app.selection.go_button.cget('text'), 'Buy')
+        self.assertFalse(app.selection.go_button.instate(['disabled']))
+        self.assertEqual(app.selection.card.itemcget(app.selection.disabled_overlay, 'state'), 'hidden')
+        app.selection.go_button.invoke()
+        self.assertIn(card, app.state.players[0].cards[card.token])
+        self.assertEqual(app.state.players[0].tokens, {})
+
     def test_nobles_follow_state_and_are_centered_left_of_supply(self):
         app = self.app
         panel = app.nobles
