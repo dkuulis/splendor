@@ -25,9 +25,9 @@ class State:
         self.finish_turn(passed=True)
 
     def take_tokens(self, tokens):
-        for token in tokens:
-            self.supply[token] -= 1
-            self.current_player.tokens[token] = self.current_player.tokens.get(token, 0) + 1
+        for token, amount in tokens.items():
+            self.supply[token] -= amount
+            self.current_player.tokens[token] = self.current_player.tokens.get(token, 0) + amount
 
         self.finish_turn(passed=False)
 

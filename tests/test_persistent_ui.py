@@ -8,7 +8,7 @@ from unittest.mock import patch
 from ai import GreedyAI
 from app.app import App
 from app.assets import load_image
-from game.constants import RUBY, GOLD
+from game.constants import RUBY, GOLD, SAPPHIRE
 from game.initialize import create_initial_state
 
 
@@ -581,6 +581,64 @@ class PersistentUITests(unittest.TestCase):
         self.root.update()
         self.assertFalse(app.player.columns[GOLD].winfo_ismapped())
         self.assertFalse(app.computer.columns[GOLD].winfo_ismapped())
+
+    def test_selected_color_piles_grow_shrink_and_disable_invalid_takes(self):
+        app = self.app
+        panel = app.selection_panel
+        canvas = panel.tokens
+        item = panel.items[RUBY]
+        original_items = canvas.find_all()
+        app.supply.pick(RUBY)
+        app.supply.pick(RUBY)
+        self.root.update()
+        image = load_image(panel, 'ruby2')
+        self.assertEqual(canvas.itemcget(item, 'image'), str(image))
+        self.assertGreaterEqual(canvas.winfo_width(), image.width())
+        self.assertGreaterEqual(canvas.winfo_height(), image.height())
+        self.assertEqual(app.supply.counts[RUBY], 2)
+        self.assertFalse(self.action_button.instate(['disabled']))
+        app.state.current_player.tokens = {GOLD: 5, SAPPHIRE: 4}
+        app.refresh()
+        self.assertTrue(self.action_button.instate(['disabled']))
+        app.state.current_player.tokens.clear()
+        app.supply.pick(RUBY)
+        self.assertTrue(self.action_button.instate(['disabled']))
+        self.assertEqual(canvas.itemcget(item, 'image'), str(load_image(panel, 'ruby3')))
+        for expected in (2, 1, 0):
+            x, y = canvas.coords(item)
+            canvas.event_generate('<Motion>', x=int(x), y=int(y))
+            canvas.event_generate('<Button-1>', x=int(x), y=int(y))
+            self.root.update()
+            self.assertEqual(app.selection.tokens.get(RUBY, 0), expected)
+            self.assertEqual(app.supply.counts[RUBY], 4 - expected)
+        self.assertEqual(canvas.itemcget(item, 'state'), 'hidden')
+        self.assertEqual(canvas.find_all(), original_items)
+
+    def test_gold_pile_selection_requires_one_gold_to_reserve(self):
+        app = self.app
+        card = app.state.market[1][0]
+        card.cost = {}
+        app.select_card(card)
+        panel = app.selection_panel
+        item = panel.items[GOLD]
+        for count in range(1, 6):
+            app.supply.pick(GOLD)
+            self.root.update()
+            name = 'gold' + (str(count) if count > 1 else '')
+            self.assertEqual(panel.tokens.itemcget(item, 'image'), str(load_image(panel, name)))
+            self.assertEqual(app.supply.counts[GOLD], 5 - count)
+            self.assertEqual(self.action_button.instate(['disabled']), count != 1)
+        for count in range(4, 0, -1):
+            x, y = panel.tokens.coords(item)
+            panel.tokens.event_generate('<Motion>', x=int(x), y=int(y))
+            panel.tokens.event_generate('<Button-1>', x=int(x), y=int(y))
+            self.root.update()
+            self.assertEqual(app.selection.tokens, {GOLD: count})
+            self.assertEqual(self.action_button.instate(['disabled']), count != 1)
+        self.action_button.invoke()
+        self.assertIn(card, app.state.players[0].reserved_cards)
+        self.assertEqual(app.state.players[0].tokens, {GOLD: 1})
+        self.assertEqual(app.state.supply[GOLD], 4)
 
     def test_gold_without_a_card_preserves_pass_and_gem_collection(self):
         app = self.app

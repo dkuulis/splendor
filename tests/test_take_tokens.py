@@ -22,6 +22,19 @@ class TakeTokensTests(unittest.TestCase):
         self.assertEqual(tokens, {SAPPHIRE: 1})
         self.assertEqual(selection.tokens, {RUBY: 1})
 
+    def test_matching_gems_dispatch_transfers_two_and_clears_selection(self):
+        state = State()
+        selection = Selection()
+        state.current_player.tokens = {GOLD: 8}
+        selection.select_token(RUBY, state)
+        selection.select_token(RUBY, state)
+        self.assertTrue(selection.can_perform_action(state))
+        selection.perform_action(state)
+        self.assertEqual(state.players[0].tokens, {GOLD: 8, RUBY: 2})
+        self.assertEqual(state.supply[RUBY], 2)
+        self.assertEqual(selection.tokens, {})
+        self.assertEqual(state.turn.active_player, 1)
+
     def test_empty_selection_passes_and_counts_toward_stalemate(self):
         state = State()
         selection = Selection()
@@ -48,7 +61,13 @@ class TakeTokensTests(unittest.TestCase):
             ([], 0, 4, False, False),
             ([], 10, 4, False, False),
             ([], 0, 4, True, False),
-            ([RUBY, RUBY], 0, 4, False, False),
+            ([RUBY, RUBY], 0, 4, False, True),
+            ([RUBY, RUBY], 0, 3, False, False),
+            ([RUBY, RUBY], 8, 4, False, True),
+            ([RUBY, RUBY], 9, 4, False, False),
+            ([RUBY, RUBY], 10, 4, False, False),
+            ([RUBY, RUBY, ONYX], 0, 4, False, False),
+            ([RUBY, RUBY, RUBY], 0, 4, False, False),
             ([RUBY, ONYX, DIAMOND, EMERALD], 0, 4, False, False),
             ([GOLD], 0, 4, False, False),
             (['unknown'], 0, 4, False, False),
@@ -90,7 +109,7 @@ class TakeTokensTests(unittest.TestCase):
         self.assertEqual(state.turn.round_number, 2)
 
     def test_disallowed_token_checks_leave_state_unchanged(self):
-        for tokens in ([RUBY] * 2, [RUBY, ONYX, DIAMOND, EMERALD], [GOLD], [SAPPHIRE]):
+        for tokens in ([RUBY] * 3, [RUBY, ONYX, DIAMOND, EMERALD], [GOLD], [SAPPHIRE]):
             with self.subTest(tokens=tokens):
                 state = State()
                 selection = Selection()

@@ -31,6 +31,27 @@ class SelectionTests(unittest.TestCase):
         selection.deselect_token(SAPPHIRE, state)
         self.assertEqual(selection.tokens, {})
 
+    def test_repeated_gem_clicks_select_available_supply_and_remove_one_at_a_time(self):
+        state = self.state
+        selection = self.selection
+        supply = dict(state.supply)
+        for count in range(1, 5):
+            selection.select_token(RUBY, state)
+            self.assertEqual(selection.tokens, {RUBY: count})
+            self.assertEqual(selection.can_take_tokens(state), count <= 2)
+        self.assertFalse(selection.can_select_token(RUBY, state))
+        selection.select_token(RUBY, state)
+        self.assertEqual(selection.tokens, {RUBY: 4})
+        selection.select_token(SAPPHIRE, state)
+        for count in range(3, -1, -1):
+            selection.deselect_token(RUBY, state)
+            expected = {SAPPHIRE: 1}
+            if count:
+                expected[RUBY] = count
+            self.assertEqual(selection.tokens, expected)
+        self.assertEqual(state.supply, supply)
+        self.assertEqual(state.current_player.tokens, {})
+
     def test_card_toggle_and_replacement(self):
         other = Card('other', 1, ONYX, 0, {})
         self.state.market[1].append(other)
@@ -157,7 +178,7 @@ class SelectionTests(unittest.TestCase):
         # Each destination includes the exact card and tokens, not just intent.
         expected = {
             'gem': ['gems', 'gems', 'gems', 'two_gems', 'gems'],
-            'gold': ['empty', 'reserve_initial', 'reserved_initial', 'gems', 'reserve_initial'],
+            'gold': ['empty', 'reserve_initial', 'reserved_initial', 'gems', 'two_gold_initial'],
             'affordable': ['buy', 'buy', 'buy', 'buy', 'buy'],
             'unaffordable': ['reserve', 'reserve', 'reserve', 'reserve', 'reserve'],
             'reserved': ['reserved', 'reserved', 'reserved', 'reserved', 'reserved'],
@@ -216,6 +237,7 @@ class SelectionTests(unittest.TestCase):
                         'reserved_initial': ('buy', initial_reserved, {}),
                         'reserve': ('reserve', costly, {GOLD: 1}),
                         'reserve_initial': ('reserve', initial_card, {GOLD: 1}),
+                        'two_gold_initial': ('reserve', initial_card, {GOLD: 2}),
                     }
                     self.assertEqual((selection.action_kind, selection.card, selection.tokens),
                                      outcomes[destination])

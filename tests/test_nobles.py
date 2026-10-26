@@ -83,7 +83,7 @@ class NobleTests(unittest.TestCase):
         noble = Noble('noble', 3, {RUBY: 1})
         state.nobles = [noble]
         state.current_player.add_card(Card('ruby', 1, RUBY, 0, {}))
-        selection.tokens = {RUBY: 2}
+        selection.tokens = {RUBY: 3}
         self.assertFalse(selection.can_take_tokens(state))
         self.assertEqual(state.nobles, [noble])
         self.assertEqual(state.current_player.nobles, [])

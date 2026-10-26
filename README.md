@@ -13,7 +13,9 @@ computer strategy at launch with `--ai` (default: `greedy`):
 
 Pass ends the turn without collecting when nothing is selected; two consecutive passes end
 the game using score and card-count tie-breaks.
-Select one to three different gems and use Take to collect them. The button is
+Select one to three different gems, or two of one color when at least four of
+that color are in supply, and use Take to collect them. Both options must keep
+your inventory at or below 10 tokens. The button is
 disabled when the selection is invalid.
 The selection panel has one action button and a separate Restart button.
 The action button shows Buy, Reserve, Take, or Pass to match the selection.
@@ -54,7 +56,8 @@ the action is confirmed. App owns `state` and `selection` separately;
 
 1. **Select a colored gem:** clear the selected card and gold, keep other
    selected colored gems, and add one gem of this color. Selecting the same
-   color again does not add another gem.
+   color again adds another gem, up to the available supply. Selected gems
+   appear as one pile per color.
 2. **Select a market card:** replace the selected card and clear all selected
    tokens, including gold. If the new card is affordable, select it for Buy.
    Otherwise, automatically add one gold and select it for Reserve.
@@ -63,10 +66,13 @@ the action is confirmed. App owns `state` and `selection` separately;
    tokens. An unaffordable reserved card leaves the selection unchanged.
 4. **Select gold:** only allowed when an affordable market card is selected
    and gold is available in the bank. Keep the card and select one gold for
-   Reserve. Selecting gold again does not add another gold.
-5. **Deselect a colored gem:** remove that gem and keep any other selected gems.
+   Reserve. Repeated clicks add gold up to the available supply; Reserve is
+   enabled only with exactly one selected gold.
+5. **Deselect a colored gem:** click its selected pile to remove one gem,
+   keeping the rest of that pile and any other selected gems.
 6. **Deselect gold:** only allowed when the selected market card is affordable.
-   Remove gold and keep the card for Buy. An unaffordable market card must
+   Remove one gold at a time; removing the last gold keeps the card for Buy.
+   An unaffordable market card must
    retain gold and remain a reservation.
 7. **Deselect a market or reserved card:** click the selected card again to
    clear the card and all selected tokens, including reservation gold.

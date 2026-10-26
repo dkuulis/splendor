@@ -49,6 +49,29 @@ class SelectionPermissionTests(unittest.TestCase):
         state.supply[GOLD] = 0
         self.assertIs(selection.can_select_token(GOLD, state), False)
 
+    def test_multiple_gold_selection_only_allows_reserving_with_one(self):
+        state = self.state
+        selection = self.selection
+        selection.select_card(self.card, state)
+        supply = dict(state.supply)
+        for count in range(1, 6):
+            selection.select_token(GOLD, state)
+            self.assertEqual(selection.tokens, {GOLD: count})
+            self.assertIs(selection.can_reserve_card(state), count == 1)
+            self.assertIs(selection.can_perform_action(state), count == 1)
+        self.assertFalse(selection.can_select_token(GOLD, state))
+        selection.select_token(GOLD, state)
+        self.assertEqual(selection.tokens, {GOLD: 5})
+        for count in range(4, -1, -1):
+            selection.deselect_token(GOLD, state)
+            self.assertEqual(selection.tokens, {GOLD: count} if count else {})
+            self.assertIs(selection.card, self.card)
+            self.assertIs(selection.can_reserve_card(state), count == 1)
+            self.assertIs(selection.can_perform_action(state), count <= 1)
+        self.assertEqual(selection.action_kind, 'buy')
+        self.assertEqual(state.supply, supply)
+        self.assertEqual(state.current_player.tokens, {})
+
     def test_selection_can_be_allowed_while_confirmation_is_disallowed(self):
         for limit in ('gold supply', 'inventory', 'reservations'):
             with self.subTest(limit=limit):

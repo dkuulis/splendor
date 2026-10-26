@@ -5,7 +5,7 @@ from game.constants import TOKENS
 
 from .assets import load_image
 from .card_panel import CardPanel
-from .styles import (CARD_BACKGROUND, TOKEN_SIZE, TOKEN_SPACING,
+from .styles import (CARD_BACKGROUND, TOKEN_SIZE, TOKEN_SPACING, TOKEN_GAP,
                      MARKET_CARD_HEIGHT, ACTION_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT,
                      ACTION_BUTTON_TOPS, RESTART_BUTTON_HEIGHT)
 
@@ -69,14 +69,22 @@ class SelectionPanel(tk.Frame):
         else:
             self.card.grid_remove()
             self.tokens.grid(padx=0)
-        index = 0
+        piles = []
         for token, item in self.items.items():
-            selected = bool(selection.tokens.get(token, 0))
-            self.tokens.itemconfigure(item, state="normal" if selected else "hidden")
-            if selected:
-                self.tokens.coords(item, TOKEN_SIZE / 2 + index * TOKEN_SPACING, TOKEN_SIZE / 2)
-                index += 1
-        self.tokens.configure(width=TOKEN_SIZE + max(0, index - 1) * TOKEN_SPACING)
+            count = selection.tokens.get(token, 0)
+            self.tokens.itemconfigure(item, state="normal" if count else "hidden")
+            if count:
+                name = token.lower() + (str(count) if count > 1 else "")
+                image = load_image(self, name)
+                self.tokens.itemconfigure(item, image=image)
+                piles.append((item, image.width(), image.height()))
+        height = max([TOKEN_SIZE] + [height for _, _, height in piles])
+        left = 0
+        for item, width, _ in piles:
+            self.tokens.coords(item, left + width / 2, height / 2)
+            left += width + TOKEN_GAP
+        self.tokens.configure(width=max(TOKEN_SIZE, left - TOKEN_GAP),
+                              height=height)
         if state.turn.finished:
             result = {0: "win", 1: "loose", None: "tie"}[state.turn.winner]
             self.set_button(self.action_button, result, False)

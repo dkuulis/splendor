@@ -20,7 +20,9 @@ one computer opponent.
 Choose one action:
 
 1. **Take gems:** take one, two, or three different colors from the bank,
-   one gem per color. Each selected color must be available. Taking fewer
+   one gem per color, or take exactly two gems of one color if at least four
+   of that color are available before taking them. Each selected color must
+   be available. Taking fewer
    than three is allowed even when more colors are available. You cannot
    take gems that would bring your inventory above 10. You cannot return
    or exchange gems to make room; gems leave your inventory only when spent
@@ -94,8 +96,6 @@ strategy priorities and control options.
   automatically rather than letting the player choose.
 - **Reservations and gold:** reservations require taking one available gold
   without exceeding the token limit. Blind reservations are not implemented.
-- **Two matching gems:** omitted for now; the full game permits this only
-  when at least four gems of that color are available before taking them.
 - **Player count:** only two players; no three- or four-player setup.
 - **Gem collection:** this version freely permits taking fewer than three
   different colors; the referenced full rules require three when available.

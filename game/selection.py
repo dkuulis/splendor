@@ -29,7 +29,8 @@ class Selection:
 
     def can_select_token(self, token, state):
         if (state.turn.finished or token not in TOKENS
-                or state.supply.get(token, 0) < 1):
+                or state.supply.get(token, 0) < 1
+                or self.tokens.get(token, 0) >= state.supply[token]):
             return False
         # README rule 4: manual gold selection requires an affordable market card.
         return (token != GOLD or (self.card is not None
@@ -46,13 +47,16 @@ class Selection:
         return not state.turn.finished
 
     def can_take_tokens(self, state):
-        return (not state.turn.finished and self.card is None
-                and bool(self.tokens)
-                and len(self.tokens) <= MAX_TAKE
-                and len(self.tokens) <= state.current_player.max_take
-                and all(token in TOKENS and token != GOLD and amount == 1
-                        and state.supply.get(token, 0) >= 1
-                        for token, amount in self.tokens.items()))
+        count = sum(self.tokens.values())
+        if (state.turn.finished or self.card is not None or not self.tokens
+                or count > state.current_player.max_take
+                or not all(token in TOKENS and token != GOLD and amount > 0
+                           and state.supply.get(token, 0) >= amount
+                           for token, amount in self.tokens.items())):
+            return False
+        return (count <= MAX_TAKE and all(amount == 1 for amount in self.tokens.values())
+                or len(self.tokens) == 1 and count == 2
+                and state.supply[next(iter(self.tokens))] >= 4)
 
     def can_buy_card(self, state):
         return not self.tokens and state.can_buy(self.card)
@@ -125,14 +129,15 @@ class Selection:
             # README rule 1: clear card/gold, keeping other selected gem colors.
             self.card = None
             self.tokens.pop(GOLD, None)
-        # README rules 1 and 4: repeated selection never increases the amount.
-        self.tokens[token] = 1
+        self.tokens[token] = self.tokens.get(token, 0) + 1
 
     def deselect_token(self, token, state):
         if not self.can_deselect_token(token, state):
             return
-        # README rules 5–6: remove only this token, preserving the other choices.
-        self.tokens.pop(token)
+        # Remove one token at a time, preserving the other choices.
+        self.tokens[token] -= 1
+        if not self.tokens[token]:
+            self.tokens.pop(token)
 
     def clear(self):
         self.tokens.clear()
