@@ -27,11 +27,23 @@ class PlayerPanel(tk.Frame):
         self.panel.pack(fill="both", expand=True)
         self.panel.rowconfigure(0, minsize=MARKET_CARD_HEIGHT)
 
+        self.columns = {}
         for index, token in enumerate(TOKENS):
+            column = PlayerColumn(self.panel, token, [], 0)
+            column.grid(row=0, column=index, sticky="ew", padx=(0, PLAYER_COLUMN_GAP))
+            self.columns[token] = column
+        self.refresh(player, active)
+
+    def refresh(self, player, active=False):
+        border = ACTIVE_PLAYER_BORDER if active else INACTIVE_PLAYER_BORDER
+        self.configure(highlightbackground=border, highlightcolor=border)
+        for index, (token, column) in enumerate(self.columns.items()):
             cards = [card for card in player.cards.values() if card.token == token]
             token_count = player.tokens.get(token, 0)
-            if not cards and not token_count:
-                continue
-            column = PlayerColumn(self.panel, token, cards, token_count)
-            self.panel.columnconfigure(index, weight=1)
-            column.grid(row=0, column=index, sticky="ew", padx=(0, PLAYER_COLUMN_GAP))
+            column.refresh(cards, token_count)
+            visible = bool(cards or token_count)
+            self.panel.columnconfigure(index, weight=1 if visible else 0)
+            if visible:
+                column.grid()
+            else:
+                column.grid_remove()

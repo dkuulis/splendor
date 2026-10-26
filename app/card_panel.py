@@ -5,24 +5,22 @@ from .styles import CARD_BACKGROUND, MARKET_CARD_WIDTH, MARKET_CARD_HEIGHT
 
 
 class CardPanel(tk.Canvas):
-    def __init__(self, parent, card, on_buy=None, affordable=False, owned=False):
-        enabled = bool(on_buy and affordable and not owned)
+    def __init__(self, parent, card=None, on_buy=None, affordable=False, owned=False):
         super().__init__(parent, width=MARKET_CARD_WIDTH, height=MARKET_CARD_HEIGHT,
                          highlightthickness=0, borderwidth=0, background=CARD_BACKGROUND)
-        self.images = self.draw(self, card, active=enabled, owned=owned)
-        if enabled:
-            self.configure(cursor="hand2")
-            self.bind("<Button-1>", lambda event: on_buy(card))
+        self.on_buy = on_buy
+        self.art = self.create_image(0, 0, anchor="nw")
+        self.overlay = self.create_image(0, 0, anchor="nw", image=load_image(self, "disabled"))
+        self.bind("<Button-1>", self.select)
+        self.refresh(card, affordable, owned)
 
-    @staticmethod
-    def draw(canvas, card, x=0, y=0, active=True, owned=False):
-        """Draw card assets and return image references for the caller to retain."""
-        names = [card.id]
-        if not active and not owned:
-            names.append("disabled")
-        images = []
-        for name in names:
-            image = load_image(canvas, name)
-            canvas.create_image(x, y, image=image, anchor="nw")
-            images.append(image)
-        return images
+    def refresh(self, card, affordable=False, owned=False):
+        self.card = card
+        self.enabled = bool(card and self.on_buy and affordable and not owned)
+        self.configure(cursor="hand2" if self.enabled else "")
+        self.itemconfigure(self.art, image=load_image(self, card.id) if card else "")
+        self.itemconfigure(self.overlay, state="normal" if card and not self.enabled and not owned else "hidden")
+
+    def select(self, event):
+        if self.enabled:
+            self.on_buy(self.card)

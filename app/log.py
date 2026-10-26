@@ -9,6 +9,7 @@ class Log(tk.Frame):
         super().__init__(parent, padx=10, pady=10, background=LOG_BACKGROUND)
         self.messages = messages
         self.labels = []
+        self.displayed_messages = []
         self.canvas = tk.Canvas(
             self, width=250, height=200, highlightthickness=0, borderwidth=0,
             background=LOG_BACKGROUND,
@@ -35,14 +36,27 @@ class Log(tk.Frame):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def refresh(self):
-        for label in self.labels:
-            label.destroy()
-        self.labels.clear()
-        for message in self.messages:
-            self.create_message(message)
+        if self.displayed_messages == self.messages:
+            return
+        appended = self.messages[:len(self.displayed_messages)] == self.displayed_messages
+        follow_latest = not appended or not self.displayed_messages or self.canvas.yview()[1] >= 0.999
+        top = self.canvas.canvasy(0)
+        for index, message in enumerate(self.messages):
+            if index == len(self.labels):
+                self.create_message(message)
+            elif index >= len(self.displayed_messages) or message != self.displayed_messages[index]:
+                self.labels[index].configure(text=message)
+                self.labels[index].pack(fill="x", anchor="w", padx=6, pady=(0, 12))
+        for label in self.labels[len(self.messages):]:
+            label.pack_forget()
+        self.displayed_messages = list(self.messages)
         self.content.update_idletasks()
         self.update_scroll_region()
-        self.canvas.yview_moveto(1)
+        if follow_latest:
+            self.canvas.yview_moveto(1)
+        else:
+            height = max(self.canvas.winfo_height(), self.content.winfo_reqheight())
+            self.canvas.yview_moveto(top / height)
 
     def create_message(self, message):
         label = tk.Label(

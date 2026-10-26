@@ -46,13 +46,7 @@ class App:
         self.log = Log(sidebar, self.state.log)
         self.log.pack(fill="both", expand=True)
 
-        self.refresh()
-
-    def refresh(self):
-        self.cancel_ai()
         state = self.state
-        for child in self.field.winfo_children():
-            child.destroy()
         self.computer = PlayerPanel(self.field, state.players[1],
                                     active=state.is_active_player(state.players[1]))
         self.computer.pack(fill="x")
@@ -61,7 +55,7 @@ class App:
         for row in range(3):
             table.rowconfigure(row, minsize=MARKET_CARD_HEIGHT + 2 * MARKET_ROW_PADDING)
         self.market = MarketPanel(table, state.market, self.select_card,
-                                  lambda card: self.manual_turn and state.can_buy(card), state.selected_card)
+                                  lambda card: self.manual_turn and self.state.can_buy(card), state.selected_card)
         self.market.grid(row=0, column=1, rowspan=3, sticky="n")
         self.supply = SupplyPanel(table, state.supply, state.selected_tokens,
                               self.select_token, enabled=self.manual_turn)
@@ -75,11 +69,33 @@ class App:
                                   active=state.is_active_player(state.players[0]))
         self.player.pack(fill="x")
 
+        self.refresh()
+
+    def refresh(self):
+        self.cancel_ai()
+        state = self.state
+        self.computer.refresh(state.players[1], state.is_active_player(state.players[1]))
+        self.player.refresh(state.players[0], state.is_active_player(state.players[0]))
+        self.market.refresh(state.market, state.selected_card)
+        self.supply.available_tokens = state.supply
+        self.supply.selected_tokens = state.selected_tokens
+        self.supply.enabled = self.manual_turn
+        self.supply.refresh()
+        self.selection.state = state
+        self.selection.enabled = self.manual_turn
+        self.selection.refresh()
+        self.scores.players = state.players
+        self.log.messages = state.log
         self.scores.refresh()
         self.log.refresh()
         self.size_window(self.root)
         if self.ai_turn:
             self.pending_ai = self.root.after(500, self.run_ai)
+
+    def refresh_selection(self):
+        self.supply.refresh()
+        self.market.refresh_selection(self.state.selected_card)
+        self.selection.refresh()
 
     @property
     def ai_turn(self):
@@ -114,24 +130,22 @@ class App:
     def new_game(self):
         self.cancel_ai()
         self.state = create_initial_state()
-        for child in self.shell.winfo_children():
-            child.destroy()
-        self.create_ui()
+        self.refresh()
 
     def select_card(self, card):
         if self.manual_turn:
             self.state.select_card(card)
-            self.refresh()
+            self.refresh_selection()
 
     def select_token(self, token):
         if self.manual_turn:
             self.state.select_token(token)
-            self.refresh()
+            self.refresh_selection()
 
     def deselect_token(self, token):
         if self.manual_turn:
             self.state.deselect_token(token)
-            self.refresh()
+            self.refresh_selection()
 
     def perform_action(self):
         if not self.manual_turn:
