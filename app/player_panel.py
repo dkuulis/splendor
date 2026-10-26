@@ -9,6 +9,7 @@ from .styles import (
     ACTIVE_PLAYER_BORDER,
     INACTIVE_PLAYER_BORDER,
     MARKET_CARD_HEIGHT,
+    NOBLE_SIZE,
     PLAYER_COLUMN_GAP,
     PLAYER_PANEL_BACKGROUND,
     PLAYER_PANEL_PADDING,
@@ -28,8 +29,11 @@ class PlayerPanel(tk.Frame):
         self.panel.rowconfigure(0, minsize=MARKET_CARD_HEIGHT)
 
         self.columns = {}
-        for index, token in enumerate(TOKENS):
-            column = PlayerColumn(self.panel, token, [], 0)
+        # Nobles share the leftmost column with gold; gem columns follow canonical order.
+        column_tokens = ["Gold"] + [token for token in TOKENS if token != "Gold"]
+        for index, token in enumerate(column_tokens):
+            height = NOBLE_SIZE if token == "Gold" else MARKET_CARD_HEIGHT
+            column = PlayerColumn(self.panel, token, [], 0, height=height)
             column.grid(row=0, column=index, sticky="ew", padx=(0, PLAYER_COLUMN_GAP))
             self.columns[token] = column
         self.refresh(player, active)
@@ -38,7 +42,8 @@ class PlayerPanel(tk.Frame):
         border = ACTIVE_PLAYER_BORDER if active else INACTIVE_PLAYER_BORDER
         self.configure(highlightbackground=border, highlightcolor=border)
         for index, (token, column) in enumerate(self.columns.items()):
-            cards = [card for card in player.cards.values() if card.token == token]
+            cards = (list(player.nobles.values()) if token == "Gold" else
+                     [card for card in player.cards.values() if card.token == token])
             token_count = player.tokens.get(token, 0)
             column.refresh(cards, token_count)
             visible = bool(cards or token_count)

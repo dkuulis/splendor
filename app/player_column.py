@@ -15,10 +15,11 @@ from .styles import (
 
 
 class PlayerColumn(ttk.Frame):
-    def __init__(self, parent, token, cards, token_count):
+    def __init__(self, parent, token, cards, token_count, height=MARKET_CARD_HEIGHT):
         super().__init__(parent, style="Player.TFrame")
         self.token = token
-        self.stack = tk.Canvas(self, height=MARKET_CARD_HEIGHT,
+        self.height = height
+        self.stack = tk.Canvas(self, height=height,
                                highlightthickness=0, borderwidth=0,
                                background=PLAYER_PANEL_BACKGROUND)
         self.stack.pack()
@@ -50,7 +51,7 @@ class PlayerColumn(ttk.Frame):
             if index < token_count:
                 column, row = divmod(index, PLAYER_TOKENS_PER_COLUMN)
                 self.stack.coords(item, width - TOKEN_SIZE / 2 - column * TOKEN_SPACING,
-                                  MARKET_CARD_HEIGHT - TOKEN_SIZE / 2 - row * TOKEN_SPACING)
+                                  self.height - TOKEN_SIZE / 2 - row * TOKEN_SPACING)
                 self.stack.itemconfigure(item, state="normal")
                 self.stack.tag_raise(item)
             else:

@@ -135,6 +135,44 @@ class PersistentUITests(unittest.TestCase):
         self.assertIs(panel.nobles, app.state.nobles)
         self.assertTrue(all(tile.winfo_ismapped() for tile in slots))
 
+    def test_player_nobles_and_gold_share_leftmost_column(self):
+        app = self.app
+        nobles = app.state.nobles[:2]
+        card = app.state.market[1][0]
+        for player, panel in zip(app.state.players, (app.player, app.computer)):
+            column = panel.columns['Gold']
+            self.assertFalse(column.winfo_ismapped())
+            player.tokens['Gold'] = 5
+            app.refresh()
+            self.root.update()
+            self.assertTrue(column.winfo_ismapped())
+            self.assertEqual(len(column.token_items), 5)
+            player.nobles = {noble.id: noble for noble in nobles}
+            player.cards[card.id] = card
+            app.refresh()
+            self.root.update()
+            gem_column = panel.columns[card.token]
+            self.assertLess(column.winfo_rootx() + column.winfo_width(), gem_column.winfo_rootx())
+            self.assertEqual(column.stack.winfo_height(), 150)
+            for item, noble in zip(column.card_items, nobles):
+                self.assertEqual(column.stack.itemcget(item, 'image'), str(load_image(column, noble.id)))
+            self.assertEqual(column.stack.coords(column.card_items[1])[0]
+                             - column.stack.coords(column.card_items[0])[0], 30)
+            for item in column.token_items:
+                self.assertEqual(column.stack.itemcget(item, 'image'), str(load_image(column, 'gold')))
+                self.assertEqual(column.stack.itemcget(item, 'state'), 'normal')
+            self.assertEqual(list(column.stack.find_all()), column.card_items + column.token_items)
+            player.tokens.clear()
+            app.refresh()
+            self.root.update()
+            self.assertTrue(column.winfo_ismapped())
+            self.assertTrue(all(column.stack.itemcget(item, 'state') == 'hidden'
+                                for item in column.token_items))
+        app.new_game()
+        self.root.update()
+        self.assertFalse(app.player.columns['Gold'].winfo_ismapped())
+        self.assertFalse(app.computer.columns['Gold'].winfo_ismapped())
+
     def test_log_scroll_and_label_reuse(self):
         app = self.app
         app.state.log.extend(f'Message {index}' for index in range(100))
