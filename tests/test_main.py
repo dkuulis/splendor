@@ -4,13 +4,14 @@ import unittest
 from unittest.mock import patch
 
 import main
-from ai import GreedyAI, Greedy2AI, PassOnlyAI
+from ai import GreedyAI, Greedy2AI, GreedySimAI, PassOnlyAI
 
 
 class CommandLineTests(unittest.TestCase):
     def test_selected_strategy_is_passed_to_app(self):
         for arguments, expected in (([], GreedyAI), (['--ai', 'greedy'], GreedyAI),
                                     (['--ai', 'greedy2'], Greedy2AI),
+                                    (['--ai', 'greedy_sim'], GreedySimAI),
                                     (['--ai', 'pass-only'], PassOnlyAI),
                                     (['--ai', 'manual'], type(None))):
             with self.subTest(arguments=arguments), patch('sys.argv', ['main.py', *arguments]), \

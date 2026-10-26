@@ -8,6 +8,7 @@ computer strategy at launch with `--ai` (default: `greedy`):
 ```sh
 .venv/bin/python main.py --ai greedy
 .venv/bin/python main.py --ai greedy2
+.venv/bin/python main.py --ai greedy_sim
 .venv/bin/python main.py --ai pass-only
 .venv/bin/python main.py --ai manual
 ```
@@ -67,6 +68,14 @@ collection turns, then noble progress, then missing gem count. A bonus advances
 a noble only while that color's requirement is unmet; tokens do not count.
 Remaining ties keep market order followed by reserved-card order. Collection
 limits, scarce-color preference, spare picks, and passing follow Greedy.
+
+Greedy_sim simulates each purchase, reservation, and token take one move ahead.
+It evaluates the resulting position by points (including noble awards), owned
+card count, then the fewest collection turns and missing gems for a visible or
+reserved target, with remaining tokens breaking ties. Gold reduces target
+shortfalls. It scores every generated move, including take/return exchanges
+and reservations, using the copied deck order for market replacements. Only
+the best move is converted into a pending selection. If no moves exist, it passes.
 
 ## Selection rules
 

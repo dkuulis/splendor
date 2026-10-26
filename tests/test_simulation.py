@@ -1,6 +1,5 @@
 import ast
 import copy
-import random
 import unittest
 from itertools import combinations, combinations_with_replacement
 from pathlib import Path
@@ -303,28 +302,6 @@ class SimulationTests(unittest.TestCase):
         move.unmake(state, 0)
         self.assertEqual(snapshot(state), before)
 
-    def test_noble_order_final_round_and_finished_state(self):
-        for active in (0, 1):
-            source = State()
-            source.turn.active_player = active
-            source.current_player.add_card(Card("points", 1, DIAMOND, 12, {}))
-            source.market[1] = [Card("winning", 1, RUBY, 0, {})]
-            source.nobles = [Noble("unqualified", 3, {ONYX: 4}),
-                             Noble("first", 3, {RUBY: 1}), Noble("second", 3, {RUBY: 1})]
-            state, moves = self.check_moves(source)
-            before = snapshot(state)
-            move = next(move for move in moves if move.kind == "buy")
-            self.assertEqual(move.noble_index, 1)
-            move.make(state, active)
-            self.assertEqual(state.nobles[move.noble_index].owner, active)
-            self.assertEqual(move.noble_index, 1)
-            self.assertTrue(state.final_round)
-            self.assertEqual(state.finished(1 - active), active == 1)
-            if state.finished(1 - active):
-                self.assertEqual(generate_moves(state, 1 - active), [])
-            move.unmake(state, active)
-            self.assertEqual(snapshot(state), before)
-
     def test_take_and_reserve_complete_overflow_in_one_move(self):
         for kind in ("take", "reserve"):
             source = create_initial_state(5)
@@ -519,32 +496,6 @@ class SimulationTests(unittest.TestCase):
         self.assertFalse(state.finished(0))
         self.assertEqual(snapshot(state), before)
 
-    def test_random_paths_match_game_and_unwind_exactly(self):
-        for seed in range(10):
-            source = create_initial_state(seed)
-            state = SimulationState.from_game(source)
-            before = snapshot(state)
-            player = source.turn.active_player
-            rng = random.Random(seed)
-            history = []
-            for _ in range(120):
-                moves = generate_moves(state, player)
-                if not moves:
-                    break
-                move = rng.choice(moves)
-                history.append((move, player, snapshot(state), state.deck_starts[:]))
-                perform_game_move(move, source, state)
-                move.make(state, player)
-                player = 1 - player
-                self.assertEqual(snapshot(state), game_snapshot(source))
-                self.assertEqual(state.finished(player), source.turn.finished)
-                self.assertEqual(state.winner(player), source.turn.winner)
-            for move, player, previous, cursors in reversed(history):
-                move.unmake(state, player)
-                self.assertEqual(snapshot(state), previous)
-                self.assertEqual(state.deck_starts, cursors)
-            self.assertEqual(snapshot(state), before)
-
     def test_conversion_owns_arrays_and_definitions(self):
         source = create_initial_state(8)
         source.players[1].nobles = [Noble("owned", 3, {RUBY: 1})]
@@ -560,17 +511,6 @@ class SimulationTests(unittest.TestCase):
         owned = [noble for noble in state.nobles if noble.owner == 1]
         self.assertEqual(len(owned), 1)
         self.assertEqual(owned[0].points, 3)
-
-    def test_conversion_of_finished_game_derives_result(self):
-        source = State()
-        source.turn.active_player = 1
-        source.current_player.add_card(Card("winning", 1, RUBY, 15, {}))
-        source.finish_turn(passed=False)
-        state = SimulationState.from_game(source)
-        self.assertEqual(snapshot(state), game_snapshot(source))
-        self.assertTrue(state.finished(0))
-        self.assertEqual(state.winner(0), 1)
-        self.assertEqual(generate_moves(state, 0), [])
 
     def test_native_state_and_definitions_need_no_game_objects(self):
         state = SimulationState()

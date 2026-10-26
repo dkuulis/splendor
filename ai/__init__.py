@@ -9,5 +9,7 @@ the action after the strategy returns. Strategies must not depend on Tkinter.
 from .pass_only import PassOnlyAI
 from .greedy import GreedyAI
 from .greedy2 import Greedy2AI
+from .greedy_sim import GreedySimAI
 
-STRATEGIES = {"pass-only": PassOnlyAI, "greedy": GreedyAI, "greedy2": Greedy2AI}
+STRATEGIES = {"pass-only": PassOnlyAI, "greedy": GreedyAI, "greedy2": Greedy2AI,
+              "greedy_sim": GreedySimAI}
