@@ -1,7 +1,8 @@
 """Plain Python objects, independent of the UI and game rules.
 
 Token dictionaries map token types to counts; missing types mean zero.
-Player card dictionaries map card IDs to Card objects; {} means no cards.
+Player card dictionaries map gem colors to lists of owned Card objects;
+all gem keys are present, with empty lists for colors without owned cards.
 Player nobles are lists of owned Noble objects; [] means no nobles.
 State nobles are a list of available nobles.
 Decks and market rows are lists of cards with all three tier keys present;
