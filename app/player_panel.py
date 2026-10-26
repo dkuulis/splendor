@@ -22,11 +22,9 @@ class PlayerPanel(tk.Frame):
         self.panel.pack(fill="both", expand=True)
         ttk.Label(self.panel, text=str(player.points), font=POINTS_FONT, style="Player.TLabel").pack(side="left", padx=(0, 20))
 
-        self.columns = {}
         for color in COLORS:
             cards = [card for card in player.cards.values() if card.color == color]
             column = PlayerColumn(self.panel, color, cards, player.gems.get(color, 0))
             column.pack(side="left", expand=True, fill="x", padx=(0, PLAYER_COLUMN_GAP))
-            self.columns[color] = column
 
         ttk.Label(self.panel, text=f"{sum(player.gems.values())} gems", justify="right", style="Player.TLabel").pack(side="right")

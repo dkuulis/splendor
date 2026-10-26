@@ -1,15 +1,11 @@
 import tkinter as tk
 from tkinter import ttk
 
-from .drawing import draw_gem, row_centers
+from .assets import load_image
 from .styles import (
-    GEM_RADIUS,
     GEM_SPACING,
     MUTED_TEXT_COLOR,
-    OUTLINE_PALETTE,
-    SELECTION_MARKER_FONT,
-    SELECTION_OUTLINE_COLOR,
-    TEXT_PALETTE,
+    gem_centers,
 )
 
 BANK_CANVAS_WIDTH = 176
@@ -19,7 +15,6 @@ BANK_CANVAS_HEIGHT = 48
 class GemSelector(ttk.Frame):
     def __init__(self, parent, color, available, on_selection_changed, enabled=True):
         super().__init__(parent)
-        self.color = color
         self.available = available
         self.selected = 0
         self.enabled = enabled
@@ -31,19 +26,13 @@ class GemSelector(ttk.Frame):
             background=self.winfo_toplevel().cget("background"),
         )
         self.tokens.pack()
+        self.image = load_image(self, color.lower())
+        self.selected_image = load_image(self, f"{color.lower()}_selected")
 
         y = BANK_CANVAS_HEIGHT / 2
-        for x in row_centers(available, BANK_CANVAS_WIDTH, GEM_SPACING):
-            gem = draw_gem(
-                self.tokens, color, x, y, GEM_RADIUS, width=2, tags=("gem",),
-            )
-            marker = self.tokens.create_text(
-                x, y, text="✓",
-                fill=TEXT_PALETTE[color],
-                font=SELECTION_MARKER_FONT,
-                state="hidden", tags=("gem",),
-            )
-            self.gem_items.append((gem, marker))
+        for x in gem_centers(available, BANK_CANVAS_WIDTH, GEM_SPACING):
+            gem = self.tokens.create_image(x, y, image=self.image, tags=("gem",))
+            self.gem_items.append(gem)
 
         self.tokens.tag_bind("gem", "<Button-1>", lambda event: self.toggle_selection())
         self.tokens.tag_bind("gem", "<Enter>", lambda event: self.tokens.configure(cursor="hand2"))
@@ -59,11 +48,9 @@ class GemSelector(ttk.Frame):
         self.on_selection_changed()
 
     def update_selection(self):
-        for index, (gem, marker) in enumerate(self.gem_items):
+        for index, gem in enumerate(self.gem_items):
             selected = index < self.selected
             self.tokens.itemconfigure(
                 gem,
-                outline=SELECTION_OUTLINE_COLOR if selected else OUTLINE_PALETTE[self.color],
-                width=4 if selected else 2,
+                image=self.selected_image if selected else self.image,
             )
-            self.tokens.itemconfigure(marker, state="normal" if selected else "hidden")

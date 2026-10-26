@@ -57,7 +57,7 @@ class App:
         self.computer.pack(fill="x")
         table = ttk.Frame(field)
         table.pack(pady=10)
-        self.market = MarketPanel(table, state.market, state.decks, self.buy_card,
+        self.market = MarketPanel(table, state.market, self.buy_card,
                                   lambda card: self.manual_turn and state.can_buy(card))
         self.market.grid(row=0, column=1)
         self.bank = BankPanel(
