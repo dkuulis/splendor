@@ -1,3 +1,4 @@
+from collections import Counter
 import copy
 import unittest
 
@@ -29,23 +30,26 @@ class TakeTokensTests(unittest.TestCase):
                 state.turn.finished = finished
                 before = copy.deepcopy((state.supply, state.current_player.tokens,
                                         vars(state.turn), state.log))
-                self.assertEqual(state.take_tokens_error(tokens), expected)
+                state.selected_tokens = dict(Counter(tokens))
+                self.assertEqual(state.take_tokens_error(), expected)
                 self.assertEqual((state.supply, state.current_player.tokens,
                                   vars(state.turn), state.log), before)
                 if expected is None:
-                    state.take_tokens(iter(tokens))
+                    state.take_tokens()
                 else:
                     with self.assertRaises(ValueError) as error:
-                        state.take_tokens(tokens)
+                        state.take_tokens()
                     self.assertEqual(str(error.exception), expected)
 
     def test_transfer_and_manual_second_player(self):
         state = State()
-        state.take_tokens(['Ruby', 'Onyx', 'Diamond'])
+        state.selected_tokens = {'Ruby': 1, 'Onyx': 1, 'Diamond': 1}
+        state.take_tokens()
         self.assertEqual(state.players[0].tokens, {'Ruby': 1, 'Onyx': 1, 'Diamond': 1})
         self.assertEqual(state.supply['Ruby'], 3)
         self.assertEqual(state.turn.active_player, 1)
-        state.take_tokens(['Ruby'])
+        state.selected_tokens = {'Ruby': 1}
+        state.take_tokens()
         self.assertEqual(state.players[1].tokens, {'Ruby': 1})
         self.assertEqual(state.supply['Ruby'], 2)
         self.assertEqual(state.turn.active_player, 0)
@@ -59,24 +63,29 @@ class TakeTokensTests(unittest.TestCase):
                 state.supply['Sapphire'] = 0
                 before = copy.deepcopy((state.supply, state.players[0].tokens, vars(state.turn), state.log))
                 with self.assertRaises(ValueError):
-                    state.take_tokens(tokens)
+                    state.selected_tokens = dict(Counter(tokens))
+                    state.take_tokens()
                 self.assertEqual((state.supply, state.players[0].tokens, vars(state.turn), state.log), before)
 
     def test_limit_and_pass_reset(self):
         state = State()
         state.players[0].tokens = {'Ruby': 9}
         with self.assertRaises(ValueError):
-            state.take_tokens(['Onyx', 'Emerald'])
-        state.take_tokens(['Onyx'])
+            state.selected_tokens = {'Onyx': 1, 'Emerald': 1}
+            state.take_tokens()
+        state.selected_tokens = {'Onyx': 1}
+        state.take_tokens()
         self.assertEqual(sum(state.players[0].tokens.values()), 10)
         state.pass_turn()
         with self.assertRaises(ValueError):
-            state.take_tokens(['Onyx'])
+            state.selected_tokens = {'Onyx': 1}
+            state.take_tokens()
         self.assertEqual(state.turn.consecutive_passes, 1)
 
         state = State()
         state.pass_turn()
-        state.take_tokens(['Ruby'])
+        state.selected_tokens = {'Ruby': 1}
+        state.take_tokens()
         self.assertEqual(state.turn.consecutive_passes, 0)
         state.pass_turn()
         self.assertFalse(state.turn.finished)
@@ -86,7 +95,8 @@ class TakeTokensTests(unittest.TestCase):
         state.pass_turn()
         state.pass_turn()
         with self.assertRaises(ValueError):
-            state.take_tokens(['Ruby'])
+            state.selected_tokens = {'Ruby': 1}
+            state.take_tokens()
         self.assertEqual(state.players[1].tokens, {})
 
 

@@ -9,6 +9,23 @@ class GreedyAITests(unittest.TestCase):
         self.state = State()
         self.player = self.state.current_player
 
+    def test_replaces_pending_selection_before_collecting(self):
+        self.state.market[1] = [Card('target', 1, 'Emerald', 0, {'Ruby': 1})]
+        self.state.select_token('Diamond')
+        GreedyAI().play_turn(self.state)
+        self.assertEqual(self.player.tokens, {'Ruby': 1})
+        self.assertEqual(self.state.selected_tokens, {})
+        self.assertIsNone(self.state.selected_card)
+
+    def test_buys_an_already_selected_card_without_toggling_it_off(self):
+        card = Card('free', 1, 'Ruby', 1)
+        self.state.market[1] = [card]
+        self.state.select_card(card)
+        GreedyAI().play_turn(self.state)
+        self.assertEqual(self.player.cards, {'free': card})
+        self.assertIsNone(self.state.selected_card)
+        self.assertEqual(self.state.turn.active_player, 1)
+
     def test_buys_highest_points_before_cheapest(self):
         cheap = Card("cheap", 1, "Ruby", 1)
         valuable = Card("valuable", 2, "Emerald", 3, {"Diamond": 2})

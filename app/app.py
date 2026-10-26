@@ -30,9 +30,7 @@ class App:
         self.create_ui()
 
     def create_ui(self):
-        state = self.state
-        shell = self.shell
-        body = ttk.Frame(shell)
+        body = ttk.Frame(self.shell)
         body.pack(fill="both", expand=True)
         body.columnconfigure(0, weight=1)
         body.rowconfigure(0, weight=1)
@@ -43,9 +41,9 @@ class App:
         self.header = Header(sidebar, self.new_game, self.control,
                              ("Manual", *STRATEGIES), self.change_control)
         self.header.pack(fill="x", padx=10, pady=(0, 12))
-        self.scores = ScorePanel(sidebar, state.players)
+        self.scores = ScorePanel(sidebar, self.state.players)
         self.scores.pack(fill="x", padx=10, pady=(0, 12))
-        self.log = Log(sidebar, state.log)
+        self.log = Log(sidebar, self.state.log)
         self.log.pack(fill="both", expand=True)
 
         self.refresh()
@@ -53,13 +51,12 @@ class App:
     def refresh(self):
         self.cancel_ai()
         state = self.state
-        field = self.field
-        for child in field.winfo_children():
+        for child in self.field.winfo_children():
             child.destroy()
-        self.computer = PlayerPanel(field, state.players[1],
+        self.computer = PlayerPanel(self.field, state.players[1],
                                     active=state.player_status(state.players[1]) == "active")
         self.computer.pack(fill="x")
-        table = ttk.Frame(field)
+        table = ttk.Frame(self.field)
         table.pack(pady=10)
         for row in range(3):
             table.rowconfigure(row, minsize=MARKET_CARD_HEIGHT + 2 * MARKET_ROW_PADDING)
@@ -70,11 +67,11 @@ class App:
                               self.select_token, enabled=self.manual_turn)
         self.supply.grid(row=0, column=0, rowspan=2, sticky="nsew", padx=(0, 12))
         self.selection = SelectionPanel(
-            table, state, self.pass_turn, self.take_tokens, self.buy_card,
+            table, state, self.perform_action,
             self.select_card, self.deselect_token, enabled=self.manual_turn,
         )
         self.selection.grid(row=2, column=0, sticky="ew", padx=(0, 12), pady=MARKET_ROW_PADDING)
-        self.player = PlayerPanel(field, state.players[0],
+        self.player = PlayerPanel(self.field, state.players[0],
                                   active=state.player_status(state.players[0]) == "active")
         self.player.pack(fill="x")
 
@@ -121,12 +118,6 @@ class App:
             child.destroy()
         self.create_ui()
 
-    def pass_turn(self):
-        if not self.manual_turn:
-            return
-        self.state.pass_turn()
-        self.refresh()
-
     def select_card(self, card):
         if self.manual_turn:
             self.state.select_card(card)
@@ -142,23 +133,13 @@ class App:
             self.state.deselect_token(token)
             self.refresh()
 
-    def take_tokens(self, tokens):
+    def perform_action(self):
         if not self.manual_turn:
             return
         try:
-            self.state.take_tokens(tokens)
+            self.state.perform_action()
         except ValueError as error:
-            messagebox.showinfo("Cannot take gems", str(error), parent=self.shell)
-            return
-        self.refresh()
-
-    def buy_card(self, card):
-        if not self.manual_turn:
-            return
-        try:
-            self.state.buy_card(card)
-        except ValueError as error:
-            messagebox.showinfo("Cannot buy card", str(error), parent=self.shell)
+            messagebox.showinfo("Cannot perform action", str(error), parent=self.shell)
             return
         self.refresh()
 

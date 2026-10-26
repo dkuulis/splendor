@@ -15,7 +15,8 @@ class BuyCardTests(unittest.TestCase):
         state.market[2] = [card]
         state.decks[2] = [replacement]
         self.assertTrue(state.can_buy(card))
-        state.buy_card(card)
+        state.selected_card = card
+        state.buy_card()
         self.assertEqual(player.tokens, {})
         self.assertEqual(state.supply['Ruby'], 6)
         self.assertEqual(state.supply['Sapphire'], 5)
@@ -36,7 +37,8 @@ class BuyCardTests(unittest.TestCase):
         card = Card('free', 1, 'Onyx', 0, {'Ruby': 1})
         state.market[1] = [card]
         state.turn.consecutive_passes = 1
-        state.buy_card(card)
+        state.selected_card = card
+        state.buy_card()
         self.assertEqual(state.players[0].tokens, {})
         self.assertEqual(state.market[1], [])
         self.assertEqual(state.turn.consecutive_passes, 0)
@@ -51,12 +53,14 @@ class BuyCardTests(unittest.TestCase):
         before = copy.deepcopy((state.supply, state.players[0].tokens, vars(state.turn), state.log))
         self.assertFalse(state.can_buy(card))
         with self.assertRaises(ValueError):
-            state.buy_card(card)
+            state.selected_card = card
+            state.buy_card()
         self.assertEqual((state.supply, state.players[0].tokens, vars(state.turn), state.log), before)
         self.assertEqual(state.market[1], [card])
         self.assertEqual(state.players[0].cards, {})
         with self.assertRaises(ValueError):
-            state.buy_card(Card('missing', 1, 'Ruby', 0))
+            state.selected_card = Card('missing', 1, 'Ruby', 0)
+            state.buy_card()
 
     def test_card_cannot_discount_its_own_purchase(self):
         state = State()
@@ -71,18 +75,21 @@ class BuyCardTests(unittest.TestCase):
         first = Card('first', 3, 'Onyx', 1)
         second = Card('second', 3, 'Diamond', 2)
         state.market[3] = [first, second]
-        state.buy_card(first)
+        state.selected_card = first
+        state.buy_card()
         self.assertTrue(state.turn.final_round)
         self.assertIn("YOU reached 15 points and triggered the final round.", state.log)
         self.assertFalse(state.turn.finished)
         self.assertEqual(state.turn.active_player, 1)
-        state.buy_card(second)
+        state.selected_card = second
+        state.buy_card()
         self.assertTrue(state.turn.finished)
         self.assertEqual(state.turn.winner, 1)
         self.assertEqual(sum("triggered the final round" in message for message in state.log), 1)
         self.assertFalse(state.can_buy(first))
         with self.assertRaises(ValueError):
-            state.buy_card(first)
+            state.selected_card = first
+            state.buy_card()
 
 
 if __name__ == '__main__':

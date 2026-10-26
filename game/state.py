@@ -53,6 +53,30 @@ class State:
         self.selected_tokens.clear()
         self.selected_card = None
 
+    @property
+    def action_label(self):
+        if self.selected_card is not None:
+            return "Buy"
+        return "Take" if self.selected_tokens else "Pass"
+
+    @property
+    def action_error(self):
+        """Return why the selected action is illegal, or None when it is legal."""
+        if self.selected_card is not None:
+            return self.buy_card_error()
+        if self.selected_tokens:
+            return self.take_tokens_error()
+        return "The game has already ended." if self.turn.finished else None
+
+    def perform_action(self):
+        """Validate and execute the selection, passing when nothing is selected."""
+        if self.selected_card is not None:
+            self.buy_card()
+        elif self.selected_tokens:
+            self.take_tokens()
+        else:
+            self.pass_turn()
+
     def pass_turn(self):
         if self.turn.finished:
             raise ValueError("The game has already ended.")
@@ -60,31 +84,30 @@ class State:
         self.turn.consecutive_passes += 1
         self.finish_turn()
 
-    def take_tokens_error(self, tokens):
+    def take_tokens_error(self):
         """Return why a gem collection is illegal, or None when it is legal."""
         if self.turn.finished:
             return "The game has already ended."
-        tokens = list(tokens)
-        if not 1 <= len(tokens) <= 3 or len(set(tokens)) != len(tokens):
+        if (not 1 <= len(self.selected_tokens) <= 3
+                or any(amount != 1 for amount in self.selected_tokens.values())):
             return "Select one to three different token types."
-        if any(token not in TOKENS or token == "Gold" or self.supply.get(token, 0) < 1 for token in tokens):
+        if any(token not in TOKENS or token == "Gold" or self.supply.get(token, 0) < 1
+               for token in self.selected_tokens):
             return "A selected gem is not available."
-        if len(tokens) > self.max_take:
+        if len(self.selected_tokens) > self.max_take:
             return f"You cannot hold more than {self.token_limit} gems."
         return None
 
-    def take_tokens(self, tokens):
-        tokens = list(tokens)
-        error = self.take_tokens_error(tokens)
+    def take_tokens(self):
+        error = self.take_tokens_error()
         if error is not None:
             raise ValueError(error)
-        player = self.current_player
-        for token in tokens:
+        for token in self.selected_tokens:
             self.supply[token] -= 1
-            player.tokens[token] = player.tokens.get(token, 0) + 1
+            self.current_player.tokens[token] = self.current_player.tokens.get(token, 0) + 1
 
-        taken = ", ".join(token for token in TOKENS if token in tokens)
-        self.log.append(f"{player.name} took {taken}.")
+        taken = ", ".join(token for token in TOKENS if token in self.selected_tokens)
+        self.log.append(f"{self.current_player.name} took {taken}.")
         self.turn.consecutive_passes = 0
         self.finish_turn()
 
@@ -95,17 +118,26 @@ class State:
     def can_buy(self, card):
         if self.turn.finished or card not in self.market.get(card.tier, []):
             return False
-        player = self.current_player
-        return all(player.tokens.get(token, 0) >= amount for token, amount in self.card_cost(card).items())
+        return all(self.current_player.tokens.get(token, 0) >= amount
+                   for token, amount in self.card_cost(card).items())
 
-    def buy_card(self, card):
+    def buy_card_error(self):
+        """Return why a purchase is illegal, or None when it is legal."""
         if self.turn.finished:
-            raise ValueError("The game has already ended.")
-        if card not in self.market.get(card.tier, []):
-            raise ValueError("That card is no longer in the market.")
-        if not self.can_buy(card):
-            raise ValueError("You do not have enough gems/gold to buy that card.")
+            return "The game has already ended."
+        if (self.selected_card is None
+                or self.selected_card not in self.market.get(self.selected_card.tier, [])):
+            return "That card is no longer in the market."
+        if not self.can_buy(self.selected_card):
+            return "You do not have enough gems/gold to buy that card."
+        return None
+
+    def buy_card(self):
+        error = self.buy_card_error()
+        if error is not None:
+            raise ValueError(error)
         player = self.current_player
+        card = self.selected_card
         cost = self.card_cost(card)
         for token, amount in cost.items():
             if amount:
@@ -134,8 +166,8 @@ class State:
         self.clear_selection()
         if not self.turn.final_round and self.current_player.points >= self.target_points:
             self.turn.final_round = True
-            player = self.current_player
-            self.log.append(f"{player.name} reached {player.points} points and triggered the final round.")
+            self.log.append(f"{self.current_player.name} reached {self.current_player.points} points "
+                            "and triggered the final round.")
         round_complete = self.turn.active_player == len(self.players) - 1
         if self.turn.consecutive_passes >= 2 or (self.turn.final_round and round_complete):
             self.turn.finished = True
