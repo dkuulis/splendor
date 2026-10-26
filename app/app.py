@@ -9,6 +9,7 @@ from .supply_panel import SupplyPanel
 from .log import Log
 from .header import Header
 from .market_panel import MarketPanel
+from .nobles_panel import NoblesPanel
 from .player_panel import PlayerPanel
 from .selection_panel import SelectionPanel
 from .score_panel import ScorePanel
@@ -54,17 +55,20 @@ class App:
         table.pack(pady=10)
         for row in range(3):
             table.rowconfigure(row, minsize=MARKET_CARD_HEIGHT + 2 * MARKET_ROW_PADDING)
+        self.nobles = NoblesPanel(table, state.nobles)
+        self.nobles.grid(row=0, column=0, rowspan=3, padx=(0, 12))
         self.market = MarketPanel(table, state.market, self.select_card,
-                                  lambda card: self.manual_turn and self.state.can_buy(card), state.selected_card)
-        self.market.grid(row=0, column=1, rowspan=3, sticky="n")
+                                  lambda card: self.manual_turn and self.state.can_buy(card),
+                                  state.selected_card)
+        self.market.grid(row=0, column=2, rowspan=3, sticky="n")
         self.supply = SupplyPanel(table, state.supply, state.selected_tokens,
                               self.select_token, enabled=self.manual_turn)
-        self.supply.grid(row=0, column=0, rowspan=2, sticky="nsew", padx=(0, 12))
+        self.supply.grid(row=0, column=1, rowspan=2, sticky="nsew", padx=(0, 12))
         self.selection = SelectionPanel(
             table, state, self.perform_action,
             self.select_card, self.deselect_token, enabled=self.manual_turn,
         )
-        self.selection.grid(row=2, column=0, sticky="ew", padx=(0, 12), pady=MARKET_ROW_PADDING)
+        self.selection.grid(row=2, column=1, sticky="ew", padx=(0, 12), pady=MARKET_ROW_PADDING)
         self.player = PlayerPanel(self.field, state.players[0],
                                   active=state.is_active_player(state.players[0]))
         self.player.pack(fill="x")
@@ -77,6 +81,7 @@ class App:
         self.computer.refresh(state.players[1], state.is_active_player(state.players[1]))
         self.player.refresh(state.players[0], state.is_active_player(state.players[0]))
         self.market.refresh(state.market, state.selected_card)
+        self.nobles.refresh(state.nobles)
         self.supply.available_tokens = state.supply
         self.supply.selected_tokens = state.selected_tokens
         self.supply.enabled = self.manual_turn

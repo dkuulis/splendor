@@ -98,6 +98,43 @@ class PersistentUITests(unittest.TestCase):
         app.run_ai()
         self.assertEqual(app.state.turn.active_player, 0)
 
+    def test_nobles_follow_state_and_are_centered_left_of_supply(self):
+        app = self.app
+        panel = app.nobles
+        slots = list(panel.slots)
+        self.assertEqual(len(slots), 3)
+        self.assertIs(panel.master, app.supply.master)
+        for neighbor in (app.supply, app.selection):
+            self.assertLess(panel.winfo_rootx() + panel.winfo_width(), neighbor.winfo_rootx())
+        self.assertAlmostEqual(panel.winfo_y() + panel.winfo_height() / 2,
+                               panel.master.winfo_height() / 2, delta=1)
+        top_card = app.market.slots[3][0]
+        next_card = app.market.slots[2][0]
+        card_gap = next_card.winfo_rooty() - top_card.winfo_rooty() - top_card.winfo_height()
+        self.assertEqual(slots[1].winfo_rooty() - slots[0].winfo_rooty()
+                         - slots[0].winfo_height(), card_gap)
+        for tile, noble in zip(slots, app.state.nobles):
+            self.assertEqual(tile.itemcget(1, 'image'), str(load_image(tile, noble.id)))
+            self.assertEqual(tile.winfo_width(), 150)
+            self.assertEqual(tile.winfo_height(), 150)
+        app.state.nobles.pop(0)
+        app.refresh()
+        self.root.update()
+        self.assertEqual(slots[0].itemcget(1, 'image'),
+                         str(load_image(slots[0], app.state.nobles[0].id)))
+        self.assertFalse(slots[-1].winfo_ismapped())
+        self.assertAlmostEqual(panel.winfo_y() + panel.winfo_height() / 2,
+                               panel.master.winfo_height() / 2, delta=1)
+        app.state.nobles.clear()
+        app.refresh()
+        self.root.update()
+        self.assertTrue(all(not tile.winfo_ismapped() for tile in slots))
+        app.new_game()
+        self.root.update()
+        self.assertEqual(slots, panel.slots)
+        self.assertIs(panel.nobles, app.state.nobles)
+        self.assertTrue(all(tile.winfo_ismapped() for tile in slots))
+
     def test_log_scroll_and_label_reuse(self):
         app = self.app
         app.state.log.extend(f'Message {index}' for index in range(100))
