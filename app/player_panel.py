@@ -17,11 +17,12 @@ from .styles import (
 
 
 class PlayerPanel(tk.Frame):
-    def __init__(self, parent, player, active, on_select, enabled):
-        border = ACTIVE_PLAYER_BORDER if active else INACTIVE_PLAYER_BORDER
+    def __init__(self, parent, on_select):
+        border = INACTIVE_PLAYER_BORDER
         super().__init__(parent, background=PLAYER_PANEL_BACKGROUND, highlightthickness=2,
                          highlightbackground=border, highlightcolor=border, borderwidth=0)
         self.on_select = on_select
+        self.enabled = False
         # Grid's row minimum takes effect only when there are children. Reserve
         # the same content height plus vertical padding for an empty inventory.
         self.panel = ttk.Frame(self, padding=PLAYER_PANEL_PADDING, style="Player.TFrame",
@@ -40,7 +41,6 @@ class PlayerPanel(tk.Frame):
                                      height=MARKET_CARD_HEIGHT, disabled=True)
         self.reserved.grid(row=0, column=len(TOKENS), sticky="ew")
         self.reserved.stack.bind("<Button-1>", self.select_reserved)
-        self.refresh(player, active, enabled)
 
     def refresh(self, player, active, enabled):
         self.player = player

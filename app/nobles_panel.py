@@ -6,10 +6,9 @@ from .styles import MARKET_ROW_PADDING, NOBLE_SIZE
 
 
 class NoblesPanel(ttk.Frame):
-    def __init__(self, parent, nobles):
+    def __init__(self, parent):
         super().__init__(parent)
         self.slots = []
-        self.refresh(nobles)
 
     def refresh(self, nobles):
         self.nobles = nobles

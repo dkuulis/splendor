@@ -7,9 +7,8 @@ from .styles import DECK_PALETTE, MARKET_ROW_PADDING, MARKET_CARD_WIDTH, MARKET_
 
 
 class MarketPanel(ttk.Frame):
-    def __init__(self, parent, market, decks, on_select, can_buy, selected_card, enabled):
+    def __init__(self, parent, on_select, can_buy):
         super().__init__(parent)
-        self.cards = []
         self.slots = {}
         self.decks = {}
         self.can_buy = can_buy
@@ -31,10 +30,8 @@ class MarketPanel(ttk.Frame):
                 panel = CardPanel(space, on_select=on_select)
                 panel.grid(row=0, column=0)
                 self.slots[tier].append(panel)
-        self.refresh(market, decks, selected_card, enabled)
 
     def refresh(self, market, decks, selected_card, enabled):
-        self.cards = []
         for tier, deck in self.decks.items():
             if decks[tier]:
                 deck.grid()
@@ -44,13 +41,13 @@ class MarketPanel(ttk.Frame):
             for slot, panel in enumerate(panels):
                 card = market[tier][slot] if slot < len(market[tier]) else None
                 panel.refresh(card, self.can_buy(card) if card else False, enabled)
-                self.cards.append((card, panel))
         self.refresh_selection(selected_card)
 
     def refresh_selection(self, selected_card):
-        for card, panel in self.cards:
-            if card is None or card is selected_card:
-                # Keep the slot's size while the card appears in the selection panel.
-                panel.grid_remove()
-            else:
-                panel.grid()
+        for panels in self.slots.values():
+            for panel in panels:
+                if panel.card is None or panel.card is selected_card:
+                    # Keep the slot's size while the card appears in the selection panel.
+                    panel.grid_remove()
+                else:
+                    panel.grid()

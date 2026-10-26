@@ -32,7 +32,7 @@ class PersistentUITests(unittest.TestCase):
         app = self.app
         widgets = self.widgets(app.field)
         selection_items = app.selection.tokens.find_all()
-        market_items = [panel.find_all() for _, panel in app.market.cards]
+        market_items = [panel.find_all() for panels in app.market.slots.values() for panel in panels]
         app.select_token(RUBY)
         app.deselect_token(RUBY)
         with patch('app.assets.tk.PhotoImage', side_effect=AssertionError('Reloaded cached image')):
@@ -70,10 +70,10 @@ class PersistentUITests(unittest.TestCase):
         self.root.update()
         self.assertEqual(widgets, self.widgets(app.field))
         self.assertEqual(selection_items, app.selection.tokens.find_all())
-        self.assertEqual(market_items, [panel.find_all() for _, panel in app.market.cards])
+        self.assertEqual(market_items, [panel.find_all() for panels in app.market.slots.values() for panel in panels])
         self.assertIs(app.selection.state, app.state)
-        self.assertIs(app.supply.available_tokens, app.state.supply)
-        self.assertIs(app.scores.players, app.state.players)
+        self.assertEqual(app.supply.counts, app.state.supply)
+        self.assertEqual([score.cget('text') for score in app.scores.scores], ['0', '0'])
         self.assertTrue(all(slot.winfo_ismapped() for slot in app.market.slots[1]))
 
     def test_control_changes_disable_callbacks_and_cancel_ai(self):
@@ -379,14 +379,14 @@ class PersistentUITests(unittest.TestCase):
     def test_log_scroll_and_label_reuse(self):
         app = self.app
         app.state.log.extend(f'Message {index}' for index in range(100))
-        app.log.refresh()
+        app.log.refresh(app.state.log)
         self.root.update()
         self.assertGreaterEqual(app.log.canvas.yview()[1], 0.999)
         labels = list(app.log.labels)
         app.log.canvas.yview_moveto(0.3)
         top = app.log.canvas.canvasy(0)
         app.state.log.append('New entry')
-        app.log.refresh()
+        app.log.refresh(app.state.log)
         self.root.update()
         self.assertAlmostEqual(app.log.canvas.canvasy(0), top, delta=1)
         self.assertEqual(labels, app.log.labels[:-1])

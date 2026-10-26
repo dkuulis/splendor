@@ -44,35 +44,27 @@ class App:
         self.header.pack(fill="x", padx=10, pady=(0, 12))
         self.scores = ScorePanel(sidebar, self.state.players)
         self.scores.pack(fill="x", padx=10, pady=(0, 12))
-        self.log = Log(sidebar, self.state.log)
+        self.log = Log(sidebar)
         self.log.pack(fill="both", expand=True)
 
-        state = self.state
-        self.computer = PlayerPanel(self.field, state.players[1],
-                                    active=state.is_active_player(state.players[1]),
-                                    on_select=self.select_card, enabled=self.manual_turn)
+        self.computer = PlayerPanel(self.field, on_select=self.select_card)
         self.computer.pack(fill="x")
         table = ttk.Frame(self.field)
         table.pack(pady=10)
         for row in range(3):
             table.rowconfigure(row, minsize=MARKET_CARD_HEIGHT + 2 * MARKET_ROW_PADDING)
-        self.nobles = NoblesPanel(table, state.nobles)
+        self.nobles = NoblesPanel(table)
         self.nobles.grid(row=0, column=0, rowspan=3, padx=(0, 12))
-        self.market = MarketPanel(table, state.market, state.decks, self.select_card,
-                                  lambda card: self.state.can_buy(card),
-                                  state.selected_card, enabled=self.manual_turn)
+        self.market = MarketPanel(table, self.select_card,
+                                  lambda card: self.state.can_buy(card))
         self.market.grid(row=0, column=2, rowspan=3, sticky="n")
-        self.supply = SupplyPanel(table, state.supply, state.selected_tokens,
-                              self.select_token, enabled=self.manual_turn)
+        self.supply = SupplyPanel(table, self.select_token)
         self.supply.grid(row=0, column=1, rowspan=2, sticky="nsew", padx=(0, 12))
         self.selection = SelectionPanel(
-            table, state, self.perform_action,
-            self.select_card, self.deselect_token, enabled=self.manual_turn,
+            table, self.perform_action, self.select_card, self.deselect_token,
         )
         self.selection.grid(row=2, column=1, sticky="ew", padx=(0, 12), pady=MARKET_ROW_PADDING)
-        self.player = PlayerPanel(self.field, state.players[0],
-                                  active=state.is_active_player(state.players[0]),
-                                  on_select=self.select_card, enabled=self.manual_turn)
+        self.player = PlayerPanel(self.field, on_select=self.select_card)
         self.player.pack(fill="x")
 
         self.refresh()
@@ -86,27 +78,20 @@ class App:
         self.player.refresh_selection(state.selected_card)
         self.market.refresh(state.market, state.decks, state.selected_card, enabled=self.manual_turn)
         self.nobles.refresh(state.nobles)
-        self.supply.available_tokens = state.supply
-        self.supply.selected_tokens = state.selected_tokens
-        self.supply.enabled = self.manual_turn
-        self.supply.refresh()
-        self.selection.state = state
-        self.selection.enabled = self.manual_turn
-        self.selection.refresh()
-        self.scores.players = state.players
-        self.log.messages = state.log
-        self.scores.refresh()
-        self.log.refresh()
+        self.supply.refresh(state.supply, state.selected_tokens, enabled=self.manual_turn)
+        self.selection.refresh(state, enabled=self.manual_turn)
+        self.scores.refresh(state.players)
+        self.log.refresh(state.log)
         self.size_window(self.root)
         if self.ai_turn:
             self.pending_ai = self.root.after(500, self.run_ai)
 
     def refresh_selection(self):
-        self.supply.refresh()
+        self.supply.refresh(self.state.supply, self.state.selected_tokens, enabled=self.manual_turn)
         self.market.refresh_selection(self.state.selected_card)
         self.computer.refresh_selection(self.state.selected_card)
         self.player.refresh_selection(self.state.selected_card)
-        self.selection.refresh()
+        self.selection.refresh(self.state, enabled=self.manual_turn)
 
     @property
     def ai_turn(self):

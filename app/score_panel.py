@@ -6,7 +6,6 @@ from .styles import POINTS_FONT
 class ScorePanel(ttk.Frame):
     def __init__(self, parent, players):
         super().__init__(parent)
-        self.players = players
         self.scores = []
         self.columnconfigure(0, weight=1)
         for row, player in enumerate(players):
@@ -14,8 +13,7 @@ class ScorePanel(ttk.Frame):
             score = ttk.Label(self, font=POINTS_FONT)
             score.grid(row=row, column=1, sticky="e")
             self.scores.append(score)
-        self.refresh()
 
-    def refresh(self):
-        for player, score in zip(self.players, self.scores):
+    def refresh(self, players):
+        for player, score in zip(players, self.scores):
             score.configure(text=str(player.points))

@@ -57,7 +57,7 @@ class LogRefreshTests(unittest.TestCase):
 
     def test_unchanged_log_does_not_touch_widgets_or_scroll(self):
         log = self.make_log(False)
-        Log.refresh(log)
+        Log.refresh(log, log.messages)
         log.canvas.yview.assert_not_called()
         log.create_message.assert_not_called()
         log.update_scroll_region.assert_not_called()
@@ -66,7 +66,7 @@ class LogRefreshTests(unittest.TestCase):
         log = self.make_log(False)
         label = log.labels[0]
         log.messages.append('New entry')
-        Log.refresh(log)
+        Log.refresh(log, log.messages)
         log.create_message.assert_called_once_with('New entry')
         self.assertIs(log.labels[0], label)
         label.destroy.assert_not_called()
@@ -75,7 +75,7 @@ class LogRefreshTests(unittest.TestCase):
     def test_append_follows_latest_when_already_at_bottom(self):
         log = self.make_log(True)
         log.messages.append('New entry')
-        Log.refresh(log)
+        Log.refresh(log, log.messages)
         log.canvas.yview_moveto.assert_called_once_with(1)
 
 

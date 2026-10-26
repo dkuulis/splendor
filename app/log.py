@@ -5,9 +5,8 @@ from .styles import LOG_BACKGROUND, LOG_FONT, MUTED_TEXT_COLOR
 
 
 class Log(tk.Frame):
-    def __init__(self, parent, messages):
+    def __init__(self, parent):
         super().__init__(parent, padx=10, pady=10, background=LOG_BACKGROUND)
-        self.messages = messages
         self.labels = []
         self.displayed_messages = []
         self.canvas = tk.Canvas(
@@ -35,21 +34,21 @@ class Log(tk.Frame):
         self.canvas.itemconfigure(self.content_window, height=height)
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
-    def refresh(self):
-        if self.displayed_messages == self.messages:
+    def refresh(self, messages):
+        if self.displayed_messages == messages:
             return
-        appended = self.messages[:len(self.displayed_messages)] == self.displayed_messages
+        appended = messages[:len(self.displayed_messages)] == self.displayed_messages
         follow_latest = not appended or not self.displayed_messages or self.canvas.yview()[1] >= 0.999
         top = self.canvas.canvasy(0)
-        for index, message in enumerate(self.messages):
+        for index, message in enumerate(messages):
             if index == len(self.labels):
                 self.create_message(message)
             elif index >= len(self.displayed_messages) or message != self.displayed_messages[index]:
                 self.labels[index].configure(text=message)
                 self.labels[index].pack(fill="x", anchor="w", padx=6, pady=(0, 12))
-        for label in self.labels[len(self.messages):]:
+        for label in self.labels[len(messages):]:
             label.pack_forget()
-        self.displayed_messages = list(self.messages)
+        self.displayed_messages = list(messages)
         self.content.update_idletasks()
         self.update_scroll_region()
         if follow_latest:
