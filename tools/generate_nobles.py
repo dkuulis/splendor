@@ -23,7 +23,7 @@ PALETTE = {
     "Ruby": "#be123c", "Onyx": "#334155",
 }
 
-# Global numbering and requirements match assets/noble_prompts.txt.
+# Global numbering and requirements match prompts/noble_prompts.txt.
 NOBLES = [
     ("noble_diamond_1", {"Diamond": 4, "Onyx": 4}),
     ("noble_diamond_2", {"Diamond": 4, "Ruby": 4}),
