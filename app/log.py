@@ -23,7 +23,6 @@ class Log(ttk.LabelFrame):
         self.content_window = self.canvas.create_window(0, 0, window=self.content, anchor="nw")
         self.content.bind("<Configure>", self.update_scroll_region)
         self.canvas.bind("<Configure>", self.resize_messages)
-        self.refresh()
 
     def resize_messages(self, event):
         self.canvas.itemconfigure(self.content_window, width=event.width)

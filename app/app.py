@@ -9,11 +9,13 @@ from .log import Log
 from .header import Header
 from .market_panel import MarketPanel
 from .player_panel import PlayerPanel
+from .styles import configure_styles
 
 
 class App:
     def __init__(self, root, state):
         self.state = state
+        configure_styles(root)
         root.title("Splendour")
         self.shell = ttk.Frame(root, padding=20)
         self.shell.pack(fill="both", expand=True)
@@ -23,7 +25,7 @@ class App:
     def create_ui(self):
         state = self.state
         shell = self.shell
-        self.header = Header(shell, state, self.new_game)
+        self.header = Header(shell, [player.name for player in state.players], self.new_game)
         self.header.pack(fill="x")
 
         body = ttk.Frame(shell)
@@ -49,14 +51,14 @@ class App:
         self.market.pack(fill="both", expand=True, pady=10)
         self.bank = BankPanel(
             field, state.bank, self.pass_turn, self.take_gems,
-            max_take=min(3, max(0, state.gem_limit - sum(state.players[state.turn.active_player].gems.values()))),
+            enabled=not state.turn.finished,
+            max_take=min(3, max(0, state.gem_limit - sum(state.current_player.gems.values()))),
         )
         self.bank.pack(fill="x", pady=(0, 10))
         self.player = PlayerPanel(field, state.players[0], self.player_subtitle(state.players[0]),
                                   active=state.player_status(state.players[0]) == "active")
         self.player.pack(fill="x")
 
-        self.bank.reset_selection(state.turn.finished)
         self.log.refresh()
 
     def new_game(self):

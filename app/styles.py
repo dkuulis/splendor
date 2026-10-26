@@ -1,4 +1,6 @@
-"""Shared UI colors and fonts."""
+"""Shared UI colors, fonts, and theme configuration."""
+
+from tkinter import ttk
 
 PALETTE = {"Diamond": "#e5e7eb", "Sapphire": "#2563eb", "Emerald": "#15803d", "Ruby": "#be123c", "Onyx": "#334155"}
 TEXT_PALETTE = {"Diamond": "#111827", "Sapphire": "white", "Emerald": "white", "Ruby": "white", "Onyx": "white"}
@@ -18,3 +20,9 @@ DECK_SYMBOL_FONT = ("Helvetica", 16, "bold")
 POINTS_FONT = ("Helvetica", 28, "bold")
 CARD_DETAIL_FONT = ("Helvetica", 13, "bold")
 SELECTION_MARKER_FONT = ("Helvetica", 20, "bold")
+
+
+def configure_styles(root):
+    style = ttk.Style(root)
+    for name in ("Player.TLabelframe", "Player.TLabelframe.Label", "Player.TFrame", "Player.TLabel"):
+        style.configure(name, background=PLAYER_PANEL_BACKGROUND)

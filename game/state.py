@@ -17,10 +17,14 @@ class State:
         self.target_points = 15
         self.gem_limit = 10
 
+    @property
+    def current_player(self):
+        return self.players[self.turn.active_player]
+
     def pass_turn(self):
         if self.turn.finished:
             raise ValueError("The game has already ended.")
-        self.log.append(f"{self.players[self.turn.active_player].name} passed.")
+        self.log.append(f"{self.current_player.name} passed.")
         self.turn.consecutive_passes += 1
         self.finish_turn()
 
@@ -32,7 +36,7 @@ class State:
             raise ValueError("Select one to three different gem colors.")
         if any(color not in COLORS or self.bank.get(color, 0) < 1 for color in colors):
             raise ValueError("A selected gem is not available.")
-        player = self.players[self.turn.active_player]
+        player = self.current_player
         if sum(player.gems.values()) + len(colors) > self.gem_limit:
             raise ValueError(f"You cannot hold more than {self.gem_limit} gems.")
         for color in colors:
@@ -43,13 +47,13 @@ class State:
         self.finish_turn()
 
     def card_cost(self, card):
-        discounts = self.players[self.turn.active_player].discounts
+        discounts = self.current_player.discounts
         return {color: max(0, amount - discounts.get(color, 0)) for color, amount in card.cost.items()}
 
     def can_buy(self, card):
         if self.turn.finished or card not in self.market.get(card.tier, []):
             return False
-        player = self.players[self.turn.active_player]
+        player = self.current_player
         return all(player.gems.get(color, 0) >= amount for color, amount in self.card_cost(card).items())
 
     def buy_card(self, card):
@@ -59,7 +63,7 @@ class State:
             raise ValueError("That card is no longer in the market.")
         if not self.can_buy(card):
             raise ValueError("You do not have enough gems to buy that card.")
-        player = self.players[self.turn.active_player]
+        player = self.current_player
         cost = self.card_cost(card)
         for color, amount in cost.items():
             if amount:
@@ -70,19 +74,24 @@ class State:
         player.cards[card.id] = card
         row = self.market[card.tier]
         slot = row.index(card)
+        revealed = None
         if self.decks[card.tier]:
-            row[slot] = self.decks[card.tier].pop(0)
+            revealed = self.decks[card.tier].pop(0)
+            row[slot] = revealed
         else:
             row.pop(slot)
-        payment = ", ".join(f"{amount} {color}" for color, amount in cost.items() if amount) or "no gems"
-        self.log.append(f"{player.name} bought a level {card.tier} {card.color} card ({card.points} points) for {payment}.")
+        payment = ", ".join(f"{cost[color]} {color}" for color in COLORS if cost.get(color, 0)) or "no gems"
+        self.log.append(f"{card.points}-point {card.color} card (level {card.tier}) bought by {player.name} for {payment}.")
+        if revealed is not None:
+            revealed_cost = ", ".join(f"{revealed.cost[color]} {color}" for color in COLORS if revealed.cost.get(color, 0)) or "no gems"
+            self.log.append(f"Revealed: {revealed.points}-point {revealed.color} card (level {revealed.tier}), costing {revealed_cost}.")
         self.turn.consecutive_passes = 0
         self.finish_turn()
 
     def finish_turn(self):
-        if not self.turn.final_round and self.players[self.turn.active_player].points >= self.target_points:
+        if not self.turn.final_round and self.current_player.points >= self.target_points:
             self.turn.final_round = True
-            player = self.players[self.turn.active_player]
+            player = self.current_player
             self.log.append(f"{player.name} reached {player.points} points and triggered the final round.")
         round_complete = self.turn.active_player == len(self.players) - 1
         if self.turn.consecutive_passes >= 2 or (self.turn.final_round and round_complete):

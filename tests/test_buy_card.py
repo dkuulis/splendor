@@ -25,6 +25,10 @@ class BuyCardTests(unittest.TestCase):
         self.assertEqual(state.market[2], [replacement])
         self.assertEqual(state.decks[2], [])
         self.assertEqual(state.turn.active_player, 1)
+        self.assertEqual(state.log, [
+            "2-point Emerald card (level 2) bought by YOU for 1 Sapphire, 2 Ruby.",
+            "Revealed: 1-point Diamond card (level 2), costing no gems.",
+        ])
 
     def test_free_purchase_and_exhausted_deck(self):
         state = State()
@@ -37,6 +41,7 @@ class BuyCardTests(unittest.TestCase):
         self.assertEqual(state.market[1], [])
         self.assertEqual(state.turn.consecutive_passes, 0)
         self.assertEqual(state.turn.active_player, 1)
+        self.assertEqual(state.log, ["0-point Onyx card (level 1) bought by YOU for no gems."])
 
     def test_rejected_purchase_is_atomic(self):
         state = State()

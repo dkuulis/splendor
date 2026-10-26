@@ -11,12 +11,12 @@ from .styles import (
 
 
 class GemColumn(ttk.Frame):
-    def __init__(self, parent, color, available, on_selection_changed):
+    def __init__(self, parent, color, available, on_selection_changed, enabled=True):
         super().__init__(parent)
         self.color = color
         self.available = available
         self.selected = 0
-        self.enabled = True
+        self.enabled = enabled
         self.on_selection_changed = on_selection_changed
         self.gem_items = []
 

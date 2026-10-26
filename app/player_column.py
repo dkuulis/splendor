@@ -6,9 +6,6 @@ from .styles import MUTED_TEXT_COLOR, OUTLINE_PALETTE, PALETTE, PLAYER_PANEL_BAC
 
 class PlayerColumn(ttk.Frame):
     def __init__(self, parent, color, card_count, gem_count):
-        style = ttk.Style(parent)
-        style.configure("Player.TFrame", background=PLAYER_PANEL_BACKGROUND)
-        style.configure("Player.TLabel", background=PLAYER_PANEL_BACKGROUND)
         super().__init__(parent, style="Player.TFrame")
         self.color = color
         self.card_count = card_count
