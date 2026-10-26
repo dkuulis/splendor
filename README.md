@@ -1,6 +1,10 @@
 # Splendour
 
-A Python desktop application using Tkinter and themed `ttk` widgets.
+A two-player Splendour desktop UI using Tkinter and themed `ttk` widgets.
+
+Currently a layout prototype with sample player balances, a three-level card
+market, and a gem bank. Gem selection updates the selection summary; gameplay
+buttons are disabled until rules and the computer opponent are implemented.
 
 ## Setup
 
