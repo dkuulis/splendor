@@ -5,7 +5,7 @@ from .deck_panel import DeckPanel
 
 
 class MarketPanel(ttk.Frame):
-    def __init__(self, parent, market, decks):
+    def __init__(self, parent, market, decks, on_buy=None, can_buy=None):
         super().__init__(parent)
         self.market = market
         self.decks = decks
@@ -21,6 +21,6 @@ class MarketPanel(ttk.Frame):
 
             for slot, card in enumerate(market[tier]):
                 self.columnconfigure(slot + 1, weight=1, uniform="cards")
-                panel = CardPanel(self, card)
+                panel = CardPanel(self, card, on_buy, can_buy(card) if can_buy else False)
                 panel.grid(row=row, column=slot + 1, sticky="nsew", padx=4, pady=4)
                 self.card_panels[tier].append(panel)

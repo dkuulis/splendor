@@ -42,9 +42,48 @@ class State:
         self.turn.consecutive_passes = 0
         self.finish_turn()
 
+    def card_cost(self, card):
+        discounts = self.players[self.turn.active_player].discounts
+        return {color: max(0, amount - discounts.get(color, 0)) for color, amount in card.cost.items()}
+
+    def can_buy(self, card):
+        if self.turn.finished or card not in self.market.get(card.tier, []):
+            return False
+        player = self.players[self.turn.active_player]
+        return all(player.gems.get(color, 0) >= amount for color, amount in self.card_cost(card).items())
+
+    def buy_card(self, card):
+        if self.turn.finished:
+            raise ValueError("The game has already ended.")
+        if card not in self.market.get(card.tier, []):
+            raise ValueError("That card is no longer in the market.")
+        if not self.can_buy(card):
+            raise ValueError("You do not have enough gems to buy that card.")
+        player = self.players[self.turn.active_player]
+        cost = self.card_cost(card)
+        for color, amount in cost.items():
+            if amount:
+                player.gems[color] -= amount
+                self.bank[color] = self.bank.get(color, 0) + amount
+                if player.gems[color] == 0:
+                    del player.gems[color]
+        player.cards[card.id] = card
+        row = self.market[card.tier]
+        slot = row.index(card)
+        if self.decks[card.tier]:
+            row[slot] = self.decks[card.tier].pop(0)
+        else:
+            row.pop(slot)
+        payment = ", ".join(f"{amount} {color}" for color, amount in cost.items() if amount) or "no gems"
+        self.log.append(f"{player.name} bought a level {card.tier} {card.color} card ({card.points} points) for {payment}.")
+        self.turn.consecutive_passes = 0
+        self.finish_turn()
+
     def finish_turn(self):
-        if self.players[self.turn.active_player].points >= self.target_points:
+        if not self.turn.final_round and self.players[self.turn.active_player].points >= self.target_points:
             self.turn.final_round = True
+            player = self.players[self.turn.active_player]
+            self.log.append(f"{player.name} reached {player.points} points and triggered the final round.")
         round_complete = self.turn.active_player == len(self.players) - 1
         if self.turn.consecutive_passes >= 2 or (self.turn.final_round and round_complete):
             self.turn.finished = True

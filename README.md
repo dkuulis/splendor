@@ -6,7 +6,10 @@ The app starts with shuffled decks and empty player inventories. You control
 both players manually for now. Pass switches turns; two consecutive passes end
 the game using score and card-count tie-breaks. The log records actual actions.
 Select one to three different gems and use Take selected gems to collect them.
-The 10-gem inventory limit is enforced. Purchasing remains disabled.
+The 10-gem inventory limit is enforced. Buy card is enabled for affordable
+market cards, applying owned-card discounts and returning payment to the bank.
+Purchases update scores, replace market cards, and trigger the final round at
+15 points. Both players remain manually controlled.
 
 ## Setup
 

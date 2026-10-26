@@ -11,7 +11,7 @@ from .styles import (
 
 
 class CardPanel(ttk.Frame):
-    def __init__(self, parent, card):
+    def __init__(self, parent, card, on_buy=None, affordable=False):
         super().__init__(parent, padding=8, relief="ridge")
         self.card = card
 
@@ -55,4 +55,8 @@ class CardPanel(ttk.Frame):
                 font=CARD_DETAIL_FONT,
             )
 
-        ttk.Button(self, text="Buy card", state="disabled").pack(fill="x", side="bottom", pady=(6, 0))
+        self.buy_button = ttk.Button(
+            self, text="Buy card", command=lambda: on_buy(card),
+            state="normal" if on_buy and affordable else "disabled",
+        )
+        self.buy_button.pack(fill="x", side="bottom", pady=(6, 0))
