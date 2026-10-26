@@ -16,8 +16,11 @@ Manual cancels a pending AI action. New game preserves the selected mode.
 
 Greedy AI buys the highest-point affordable card, breaking equal-point ties by
 the fewest gems spent after discounts. Otherwise, it collects up to three
-different needed gems toward the card missing the fewest gems, prioritizing
-colors with the lowest available bank count. Cards with no needed gems available
+different needed gems toward the card requiring the fewest collection turns
+(at most three gems per turn and one per color), breaking ties by missing gem
+count. It prioritizes colors with the lowest available bank count and fills
+spare picks from the next-ranked cards without repeating colors.
+Cards with no needed gems available
 are skipped. Collection respects the inventory limit; if no purchase or useful
 collection is possible, it passes.
 

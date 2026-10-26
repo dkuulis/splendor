@@ -39,7 +39,45 @@ class GreedyAITests(unittest.TestCase):
             Card("near", 1, "Emerald", 0, {"Ruby": 4}),
         ]
         GreedyAI().play_turn(self.state)
-        self.assertEqual(self.player.gems, {"Ruby": 3})
+        self.assertEqual(self.player.gems, {"Ruby": 3, "Diamond": 1})
+        self.assertEqual(self.state.log, ["YOU took 1 Ruby, 1 Diamond."])
+
+    def test_prefers_fewer_collection_turns_over_fewer_gems(self):
+        self.state.market[1] = [
+            Card("slow", 1, "Onyx", 0, {"Ruby": 3}),
+            Card("quick", 1, "Emerald", 0, {"Diamond": 2, "Sapphire": 1, "Emerald": 1}),
+        ]
+        GreedyAI().play_turn(self.state)
+        self.assertEqual(self.player.gems, {"Diamond": 1, "Sapphire": 1, "Emerald": 1})
+
+    def test_turn_estimate_accounts_for_three_gem_limit(self):
+        self.state.market[1] = [
+            Card("two turns", 1, "Onyx", 0,
+                 {"Diamond": 1, "Sapphire": 1, "Emerald": 1, "Ruby": 1}),
+            Card("one turn", 1, "Emerald", 0, {"Onyx": 1, "Ruby": 1}),
+        ]
+        GreedyAI().play_turn(self.state)
+        self.assertEqual(self.state.log, ["YOU took 1 Ruby, 1 Onyx, 1 Diamond."])
+
+    def test_spare_picks_skip_duplicate_colors_and_use_next_targets(self):
+        self.state.market[1] = [
+            Card("first", 1, "Onyx", 0, {"Ruby": 1}),
+            Card("second", 1, "Emerald", 0, {"Ruby": 1, "Sapphire": 1}),
+            Card("third", 1, "Diamond", 0, {"Emerald": 2, "Onyx": 1}),
+        ]
+        self.state.bank["Onyx"] = 1
+        GreedyAI().play_turn(self.state)
+        self.assertEqual(self.player.gems, {"Ruby": 1, "Sapphire": 1, "Onyx": 1})
+
+    def test_spare_picks_respect_inventory_capacity(self):
+        self.player.gems = {"Onyx": 8}
+        self.state.market[1] = [
+            Card("first", 1, "Onyx", 0, {"Ruby": 1}),
+            Card("second", 1, "Emerald", 0, {"Sapphire": 1, "Diamond": 1}),
+        ]
+        self.state.bank["Sapphire"] = 1
+        GreedyAI().play_turn(self.state)
+        self.assertEqual(self.player.gems, {"Onyx": 8, "Ruby": 1, "Sapphire": 1})
 
     def test_takes_three_scarcest_needed_colors(self):
         self.state.market[1] = [Card("target", 1, "Onyx", 1,

@@ -2,16 +2,27 @@ from game.constants import COLORS
 
 
 class GreedyAI:
-    """Buy for points, otherwise collect scarce gems toward the closest card."""
+    """Buy for points, otherwise collect gems toward the quickest cards."""
 
     def play_turn(self, state):
         cards = [card for row in state.market.values() for card in row]
+        if self.buy_card(state, cards):
+            return
+        if self.take_gems(state, cards):
+            return
+        state.pass_turn()
+
+    def buy_card(self, state, cards):
+        """Buy the best affordable card and report whether an action was taken."""
         affordable = [card for card in cards if state.can_buy(card)]
         if affordable:
             card = min(affordable, key=lambda card: (-card.points, sum(state.card_cost(card).values())))
             state.buy_card(card)
-            return
+            return True
+        return False
 
+    def take_gems(self, state, cards):
+        """Collect useful gems and report whether an action was taken."""
         player = state.current_player
         capacity = min(3, state.gem_limit - sum(player.gems.values()))
         if capacity > 0:
@@ -22,12 +33,20 @@ class GreedyAI:
                            for color in COLORS}
                 available = [color for color in COLORS if missing[color] and state.bank.get(color, 0)]
                 if available:
-                    targets.append((sum(missing.values()), available))
-            if targets:
-                # Stable ordering keeps ties in market / canonical gem order.
-                _, colors = min(targets, key=lambda target: target[0])
-                colors.sort(key=lambda color: state.bank[color])
-                state.take_gems(colors[:capacity])
-                return
-
-        state.pass_turn()
+                    total = sum(missing.values())
+                    # At most three gems per turn, and only one of each color.
+                    turns = max(max(missing.values()), (total + 2) // 3)
+                    targets.append((turns, total, available))
+            colors = []
+            # Prefer fewer gems when turn counts tie; otherwise keep market order.
+            for _, _, available in sorted(targets, key=lambda target: target[:2]):
+                available.sort(key=lambda color: state.bank[color])
+                for color in available:
+                    if color not in colors and len(colors) < capacity:
+                        colors.append(color)
+                if len(colors) == capacity:
+                    break
+            if colors:
+                state.take_gems(colors)
+                return True
+        return False
