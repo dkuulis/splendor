@@ -11,28 +11,18 @@ class SelectionActionTests(unittest.TestCase):
         self.card = Card('selected', 1, RUBY, 1, {})
         self.state.market[1] = [self.card]
 
-    def test_gold_selection_blocks_action_until_deselected(self):
+    def test_gold_without_a_market_card_preserves_pass_or_take(self):
         state = self.state
-        supply = dict(state.supply)
         state.selection.select_token(GOLD, state)
-        self.assertIsNone(state.selection.card)
-        self.assertEqual(state.selection.tokens, {GOLD: 1})
-        for replace_gems in (False, True):
-            with self.subTest(replace_gems=replace_gems):
-                if replace_gems:
-                    state.selection.select_token(RUBY, state)
-                    state.selection.select_token(SAPPHIRE, state)
-                    state.selection.select_token(GOLD, state)
-                self.assertEqual(state.selection.tokens, {GOLD: 1})
-                self.assertIsNotNone(state.action_error)
-                with self.assertRaises(ValueError):
-                    state.perform_action()
-                self.assertEqual(state.supply, supply)
-                self.assertEqual(state.current_player.tokens, {})
-                self.assertEqual(state.turn.active_player, 0)
-        state.selection.deselect_token(GOLD, state)
+        self.assertEqual(state.selection.action_kind, 'pass')
         self.assertEqual(state.selection.tokens, {})
-        self.assertIsNone(state.action_error)
+        state.selection.select_token(RUBY, state)
+        state.selection.select_token(SAPPHIRE, state)
+        state.selection.select_token(GOLD, state)
+        self.assertEqual(state.selection.action_kind, 'take')
+        self.assertEqual(state.selection.tokens, {RUBY: 1, SAPPHIRE: 1})
+        state.perform_action()
+        self.assertEqual(state.players[0].tokens, {RUBY: 1, SAPPHIRE: 1})
 
     def test_gold_preserves_selected_card_and_blocks_purchase(self):
         state = self.state
@@ -41,14 +31,14 @@ class SelectionActionTests(unittest.TestCase):
         self.assertIs(state.selection.card, self.card)
         self.assertEqual(state.selection.tokens, {GOLD: 1})
         self.assertEqual(state.selection.action_kind.capitalize(), 'Reserve')
-        self.assertIsNone(state.action_error)
+        self.assertTrue(state.selection.can_perform_action(state))
         with self.assertRaises(ValueError):
             state.buy_card()
         self.assertEqual(state.market[1], [self.card])
         self.assertEqual(state.turn.active_player, 0)
         state.selection.deselect_token(GOLD, state)
         self.assertIs(state.selection.card, self.card)
-        self.assertIsNone(state.action_error)
+        self.assertTrue(state.selection.can_perform_action(state))
         state.perform_action()
         self.assertIn(self.card, state.players[0].cards[self.card.token])
 
@@ -61,7 +51,7 @@ class SelectionActionTests(unittest.TestCase):
         self.assertIs(state.selection.card, self.card)
         self.assertEqual(state.selection.tokens, {GOLD: 1})
         self.assertEqual(state.selection.action_kind, 'reserve')
-        self.assertIsNone(state.action_error)
+        self.assertTrue(state.selection.can_perform_action(state))
         self.assertEqual(state.supply, supply)
         self.assertEqual(state.current_player.tokens, {})
         with self.assertRaises(ValueError):
@@ -92,12 +82,11 @@ class SelectionActionTests(unittest.TestCase):
                 state.selection.select_card(card, state)
                 self.assertEqual(state.selection.action_kind, 'reserve')
                 self.assertEqual(state.selection.tokens, {GOLD: 1})
-                error = state.action_error
-                self.assertIsNotNone(error)
+                self.assertFalse(state.selection.can_perform_action(state))
                 before = copy.deepcopy((state.supply, state.current_player.tokens,
                                         vars(state.turn)))
                 reserved = list(state.current_player.reserved_cards)
-                with self.assertRaisesRegex(ValueError, error):
+                with self.assertRaises(ValueError):
                     state.perform_action()
                 self.assertEqual((state.supply, state.current_player.tokens,
                                   vars(state.turn)), before)
@@ -108,7 +97,7 @@ class SelectionActionTests(unittest.TestCase):
         self.state.decks[1] = [replacement]
         self.state.selection.select_card(self.card, self.state)
         self.assertEqual(self.state.selection.action_kind.capitalize(), 'Buy')
-        self.assertIsNone(self.state.action_error)
+        self.assertTrue(self.state.selection.can_perform_action(self.state))
         self.state.perform_action()
         self.assertIsNone(self.state.selection.card)
         self.assertEqual(self.state.selection.tokens, {})
@@ -120,7 +109,7 @@ class SelectionActionTests(unittest.TestCase):
     def test_empty_selection_passes_even_at_token_limit(self):
         self.state.current_player.tokens = {RUBY: 10}
         self.assertEqual(self.state.selection.action_kind.capitalize(), 'Pass')
-        self.assertIsNone(self.state.action_error)
+        self.assertTrue(self.state.selection.can_perform_action(self.state))
         self.state.perform_action()
         self.assertEqual(self.state.players[0].tokens, {RUBY: 10})
         self.assertEqual(self.state.turn.consecutive_passes, 1)
@@ -130,14 +119,14 @@ class SelectionActionTests(unittest.TestCase):
         self.state.selection.select_token(RUBY, self.state)
         self.state.selection.select_token(DIAMOND, self.state)
         self.assertEqual(self.state.selection.action_kind.capitalize(), 'Take')
-        self.assertIsNone(self.state.action_error)
+        self.assertTrue(self.state.selection.can_perform_action(self.state))
         self.state.perform_action()
         self.assertEqual(self.state.players[0].tokens, {RUBY: 1, DIAMOND: 1})
         self.assertEqual(self.state.turn.active_player, 1)
         self.assertEqual(self.state.selection.tokens, {})
         self.assertEqual(self.state.selection.action_kind.capitalize(), 'Pass')
 
-    def test_invalid_actions_report_same_error_and_preserve_state(self):
+    def test_disallowed_actions_preserve_state(self):
         cases = ('missing card', 'unaffordable card', 'unavailable gem',
                  'too many gems', 'full inventory', 'finished pass',
                  'finished take', 'finished buy')
@@ -172,12 +161,10 @@ class SelectionActionTests(unittest.TestCase):
                                           {tier: [item.id for item in row] for tier, row in state.market.items()},
                                           vars(state.turn)))
                 before = snapshot()
-                error = state.action_error
-                self.assertIsNotNone(error)
+                self.assertFalse(state.selection.can_perform_action(state))
                 self.assertEqual(snapshot(), before)
-                with self.assertRaises(ValueError) as raised:
+                with self.assertRaises(ValueError):
                     state.perform_action()
-                self.assertEqual(str(raised.exception), error)
                 self.assertEqual(snapshot(), before)
 
     def test_pass_and_take_clear_selection(self):

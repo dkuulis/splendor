@@ -26,12 +26,8 @@ the selection panel; click it again to deselect it. Buy is enabled only when
 you have enough gems after owned-card discounts, using owned gold as a wildcard
 for missing colors. Buying spends matching gems first and returns the actual
 gem and gold payment to the bank.
-Selecting a market card you cannot afford automatically selects gold and
-shows Reserve. Remove the selected gold to switch back to Buy.
-Select a market card and gold, in either order, to enable Reserve. This takes the card and one gold,
-subject to the three-reservation and 10-token limits. Click your reserved cards
-in the last player-panel block to select and buy them using discounts and gold.
-Already reserved cards cannot be reserved again.
+Reservation takes a market card and one gold, subject to the three-reservation
+and 10-token limits. Reserved cards appear in the last player-panel block.
 Purchases update scores, replace market cards, and trigger the final round at
 15 points. Manual lets you control both players. Pass-only AI automatically
 passes on the computer's turn. Restart with a different `--ai` value to change
@@ -46,6 +42,51 @@ spare picks from the next-ranked cards without repeating colors.
 Cards with no needed gems available
 are skipped. Collection respects the inventory limit; if no purchase or useful
 collection is possible, it passes.
+
+## Selection rules
+
+Selections are pending choices: they do not transfer tokens or cards until
+the action is confirmed. `game/selection.py` owns the selection decisions;
+the UI delegates clicks to it.
+
+1. **Select a colored gem:** clear the selected card and gold, keep other
+   selected colored gems, and add one gem of this color. Selecting the same
+   color again does not add another gem.
+2. **Select a market card:** replace the selected card and clear all selected
+   tokens, including gold. If the new card is affordable, select it for Buy.
+   Otherwise, automatically add one gold and select it for Reserve.
+3. **Select a reserved card:** only affordable cards belonging to the current
+   player can be selected. Replace the selected card and clear all selected
+   tokens. An unaffordable reserved card leaves the selection unchanged.
+4. **Select gold:** only allowed when an affordable market card is selected
+   and gold is available in the bank. Keep the card and select one gold for
+   Reserve. Selecting gold again does not add another gold.
+5. **Deselect a colored gem:** remove that gem and keep any other selected gems.
+6. **Deselect gold:** only allowed when the selected market card is affordable.
+   Remove gold and keep the card for Buy. An unaffordable market card must
+   retain gold and remain a reservation.
+7. **Deselect a market or reserved card:** click the selected card again to
+   clear the card and all selected tokens, including reservation gold.
+
+The action button derives its action from the pending selection:
+
+- Nothing selected: **Pass**.
+- Gold selected with a market card: **Reserve**.
+- A market or reserved card selected without gold: **Buy**.
+- Colored gems selected without a card: **Take**.
+
+Unavailable tokens and cards cannot be selected. Deselecting an absent item
+does nothing. Selection changes are disabled after the game ends. Confirming
+an action or restarting clears the selection.
+
+Selection changes and action confirmation have separate permissions. For example, an unaffordable
+market card still selects Reserve when the bank has no gold or reservation
+limits are reached; confirmation stays disabled. `Selection.can_select_card`,
+`can_select_token`, and `can_deselect_token` return booleans for interaction
+availability. `can_perform_action` checks the current action through
+`can_buy_card`, `can_reserve_card`, `can_take_tokens`, or `can_pass_turn`, using
+the supplied game state. The UI and `game/state.py` use these same permissions
+to enable controls and reject disallowed actions before changing holdings.
 
 ## Adding AI strategies
 

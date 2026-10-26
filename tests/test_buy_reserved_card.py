@@ -12,10 +12,11 @@ class BuyReservedCardTests(unittest.TestCase):
 
     def test_reserved_card_selects_toggles_and_rejects_gold(self):
         state = self.state
+        state.current_player.tokens = {RUBY: 3}
         state.selection.select_card(self.card, state)
         self.assertIs(state.selection.card, self.card)
         self.assertEqual(state.selection.action_kind.capitalize(), 'Buy')
-        self.assertIsNotNone(state.action_error)
+        self.assertTrue(state.selection.can_perform_action(state))
         state.selection.select_token(GOLD, state)
         self.assertIs(state.selection.card, self.card)
         self.assertEqual(state.selection.tokens, {})
@@ -48,11 +49,15 @@ class BuyReservedCardTests(unittest.TestCase):
     def test_unaffordable_reserved_purchase_and_rereservation_are_rejected(self):
         state = self.state
         state.selection.select_card(self.card, state)
+        self.assertIsNone(state.selection.card)
+        self.assertEqual(state.selection.action_kind, 'pass')
+        # Execution still rejects invalid selections supplied directly.
+        state.selection.card = self.card
         with self.assertRaises(ValueError):
             state.buy_card()
         state.selection.tokens = {GOLD: 1}
         gold = state.supply[GOLD]
-        with self.assertRaisesRegex(ValueError, 'already reserved'):
+        with self.assertRaises(ValueError):
             state.reserve_card()
         self.assertEqual(state.current_player.reserved_cards, [self.card])
         self.assertEqual(state.current_player.tokens, {})

@@ -27,21 +27,20 @@ class TakeTokensTests(unittest.TestCase):
 
     def test_validation_matches_action_without_changing_state(self):
         cases = [
-            ([RUBY], 0, 4, False, None),
-            ([RUBY, ONYX, DIAMOND], 0, 4, False, None),
-            ([], 0, 4, False, None),
-            ([], 10, 4, False, None),
-            ([], 0, 4, True, "The game has already ended."),
-            ([RUBY, RUBY], 0, 4, False, "Select up to three different token types."),
-            ([RUBY, ONYX, DIAMOND, EMERALD], 0, 4, False,
-             "Select up to three different token types."),
-            ([GOLD], 0, 4, False, "A selected gem is not available."),
-            (['unknown'], 0, 4, False, "A selected gem is not available."),
-            ([RUBY], 0, 0, False, "A selected gem is not available."),
-            ([RUBY], 9, 4, False, None),
-            ([RUBY, ONYX], 9, 4, False, "You cannot hold more than 10 gems."),
-            ([RUBY], 10, 4, False, "You cannot hold more than 10 gems."),
-            ([RUBY], 0, 4, True, "The game has already ended."),
+            ([RUBY], 0, 4, False, True),
+            ([RUBY, ONYX, DIAMOND], 0, 4, False, True),
+            ([], 0, 4, False, True),
+            ([], 10, 4, False, True),
+            ([], 0, 4, True, False),
+            ([RUBY, RUBY], 0, 4, False, False),
+            ([RUBY, ONYX, DIAMOND, EMERALD], 0, 4, False, False),
+            ([GOLD], 0, 4, False, False),
+            (['unknown'], 0, 4, False, False),
+            ([RUBY], 0, 0, False, False),
+            ([RUBY], 9, 4, False, True),
+            ([RUBY, ONYX], 9, 4, False, False),
+            ([RUBY], 10, 4, False, False),
+            ([RUBY], 0, 4, True, False),
         ]
         for tokens, held, available, finished, expected in cases:
             with self.subTest(tokens=tokens, held=held, available=available, finished=finished):
@@ -52,15 +51,14 @@ class TakeTokensTests(unittest.TestCase):
                 before = copy.deepcopy((state.supply, state.current_player.tokens,
                                         vars(state.turn)))
                 state.selection.tokens = dict(Counter(tokens))
-                self.assertEqual(state.take_tokens_error(), expected)
+                self.assertIs(state.selection.can_take_tokens(state), expected)
                 self.assertEqual((state.supply, state.current_player.tokens,
                                   vars(state.turn)), before)
-                if expected is None:
+                if expected:
                     state.take_tokens()
                 else:
-                    with self.assertRaises(ValueError) as error:
+                    with self.assertRaises(ValueError):
                         state.take_tokens()
-                    self.assertEqual(str(error.exception), expected)
 
     def test_transfer_and_manual_second_player(self):
         state = State()

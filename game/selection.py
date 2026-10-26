@@ -1,4 +1,4 @@
-from .constants import GOLD, TOKENS
+from .constants import GOLD, TOKENS, MAX_TAKE, MAX_RESERVATIONS, TOKEN_LIMIT
 
 
 class Selection:
@@ -8,64 +8,118 @@ class Selection:
         self.card = None
         # Pending token counts by type; unselected types are omitted.
         self.tokens = {}
-        self.action_kind = "pass"
+
+    @property
+    def action_kind(self):
+        if GOLD in self.tokens:
+            return "reserve"
+        if self.card is not None:
+            return "buy"
+        if self.tokens:
+            return "take"
+        return "pass"
+
+    def can_select_card(self, card, state):
+        if state.turn.finished or card is None or not state.card_available(card):
+            return False
+        # README rules 3 and 7: reserved cards must be affordable to select;
+        # an already selected card can still be deselected.
+        return (self.card is card or card not in state.current_player.reserved_cards
+                or state.can_buy(card))
+
+    def can_select_token(self, token, state):
+        if (state.turn.finished or token not in TOKENS
+                or state.supply.get(token, 0) < 1):
+            return False
+        # README rule 4: manual gold selection requires an affordable market card.
+        return (token != GOLD or (self.card is not None
+                and self.card in state.market[self.card.tier]
+                and state.can_buy(self.card)))
+
+    def can_deselect_token(self, token, state):
+        # README rules 5–6: only selected tokens can be removed, and an
+        # unaffordable market card must retain its gold.
+        return (not state.turn.finished and token in self.tokens
+                and (token != GOLD or state.can_buy(self.card)))
+
+    def can_pass_turn(self, state):
+        return not state.turn.finished
+
+    def can_take_tokens(self, state):
+        return (not state.turn.finished and self.card is None
+                and len(self.tokens) <= MAX_TAKE
+                and len(self.tokens) <= state.current_player.max_take
+                and all(token in TOKENS and token != GOLD and amount == 1
+                        and state.supply.get(token, 0) >= 1
+                        for token, amount in self.tokens.items()))
+
+    def can_buy_card(self, state):
+        return not self.tokens and state.can_buy(self.card)
+
+    def can_reserve_card(self, state):
+        return (not state.turn.finished and self.card is not None
+                and self.card in state.market[self.card.tier]
+                and self.card not in state.current_player.reserved_cards
+                and self.tokens == {GOLD: 1} and state.supply.get(GOLD, 0) >= 1
+                and len(state.current_player.reserved_cards) < MAX_RESERVATIONS
+                and state.current_player.token_count < TOKEN_LIMIT)
+
+    def can_perform_action(self, state):
+        kind = self.action_kind
+        if kind == "reserve":
+            return self.can_reserve_card(state)
+        if kind == "buy":
+            return self.can_buy_card(state)
+        if kind == "take":
+            return self.can_take_tokens(state)
+        return self.can_pass_turn(state)
 
     def select_card(self, card, state):
-        if state.turn.finished or not state.card_available(card):
+        if not self.can_select_card(card, state):
             return
-        if self.action_kind == "buy" and self.card is card:
+        # README rule 7: clicking the selected card clears card and tokens.
+        if self.card is card:
             self.clear()
-        elif (card not in state.current_player.reserved_cards
-              and not state.can_buy(card)):
-            self.reserve_card(card, state)
-        else:
-            self.clear()
-            self.card = card
-            self.action_kind = "buy"
+            return
+        affordable = state.can_buy(card)
+        # README rules 2–3: replace the card and clear all selected tokens.
+        self.clear()
+        self.card = card
+        # README rule 2: an unaffordable market card automatically selects gold.
+        if not affordable:
+            self.tokens[GOLD] = 1
 
     def reserve_card(self, card, state):
-        if (state.turn.finished
-                or (card is not None and card not in state.market[card.tier])):
+        """Explicitly select a market card with gold for reservation."""
+        if (state.turn.finished or card is None
+                or card not in state.market[card.tier]):
             return
-        if self.action_kind == "reserve" and card is not None and self.card is card:
+        # README rule 7: toggling the reservation off clears card and gold.
+        if self.action_kind == "reserve" and self.card is card:
             self.clear()
         else:
+            # Explicit reservation chooses the market card and gold together;
+            # README rules 2 and 4 describe the equivalent selection clicks.
             self.clear()
             self.card = card
             self.tokens[GOLD] = 1
-            self.action_kind = "reserve"
 
     def select_token(self, token, state):
-        if (state.turn.finished or token not in TOKENS
-                or not state.supply.get(token, 0)
-                or (token == GOLD and self.action_kind == "buy"
-                    and self.card in state.current_player.reserved_cards)):
+        if not self.can_select_token(token, state):
             return
-        if token == GOLD:
-            if self.action_kind != "reserve":
-                card = self.card if self.action_kind == "buy" else None
-                self.reserve_card(card, state)
-        else:
-            if self.action_kind != "take":
-                self.clear()
-                self.action_kind = "take"
-            self.tokens[token] = 1
+        if token != GOLD:
+            # README rule 1: clear card/gold, keeping other selected gem colors.
+            self.card = None
+            self.tokens.pop(GOLD, None)
+        # README rules 1 and 4: repeated selection never increases the amount.
+        self.tokens[token] = 1
 
     def deselect_token(self, token, state):
-        if state.turn.finished:
+        if not self.can_deselect_token(token, state):
             return
-        if self.action_kind == "reserve" and token == GOLD:
-            self.tokens.pop(GOLD, None)
-            if self.card is None:
-                self.clear()
-            else:
-                self.action_kind = "buy"
-        elif self.action_kind == "take":
-            self.tokens.pop(token, None)
-            if not self.tokens:
-                self.clear()
+        # README rules 5–6: remove only this token, preserving the other choices.
+        self.tokens.pop(token)
 
     def clear(self):
         self.tokens.clear()
         self.card = None
-        self.action_kind = "pass"

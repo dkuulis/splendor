@@ -24,7 +24,7 @@ class ReserveCardTests(unittest.TestCase):
         gold = state.supply[GOLD]
         state.turn.consecutive_passes = 1
         self.assertEqual(state.selection.action_kind.capitalize(), 'Reserve')
-        self.assertIsNone(state.action_error)
+        self.assertTrue(state.selection.can_perform_action(state))
         state.perform_action()
         self.assertIs(player.reserved_cards[-1], card)
         self.assertEqual(len(player.reserved_cards), MAX_RESERVATIONS)
@@ -73,8 +73,10 @@ class ReserveCardTests(unittest.TestCase):
                                         vars(state.turn), state.selection.tokens))
                 reserved = list(state.current_player.reserved_cards)
                 market = list(state.market[2])
-                self.assertEqual(state.action_error, state.reserve_card_error())
-                self.assertIsNotNone(state.action_error)
+                self.assertFalse(state.selection.can_reserve_card(state))
+                with self.assertRaises(ValueError):
+                    state.reserve_card()
+                self.assertFalse(state.selection.can_perform_action(state))
                 with self.assertRaises(ValueError):
                     state.perform_action()
                 self.assertEqual((state.supply, state.current_player.tokens,

@@ -39,19 +39,24 @@ class App:
         self.field = ttk.Frame(self.root)
         self.table = ttk.Frame(self.field)
 
-        self.computer = PlayerPanel(self.field, on_select=self.select_card)
+        can_select_card = lambda card: self.state.selection.can_select_card(card, self.state)
+        self.computer = PlayerPanel(self.field, on_select=self.select_card,
+                                    can_select=can_select_card)
         self.computer_divider = DividerPanel(self.field)
 
         self.nobles = NoblesPanel(self.table)
         self.market = MarketPanel(self.table, self.select_card, lambda card: self.state.can_buy(card))
-        self.supply = SupplyPanel(self.table, self.select_token)
+        self.supply = SupplyPanel(
+            self.table, self.select_token,
+            lambda token: self.state.selection.can_select_token(token, self.state))
 
         self.selection = SelectionPanel(
             self.table, self.perform_action, self.select_card, self.deselect_token, self.new_game,
         )
 
         self.player_divider = DividerPanel(self.field)
-        self.player = PlayerPanel(self.field, on_select=self.select_card)
+        self.player = PlayerPanel(self.field, on_select=self.select_card,
+                                 can_select=can_select_card)
 
     def assemble_panels(self):
         self.field.configure(padding=20)
@@ -129,10 +134,7 @@ class App:
 
     def select_card(self, card):
         if self.manual_turn:
-            if self.state.selection.action_kind == "reserve":
-                self.state.selection.reserve_card(card, self.state)
-            else:
-                self.state.selection.select_card(card, self.state)
+            self.state.selection.select_card(card, self.state)
             self.refresh_selection()
 
     def select_token(self, token):

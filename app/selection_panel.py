@@ -54,7 +54,7 @@ class SelectionPanel(tk.Frame):
     def refresh(self, state, enabled):
         self.state = state
         self.enabled = enabled
-        affordable = self.enabled and state.selected_card_affordable
+        affordable = self.enabled and state.can_buy(state.selection.card)
         self.card.refresh(state.selection.card, affordable=affordable, enabled=self.enabled)
         self.card.itemconfigure(self.disabled_overlay,
                                 state="normal" if state.selection.card is not None and not affordable
@@ -94,12 +94,12 @@ class SelectionPanel(tk.Frame):
             state="normal" if enabled else "disabled")
 
     def deselect(self, token):
-        if self.enabled:
+        if self.enabled and self.state.selection.can_deselect_token(token, self.state):
             self.on_deselect(token)
 
     @property
     def can_go(self):
-        return self.enabled and self.state.action_error is None
+        return self.enabled and self.state.selection.can_perform_action(self.state)
 
     def go(self):
         if self.can_go:

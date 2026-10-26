@@ -18,7 +18,7 @@ class BuyCardTests(unittest.TestCase):
         self.assertEqual(state.current_player.card_payment(card), {RUBY: 1, GOLD: 3})
         self.assertEqual(player.tokens, {RUBY: 1, GOLD: 3, ONYX: 1})
         state.selection.select_card(card, state)
-        self.assertIsNone(state.action_error)
+        self.assertTrue(state.selection.can_perform_action(state))
         state.perform_action()
         self.assertEqual(player.tokens, {ONYX: 1})
         supply[RUBY] += 1

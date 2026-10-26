@@ -8,10 +8,11 @@ from .styles import TOKEN_PILE_HEIGHT, TOKEN_PILE_WIDTH
 
 
 class SupplyPanel(ttk.Frame):
-    def __init__(self, parent, on_pick):
+    def __init__(self, parent, on_select, can_select):
         super().__init__(parent, padding=5)
         self.enabled = False
-        self.on_pick = on_pick
+        self.on_select = on_select
+        self.can_select = can_select
         self.cells = {}
         self.counts = {}
 
@@ -28,12 +29,13 @@ class SupplyPanel(ttk.Frame):
             cell.create_image(TOKEN_PILE_WIDTH / 2, TOKEN_PILE_HEIGHT / 2, tags=("gem",))
             self.cells[token] = cell
             cell.tag_bind("gem", "<Button-1>", lambda event, token=token: self.pick(token))
-            cell.tag_bind("gem", "<Enter>", lambda event, cell=cell: cell.configure(cursor="hand2" if self.enabled else ""))
+            cell.tag_bind("gem", "<Enter>", lambda event, token=token, cell=cell:
+                          cell.configure(cursor="hand2" if self.enabled and self.can_select(token) else ""))
             cell.tag_bind("gem", "<Leave>", lambda event, cell=cell: cell.configure(cursor=""))
 
     def pick(self, token):
-        if self.enabled:
-            self.on_pick(token)
+        if self.enabled and self.can_select(token):
+            self.on_select(token)
 
     def refresh(self, available_tokens, selected_tokens, enabled):
         self.enabled = enabled

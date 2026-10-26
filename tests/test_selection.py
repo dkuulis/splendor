@@ -55,7 +55,7 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(state.selection.tokens, {RUBY: 1})
         state.selection.select_token(SAPPHIRE, state)
         self.assertEqual(state.selection.tokens, {RUBY: 1, SAPPHIRE: 1})
-        self.assertIsNone(state.action_error)
+        self.assertTrue(state.selection.can_perform_action(state))
 
     def test_finished_game_cannot_select(self):
         self.state.turn.finished = True
@@ -95,22 +95,6 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(state.current_player.tokens, {})
         self.assertEqual(state.market[1], [self.card])
 
-    def test_card_methods_switch_intent_without_toggling_the_card_off(self):
-        state = self.state
-        selection = state.selection
-        selection.select_card(self.card, state)
-        self.assertEqual(selection.action_kind, 'buy')
-        selection.reserve_card(self.card, state)
-        self.assertEqual(selection.action_kind, 'reserve')
-        self.assertIs(selection.card, self.card)
-        self.assertEqual(selection.tokens, {GOLD: 1})
-        selection.select_card(self.card, state)
-        self.assertEqual(selection.action_kind, 'buy')
-        self.assertIs(selection.card, self.card)
-        self.assertEqual(selection.tokens, {})
-        selection.select_card(self.card, state)
-        self.assertEqual(selection.action_kind, 'pass')
-
     def test_reservation_replaces_and_toggles_cards(self):
         state = self.state
         other = Card('other', 1, ONYX, 0, {})
@@ -126,28 +110,27 @@ class SelectionTests(unittest.TestCase):
         self.assertIsNone(selection.card)
         self.assertEqual(selection.tokens, {})
 
-    def test_token_transitions_follow_action_kind(self):
+    def test_token_transitions_follow_selection(self):
         state = self.state
         selection = state.selection
         selection.select_token(GOLD, state)
-        self.assertEqual(selection.action_kind, 'reserve')
-        self.assertIsNotNone(state.action_error)
+        self.assertEqual(selection.action_kind, 'pass')
+        selection.select_card(self.card, state)
         selection.select_token(GOLD, state)
-        self.assertEqual(selection.tokens, {GOLD: 1})
-        selection.reserve_card(self.card, state)
         self.assertEqual(selection.action_kind, 'reserve')
         selection.deselect_token(GOLD, state)
         self.assertEqual(selection.action_kind, 'buy')
         self.assertIs(selection.card, self.card)
         selection.select_token(RUBY, state)
         selection.select_token(SAPPHIRE, state)
+        selection.select_token(GOLD, state)
         self.assertEqual(selection.action_kind, 'take')
+        self.assertEqual(selection.tokens, {RUBY: 1, SAPPHIRE: 1})
         self.assertIsNone(selection.card)
         selection.deselect_token(RUBY, state)
         self.assertEqual(selection.action_kind, 'take')
         selection.deselect_token(SAPPHIRE, state)
         self.assertEqual(selection.action_kind, 'pass')
-        selection.select_token(GOLD, state)
         selection.deselect_token(GOLD, state)
         self.assertEqual(selection.action_kind, 'pass')
 
@@ -165,3 +148,94 @@ class SelectionTests(unittest.TestCase):
         state.turn.finished = True
         selection.reserve_card(self.card, state)
         self.assertEqual(selection.action_kind, 'buy')
+
+    def test_transition_matrix(self):
+        # Each destination includes the exact card and tokens, not just intent.
+        expected = {
+            'gem': ['gems', 'gems', 'gems', 'two_gems', 'gems'],
+            'gold': ['empty', 'reserve_initial', 'reserved_initial', 'gems', 'reserve_initial'],
+            'affordable': ['buy', 'buy', 'buy', 'buy', 'buy'],
+            'unaffordable': ['reserve', 'reserve', 'reserve', 'reserve', 'reserve'],
+            'reserved': ['reserved', 'reserved', 'reserved', 'reserved', 'reserved'],
+            'unaffordable_reserved': ['empty', 'buy_initial', 'reserved_initial', 'gems', 'reserve_initial'],
+            'remove_gem': ['empty', 'buy_initial', 'reserved_initial', 'empty', 'reserve_initial'],
+            'remove_gold': ['empty', 'buy_initial', 'reserved_initial', 'gems', 'buy_initial'],
+            'remove_card': ['empty', 'empty', 'reserved_initial', 'gems', 'empty'],
+            'remove_reserved': ['empty', 'buy_initial', 'empty', 'gems', 'reserve_initial'],
+        }
+        for event, destinations in expected.items():
+            for index, destination in enumerate(destinations):
+                with self.subTest(event=event, initial=index):
+                    state = State()
+                    initial_card = Card('initial', 1, RUBY, 0, {})
+                    market = Card('affordable', 1, RUBY, 0, {})
+                    costly = Card('costly', 1, RUBY, 0, {RUBY: 2})
+                    initial_reserved = Card('initial_reserved', 1, RUBY, 0, {})
+                    reserved = Card('reserved', 1, RUBY, 0, {})
+                    costly_reserved = Card('costly_reserved', 1, RUBY, 0, {RUBY: 2})
+                    state.market[1] = [initial_card, market, costly]
+                    state.current_player.reserved_cards = [initial_reserved, reserved, costly_reserved]
+                    selection = state.selection
+                    if index in (1, 4):
+                        selection.select_card(initial_card, state)
+                    elif index == 2:
+                        selection.select_card(initial_reserved, state)
+                    elif index == 3:
+                        selection.select_token(SAPPHIRE, state)
+                    if index == 4:
+                        selection.select_token(GOLD, state)
+                    supply = dict(state.supply)
+                    if event == 'gem':
+                        selection.select_token(RUBY, state)
+                    elif event == 'gold':
+                        selection.select_token(GOLD, state)
+                    elif event in ('affordable', 'unaffordable', 'reserved', 'unaffordable_reserved'):
+                        selection.select_card({
+                            'affordable': market, 'unaffordable': costly,
+                            'reserved': reserved, 'unaffordable_reserved': costly_reserved,
+                        }[event], state)
+                    elif event == 'remove_gem':
+                        selection.deselect_token(SAPPHIRE, state)
+                    elif event == 'remove_gold':
+                        selection.deselect_token(GOLD, state)
+                    elif event == 'remove_card' and index in (1, 4):
+                        selection.select_card(initial_card, state)
+                    elif event == 'remove_reserved' and index == 2:
+                        selection.select_card(initial_reserved, state)
+                    outcomes = {
+                        'empty': ('pass', None, {}),
+                        'gems': ('take', None, {RUBY: 1} if event == 'gem' else {SAPPHIRE: 1}),
+                        'two_gems': ('take', None, {RUBY: 1, SAPPHIRE: 1}),
+                        'buy': ('buy', market, {}),
+                        'buy_initial': ('buy', initial_card, {}),
+                        'reserved': ('buy', reserved, {}),
+                        'reserved_initial': ('buy', initial_reserved, {}),
+                        'reserve': ('reserve', costly, {GOLD: 1}),
+                        'reserve_initial': ('reserve', initial_card, {GOLD: 1}),
+                    }
+                    self.assertEqual((selection.action_kind, selection.card, selection.tokens),
+                                     outcomes[destination])
+                    self.assertEqual(state.supply, supply)
+                    self.assertEqual(state.current_player.tokens, {})
+                    self.assertEqual(state.turn.active_player, 0)
+
+    def test_unaffordable_reservation_keeps_gold_until_card_is_deselected(self):
+        state = self.state
+        self.card.cost = {RUBY: 2}
+        selection = state.selection
+        selection.select_card(self.card, state)
+        selection.deselect_token(GOLD, state)
+        self.assertEqual(selection.tokens, {GOLD: 1})
+        self.assertEqual(selection.action_kind, 'reserve')
+        selection.select_card(self.card, state)
+        self.assertIsNone(selection.card)
+        self.assertEqual(selection.tokens, {})
+        self.assertEqual(selection.action_kind, 'pass')
+
+    def test_removing_one_of_multiple_gems_keeps_take(self):
+        selection = self.state.selection
+        selection.select_token(RUBY, self.state)
+        selection.select_token(SAPPHIRE, self.state)
+        selection.deselect_token(RUBY, self.state)
+        self.assertEqual(selection.tokens, {SAPPHIRE: 1})
+        self.assertEqual(selection.action_kind, 'take')

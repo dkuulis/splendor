@@ -15,10 +15,11 @@ from .styles import (
 
 
 class PlayerPanel(tk.Frame):
-    def __init__(self, parent, on_select):
+    def __init__(self, parent, on_select, can_select):
         super().__init__(parent, background=PLAYER_PANEL_BACKGROUND,
                          highlightthickness=0, borderwidth=0)
         self.on_select = on_select
+        self.can_select = can_select
         self.enabled = False
         # Grid's row minimum takes effect only when there are children. Reserve
         # the same content height plus vertical padding for an empty inventory.
@@ -42,7 +43,9 @@ class PlayerPanel(tk.Frame):
     def refresh(self, player, active, enabled):
         self.player = player
         self.enabled = enabled and active
-        self.reserved.stack.configure(cursor="hand2" if self.enabled else "")
+        self.reserved.stack.configure(
+            cursor="hand2" if self.enabled and any(self.can_select(card)
+                                                  for card in player.reserved_cards) else "")
         for index, (token, column) in enumerate(self.columns.items()):
             cards = (list(player.nobles) if token == GOLD else
                      player.cards[token])
@@ -75,5 +78,6 @@ class PlayerPanel(tk.Frame):
         for index, card in enumerate(self.player.reserved_cards):
             if (self.reserved.card_items[index] in current
                     or self.reserved.overlay_items[index] in current):
-                self.on_select(card)
+                if self.can_select(card):
+                    self.on_select(card)
                 return
