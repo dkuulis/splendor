@@ -50,7 +50,7 @@ class SelectionPanel(tk.Frame):
     @property
     def can_go(self):
         count = sum(self.selected_tokens.values())
-        valid = all(amount == 1 and token in TOKENS and self.available_tokens.get(token, 0)
+        valid = all(amount == 1 and token in TOKENS and token != "Gold" and self.available_tokens.get(token, 0)
                     for token, amount in self.selected_tokens.items())
         return self.enabled and valid and count <= self.max_take
 
@@ -64,7 +64,7 @@ class SelectionPanel(tk.Frame):
             self.on_pass()
 
     def select(self, token):
-        if (not self.enabled or token not in TOKENS or not self.available_tokens.get(token, 0)
+        if (not self.enabled or token not in TOKENS or token == "Gold" or not self.available_tokens.get(token, 0)
                 or self.selected_tokens.get(token, 0)):
             return
         self.selected_tokens[token] = 1

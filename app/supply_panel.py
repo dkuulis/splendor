@@ -19,7 +19,7 @@ class SupplyPanel(ttk.Frame):
             self.rowconfigure(row, weight=1)
         for column in range(2):
             self.columnconfigure(column, weight=1)
-        for index, token in enumerate((*TOKENS, "Gold")):
+        for index, token in enumerate(TOKENS):
             cell = tk.Canvas(
                 self, width=TOKEN_PILE_WIDTH, height=TOKEN_PILE_HEIGHT, highlightthickness=0,
                 background=self.winfo_toplevel().cget("background"),
@@ -36,8 +36,7 @@ class SupplyPanel(ttk.Frame):
     def refresh(self):
         self.images.clear()
         for token, cell in self.cells.items():
-            # Gold is a display-only placeholder until joker rules are implemented.
-            count = 5 if token == "Gold" else max(
+            count = max(
                 0, self.available_tokens.get(token, 0) - self.selected_tokens.get(token, 0)
             )
             cell.configure(cursor="")

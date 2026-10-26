@@ -12,7 +12,7 @@ class State:
 
     def __init__(self):
         self.players = [Player("YOU"), Player("COMPUTER", is_ai=True)]
-        self.supply = dict.fromkeys(TOKENS, 4)
+        self.supply = {token: 5 if token == "Gold" else 4 for token in TOKENS}
         # Pending token counts by type; unselected types are omitted.
         self.selected_tokens = {}
         # Every tier is always present; no cards means an empty list, not None.
@@ -44,7 +44,7 @@ class State:
         tokens = list(tokens)
         if not 1 <= len(tokens) <= 3 or len(set(tokens)) != len(tokens):
             raise ValueError("Select one to three different token types.")
-        if any(token not in TOKENS or self.supply.get(token, 0) < 1 for token in tokens):
+        if any(token not in TOKENS or token == "Gold" or self.supply.get(token, 0) < 1 for token in tokens):
             raise ValueError("A selected gem is not available.")
         player = self.current_player
         if len(tokens) > self.max_take:

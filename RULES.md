@@ -8,7 +8,7 @@ one computer opponent.
 - The human plays first. Players alternate turns.
 - Each player starts with no gems, no cards, and zero points.
 - The bank starts with four gems of each color: Diamond, Sapphire, Emerald,
-  Ruby, and Onyx.
+  Ruby, and Onyx. It also holds five Gold tokens, which cannot be selected.
 - Shuffle each of the three development decks separately and reveal four
   cards per level. Remaining cards stay face down.
 
@@ -66,7 +66,8 @@ strategy priorities and control options.
 ## Rules omitted or changed from full Splendor
 
 - **Nobles:** no noble tiles, qualification checks, or noble points.
-- **Reservations and gold:** no reserved cards, blind reservations, or gold(wild gems).
+- **Reservations and gold:** no reserved cards, blind reservations, or gold
+  wildcard payments. Gold remains in the bank.
 - **Two matching gems:** omitted for now; the full game permits this only
   when at least four gems of that color are available before taking them.
 - **Player count:** only two players; no three- or four-player setup.
