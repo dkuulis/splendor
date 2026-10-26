@@ -10,6 +10,7 @@ from .styles import (
     MARKET_CARD_WIDTH,
     MUTED_TEXT_COLOR,
     PLAYER_CARD_OFFSET,
+    PLAYER_GEM_OVERHANG,
     PLAYER_PANEL_BACKGROUND,
     gem_centers,
 )
@@ -21,7 +22,7 @@ class PlayerColumn(ttk.Frame):
         stack_width = MARKET_CARD_WIDTH + max(0, len(cards) - 1) * PLAYER_CARD_OFFSET
         width = max(stack_width, GEM_SIZE + max(0, gem_count - 1) * GEM_SPACING)
 
-        stack = tk.Canvas(self, width=width, height=MARKET_CARD_HEIGHT,
+        stack = tk.Canvas(self, width=width, height=MARKET_CARD_HEIGHT + PLAYER_GEM_OVERHANG,
                           highlightthickness=0, borderwidth=0,
                           background=PLAYER_PANEL_BACKGROUND)
         stack.pack()
@@ -36,4 +37,5 @@ class PlayerColumn(ttk.Frame):
         if gem_count:
             self.gem_image = load_image(self, color.lower())
             for x in gem_centers(gem_count, width, GEM_SPACING):
-                stack.create_image(x, MARKET_CARD_HEIGHT - GEM_SIZE / 2 - 5, image=self.gem_image)
+                stack.create_image(x, MARKET_CARD_HEIGHT + PLAYER_GEM_OVERHANG - GEM_SIZE / 2,
+                                   image=self.gem_image)

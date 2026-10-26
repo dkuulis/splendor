@@ -3,7 +3,7 @@
 from tkinter import StringVar, messagebox, ttk
 
 from game.initialize import create_initial_state
-from ai import STRATEGIES
+from ai import STRATEGIES, GreedyAI
 
 from .bank_panel import BankPanel
 from .log import Log
@@ -17,8 +17,8 @@ class App:
     def __init__(self, root, state):
         self.state = state
         self.root = root
-        self.control = StringVar(master=root, value="Manual")
-        self.strategy = None
+        self.control = StringVar(master=root, value="Greedy AI")
+        self.strategy = GreedyAI()
         self.pending_ai = None
         root.bind("<Destroy>", self.on_destroy, add="+")
         configure_styles(root)
