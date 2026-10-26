@@ -36,10 +36,47 @@ class App:
                 bonus = COLORS[(slot + tier) % 5]
                 box = ttk.Frame(market, padding=8, relief="ridge")
                 box.grid(row=row, column=slot + 1, sticky="nsew", padx=4, pady=4)
-                tk.Label(box, text=f"{bonus}   +{(0, 2, 4)[tier - 1]} pts", bg=PALETTE[bonus], fg="#111827" if bonus == "Diamond" else "white", font=("Helvetica", 13, "bold"), pady=8).pack(fill="x")
-                ttk.Label(box, text=f"Bonus: +1 {bonus}").pack(anchor="w", pady=(6, 2))
-                cost = f"{tier + 1} {COLORS[(slot + 1) % 5]} · {tier} {COLORS[(slot + 2) % 5]}"
-                ttk.Label(box, text="Cost: " + cost, wraplength=180).pack(anchor="w")
+                title = tk.Frame(box, bg=PALETTE[bonus])
+                title.pack(fill="x")
+                tk.Label(
+                    title,
+                    text=str((0, 2, 4)[tier - 1]) if tier > 1 else "",
+                    bg=PALETTE[bonus],
+                    fg="#111827" if bonus == "Diamond" else "white",
+                    font=("Helvetica", 28, "bold"),
+                    anchor="nw",
+                    padx=10,
+                    pady=6,
+                ).pack(side="left")
+                tk.Label(
+                    title,
+                    text=bonus,
+                    bg=PALETTE[bonus],
+                    fg="#111827" if bonus == "Diamond" else "white",
+                    font=("Helvetica", 13, "bold"),
+                    padx=6,
+                ).pack(side="right")
+                costs = [
+                    (COLORS[(slot + offset + 1) % 5], max(1, tier + 1 - offset))
+                    for offset in range(4 if slot >= 2 else 2)
+                ]
+                cost_row = tk.Canvas(
+                    box, height=38, width=160, highlightthickness=0,
+                    background=root.cget("background"),
+                )
+                cost_row.pack(fill="x", pady=(6, 0))
+                for index, (color, amount) in enumerate(costs):
+                    x = 20 + index * 40
+                    cost_row.create_oval(
+                        x - 16, 3, x + 16, 35,
+                        fill=PALETTE[color],
+                        outline="#94a3b8" if color == "Diamond" else PALETTE[color],
+                    )
+                    cost_row.create_text(
+                        x, 19, text=str(amount),
+                        fill="#111827" if color == "Diamond" else "white",
+                        font=("Helvetica", 13, "bold"),
+                    )
                 ttk.Button(box, text="Buy card", state="disabled").pack(fill="x", side="bottom", pady=(6, 0))
 
         bank = ttk.LabelFrame(shell, text="GEM BANK", padding=10)
