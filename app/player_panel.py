@@ -3,11 +3,10 @@ from tkinter import ttk
 
 from game.constants import COLORS
 
+from .player_column import PlayerColumn
+
 from .styles import (
     ACTIVE_PLAYER_BORDER,
-    MUTED_TEXT_COLOR,
-    OUTLINE_PALETTE,
-    PALETTE,
     PLAYER_PANEL_BACKGROUND,
     POINTS_FONT,
 )
@@ -27,30 +26,10 @@ class PlayerPanel(tk.Frame):
         self.panel.pack(fill="both", expand=True)
         ttk.Label(self.panel, text=str(player.points), font=POINTS_FONT, style="Player.TLabel").pack(side="left", padx=(0, 20))
 
+        self.columns = {}
         for color in COLORS:
-            column = ttk.Frame(self.panel, style="Player.TFrame")
+            column = PlayerColumn(self.panel, color, discounts.get(color, 0), player.gems.get(color, 0))
             column.pack(side="left", expand=True, fill="x")
-
-            card_count, gem_count = discounts.get(color, 0), player.gems.get(color, 0)
-            spacing = 28
-            group_gap = 10 if card_count and gem_count else 0
-            content_width = (card_count + gem_count) * spacing + group_gap
-            canvas_width = max(100, content_width)
-
-            resources = tk.Canvas(
-                column, width=canvas_width, height=44, highlightthickness=0,
-                background=PLAYER_PANEL_BACKGROUND,
-            )
-            resources.pack()
-
-            outline = OUTLINE_PALETTE[color]
-            start = (canvas_width - content_width) / 2
-            for card in range(card_count):
-                x = start + card * spacing
-                resources.create_rectangle(x + 2, 10, x + 26, 34, fill=PALETTE[color], outline=outline)
-            for gem in range(gem_count):
-                x = start + card_count * spacing + group_gap + gem * spacing
-                resources.create_oval(x + 2, 10, x + 26, 34, fill=PALETTE[color], outline=outline)
-            ttk.Label(column, text=color, foreground=MUTED_TEXT_COLOR, style="Player.TLabel").pack()
+            self.columns[color] = column
 
         ttk.Label(self.panel, text=f"{sum(player.gems.values())} gems", justify="right", style="Player.TLabel").pack(side="right")
