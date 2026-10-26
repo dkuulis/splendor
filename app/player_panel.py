@@ -14,7 +14,6 @@ from .styles import (
 
 class PlayerPanel(tk.Frame):
     def __init__(self, parent, player, subtitle, active=False):
-        self.player = player
         discounts = player.discounts
         border = ACTIVE_PLAYER_BORDER if active else PLAYER_PANEL_BACKGROUND
         super().__init__(parent, background=PLAYER_PANEL_BACKGROUND, highlightthickness=2,

@@ -3,6 +3,10 @@ from .player import Player
 from .turn import Turn
 
 
+def format_cost(cost):
+    return ", ".join(f"{cost[color]} {color}" for color in COLORS if cost.get(color, 0)) or "no gems"
+
+
 class State:
     """Game state and legal turn transitions."""
 
@@ -21,6 +25,10 @@ class State:
     def current_player(self):
         return self.players[self.turn.active_player]
 
+    @property
+    def max_take(self):
+        return min(3, max(0, self.gem_limit - sum(self.current_player.gems.values())))
+
     def pass_turn(self):
         if self.turn.finished:
             raise ValueError("The game has already ended.")
@@ -37,7 +45,7 @@ class State:
         if any(color not in COLORS or self.bank.get(color, 0) < 1 for color in colors):
             raise ValueError("A selected gem is not available.")
         player = self.current_player
-        if sum(player.gems.values()) + len(colors) > self.gem_limit:
+        if len(colors) > self.max_take:
             raise ValueError(f"You cannot hold more than {self.gem_limit} gems.")
         for color in colors:
             self.bank[color] -= 1
@@ -80,10 +88,10 @@ class State:
             row[slot] = revealed
         else:
             row.pop(slot)
-        payment = ", ".join(f"{cost[color]} {color}" for color in COLORS if cost.get(color, 0)) or "no gems"
+        payment = format_cost(cost)
         self.log.append(f"{card.points}-point {card.color} card (level {card.tier}) bought by {player.name} for {payment}.")
         if revealed is not None:
-            revealed_cost = ", ".join(f"{revealed.cost[color]} {color}" for color in COLORS if revealed.cost.get(color, 0)) or "no gems"
+            revealed_cost = format_cost(revealed.cost)
             self.log.append(f"Revealed: {revealed.points}-point {revealed.color} card (level {revealed.tier}), costing {revealed_cost}.")
         self.turn.consecutive_passes = 0
         self.finish_turn()

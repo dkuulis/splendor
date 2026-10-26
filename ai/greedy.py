@@ -24,7 +24,7 @@ class GreedyAI:
     def take_gems(self, state, cards):
         """Collect useful gems and report whether an action was taken."""
         player = state.current_player
-        capacity = min(3, state.gem_limit - sum(player.gems.values()))
+        capacity = state.max_take
         if capacity > 0:
             targets = []
             for card in cards:

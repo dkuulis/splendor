@@ -11,8 +11,6 @@ from .styles import (
 class DeckPanel(tk.Frame):
     def __init__(self, parent, tier, cards):
         super().__init__(parent, bg=DECK_PALETTE[tier], padx=12, pady=12)
-        self.tier = tier
-        self.cards = cards
 
         tk.Label(self, text=f"LEVEL {tier}", bg=DECK_PALETTE[tier], fg=DECK_TEXT_COLOR, font=DECK_LABEL_FONT).pack()
         tk.Label(self, text="◆" * tier, bg=DECK_PALETTE[tier], fg=DECK_TEXT_COLOR, font=DECK_SYMBOL_FONT).pack(expand=True)

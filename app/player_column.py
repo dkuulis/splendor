@@ -7,9 +7,6 @@ from .styles import MUTED_TEXT_COLOR, OUTLINE_PALETTE, PALETTE, PLAYER_PANEL_BAC
 class PlayerColumn(ttk.Frame):
     def __init__(self, parent, color, card_count, gem_count):
         super().__init__(parent, style="Player.TFrame")
-        self.color = color
-        self.card_count = card_count
-        self.gem_count = gem_count
         spacing = 28
         content_width = max(card_count, gem_count) * spacing
         canvas_width = max(100, content_width)

@@ -15,7 +15,6 @@ from .styles import (
 class CardPanel(ttk.Frame):
     def __init__(self, parent, card, on_buy=None, affordable=False):
         super().__init__(parent, padding=8, relief="ridge")
-        self.card = card
 
         title = tk.Frame(self, bg=PALETTE[card.color])
         title.pack(fill="x")

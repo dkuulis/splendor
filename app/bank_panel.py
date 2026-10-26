@@ -9,7 +9,6 @@ from .gem_column import GemColumn
 class BankPanel(ttk.Frame):
     def __init__(self, parent, bank, on_pass=None, on_take=None, max_take=3, enabled=True, disabled_text="Game over"):
         super().__init__(parent, padding=10)
-        self.bank = bank
         self.on_take = on_take
         self.max_take = max_take
         self.enabled = enabled

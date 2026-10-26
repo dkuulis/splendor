@@ -62,7 +62,7 @@ class App:
             field, state.bank, self.pass_turn, self.take_gems,
             enabled=self.manual_turn,
             disabled_text="Game over" if state.turn.finished else "Computer is playing…",
-            max_take=min(3, max(0, state.gem_limit - sum(state.current_player.gems.values()))),
+            max_take=state.max_take,
         )
         self.bank.pack(fill="x", pady=(0, 10))
         self.player = PlayerPanel(field, state.players[0], self.player_subtitle(state.players[0]),
@@ -87,7 +87,6 @@ class App:
             self.pending_ai = None
 
     def change_control(self):
-        self.cancel_ai()
         strategy_class = STRATEGIES.get(self.control.get())
         self.strategy = strategy_class() if strategy_class else None
         self.refresh()

@@ -7,8 +7,6 @@ from .deck_panel import DeckPanel
 class MarketPanel(ttk.Frame):
     def __init__(self, parent, market, decks, on_buy=None, can_buy=None):
         super().__init__(parent)
-        self.market = market
-        self.decks = decks
         self.deck_panels = {}
         self.card_panels = {}
 
