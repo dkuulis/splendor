@@ -13,7 +13,7 @@ class ReserveCardTests(unittest.TestCase):
         selection = Selection()
         card = Card('reserve', 2, RUBY, 3, {RUBY: 7})
         state.market[2] = [card]
-        selection.reserve_card(card, state)
+        selection.select_card(card, state)
         return state, selection, card
 
     def test_reservation_uses_supplied_card_instead_of_pending_card(self):

@@ -125,12 +125,14 @@ class SelectionTests(unittest.TestCase):
         selection = self.selection
         other = Card('other', 1, ONYX, 0, {})
         state.market[1].append(other)
-        selection.reserve_card(self.card, state)
-        selection.reserve_card(other, state)
+        selection.select_card(self.card, state)
+        selection.select_token(GOLD, state)
+        selection.select_card(other, state)
+        selection.select_token(GOLD, state)
         self.assertIs(selection.card, other)
         self.assertEqual(selection.action_kind, 'reserve')
         self.assertEqual(selection.tokens, {GOLD: 1})
-        selection.reserve_card(other, state)
+        selection.select_card(other, state)
         self.assertEqual(selection.action_kind, 'pass')
         self.assertIsNone(selection.card)
         self.assertEqual(selection.tokens, {})
@@ -158,21 +160,6 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(selection.action_kind, 'pass')
         selection.deselect_token(GOLD, state)
         self.assertEqual(selection.action_kind, 'pass')
-
-    def test_invalid_reservation_preserves_pending_buy(self):
-        state = self.state
-        selection = self.selection
-        selection.select_card(self.card, state)
-        reserved = Card('reserved', 1, RUBY, 0, {})
-        state.current_player.reserved_cards.append(reserved)
-        for card in (reserved, Card('missing', 1, RUBY, 0, {})):
-            selection.reserve_card(card, state)
-            self.assertEqual(selection.action_kind, 'buy')
-            self.assertIs(selection.card, self.card)
-            self.assertEqual(selection.tokens, {})
-        state.turn.finished = True
-        selection.reserve_card(self.card, state)
-        self.assertEqual(selection.action_kind, 'buy')
 
     def test_transition_matrix(self):
         # Each destination includes the exact card and tokens, not just intent.

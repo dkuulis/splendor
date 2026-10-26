@@ -50,7 +50,7 @@ class PlayerPanel(tk.Frame):
         self.reserved.grid(row=0, column=len(TOKENS), sticky="ew")
         self.reserved.stack.bind("<Button-1>", self.select_reserved)
 
-    def refresh(self, player, active, enabled):
+    def refresh(self, player, active, enabled, selected_card, selected_tokens):
         self.player = player
         self.enabled = enabled and active
         self.reserved.stack.configure(
@@ -60,7 +60,6 @@ class PlayerPanel(tk.Frame):
             cards = (list(player.nobles) if token == GOLD else
                      player.cards[token])
             token_count = player.tokens.get(token, 0)
-            column.refresh(cards, token_count)
             visible = bool(cards or token_count)
             self.panel.columnconfigure(index, weight=1 if visible else 0)
             if visible:
@@ -73,6 +72,7 @@ class PlayerPanel(tk.Frame):
             self.reserved.grid()
         else:
             self.reserved.grid_remove()
+        self.refresh_selection(selected_card, selected_tokens)
 
     def refresh_selection(self, selected_card, selected_tokens):
         for token, column in self.columns.items():

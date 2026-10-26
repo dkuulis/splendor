@@ -11,7 +11,6 @@ class NoblesPanel(ttk.Frame):
         self.slots = []
 
     def refresh(self, nobles):
-        self.nobles = nobles
         while len(self.slots) < len(nobles):
             row = len(self.slots)
             tile = tk.Canvas(self, width=NOBLE_SIZE, height=NOBLE_SIZE,

@@ -2,8 +2,7 @@ from .constants import GEMS, GOLD, MAX_TAKE, TOKEN_LIMIT
 
 
 class Player:
-    def __init__(self, name, is_ai=False):
-        self.name = name
+    def __init__(self, is_ai=False):
         self.is_ai = is_ai
         self.tokens = {}
         self.cards = {token: [] for token in GEMS}

@@ -8,7 +8,7 @@ class State:
     """Game state and action execution; callers must supply allowed actions."""
 
     def __init__(self):
-        self.players = [Player("YOU"), Player("COMPUTER", is_ai=True)]
+        self.players = [Player(), Player(is_ai=True)]
         self.supply = {token: INITIAL_GOLD_SUPPLY if token == GOLD else INITIAL_GEM_SUPPLY
                        for token in TOKENS}
         # Every tier is always present; no cards means an empty list, not None.

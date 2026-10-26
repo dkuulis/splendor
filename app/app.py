@@ -89,13 +89,16 @@ class App:
     def refresh(self):
         self.cancel_ai()
         state = self.state
-        self.computer.refresh(state.players[1], state.is_active_player(state.players[1]), self.manual_turn)
-        self.player.refresh(state.players[0], state.is_active_player(state.players[0]), self.manual_turn)
+        for index, panel in enumerate((self.player, self.computer)):
+            player = state.players[index]
+            selected = (self.selection.tokens if self.selection.returning
+                        and index == state.turn.active_player else {})
+            panel.refresh(player, state.is_active_player(player), self.manual_turn,
+                          self.selection.card, selected)
         for index, divider in enumerate((self.player_divider, self.computer_divider)):
             winner = state.turn.finished and state.turn.winner == index
             active = winner if state.turn.finished else state.is_active_player(state.players[index])
             divider.refresh(active, state.players[index].points, winner)
-        self.refresh_player_selection()
         self.market.refresh(state.market, state.decks, self.selection.card,
                             enabled=self.manual_turn and not state.return_required)
         self.nobles.refresh(state.nobles)

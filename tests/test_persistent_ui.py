@@ -530,7 +530,6 @@ class PersistentUITests(unittest.TestCase):
         app.new_game()
         self.root.update()
         self.assertEqual(slots, panel.slots)
-        self.assertIs(panel.nobles, app.state.nobles)
         self.assertTrue(all(tile.winfo_ismapped() for tile in slots))
 
     def test_player_nobles_and_gold_share_leftmost_column(self):
@@ -691,7 +690,9 @@ class PersistentUITests(unittest.TestCase):
         app = self.app
         app.state.current_player.tokens = {GOLD: 2, DIAMOND: 4, SAPPHIRE: 4}
         card = app.state.market[1][0]
-        app.selection.reserve_card(card, app.state)
+        app.select_card(card)
+        if app.state.can_buy(card):
+            app.select_token(GOLD)
         app.refresh()
         self.assertFalse(self.action_button.instate(['disabled']))
         self.action_button.invoke()

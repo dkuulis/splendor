@@ -133,21 +133,6 @@ class Selection:
         if not affordable:
             self.tokens[GOLD] = 1
 
-    def reserve_card(self, card, state):
-        """Explicitly select a market card with gold for reservation."""
-        if (state.turn.finished or state.return_required or card is None
-                or card not in state.market[card.tier]):
-            return
-        # README rule 7: toggling the reservation off clears card and gold.
-        if self.action_kind == "reserve" and self.card is card:
-            self.clear()
-        else:
-            # Explicit reservation chooses the market card and gold together;
-            # README rules 2 and 4 describe the equivalent selection clicks.
-            self.clear()
-            self.card = card
-            self.tokens[GOLD] = 1
-
     def select_token(self, token, state):
         if not self.can_select_token(token, state):
             return

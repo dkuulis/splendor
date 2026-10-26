@@ -1,7 +1,7 @@
 """Compose 150×150 noble assets from clean WebP artwork (requires Pillow).
 
 Each noble awards three points; colored squares show owned-card requirements.
-These production definitions do not add nobles to the game model.
+Uses the noble IDs, points, and requirements from the game model.
 """
 
 import argparse
@@ -11,10 +11,11 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
-# Allow direct execution from tools/ while importing the project's constants.
+# Allow direct execution from tools/ while importing the game package.
 sys.path.insert(0, str(ROOT))
 
 from game.constants import DIAMOND, SAPPHIRE, EMERALD, RUBY, ONYX, TOKENS
+from game.initialize import create_nobles
 
 SCALE = 8
 SIZE = (150 * SCALE, 150 * SCALE)
@@ -22,20 +23,6 @@ PALETTE = {
     DIAMOND: "#e5e7eb", SAPPHIRE: "#2563eb", EMERALD: "#15803d",
     RUBY: "#be123c", ONYX: "#334155",
 }
-
-# Global numbering and requirements match prompts/noble_prompts.txt.
-NOBLES = [
-    ("noble_diamond_1", {DIAMOND: 4, ONYX: 4}),
-    ("noble_diamond_2", {DIAMOND: 4, RUBY: 4}),
-    ("noble_sapphire_3", {DIAMOND: 4, SAPPHIRE: 4}),
-    ("noble_sapphire_4", {SAPPHIRE: 4, RUBY: 4}),
-    ("noble_emerald_5", {EMERALD: 4, RUBY: 4}),
-    ("noble_emerald_6", {SAPPHIRE: 3, EMERALD: 3, ONYX: 3}),
-    ("noble_ruby_7", {DIAMOND: 3, SAPPHIRE: 3, ONYX: 3}),
-    ("noble_ruby_8", {DIAMOND: 3, EMERALD: 3, RUBY: 3}),
-    ("noble_onyx_9", {EMERALD: 3, RUBY: 3, ONYX: 3}),
-    ("noble_onyx_10", {DIAMOND: 3, SAPPHIRE: 3, EMERALD: 3}),
-]
 
 
 def generate_nobles(nobles, artwork_dir, output, font_path, high_res=None):
@@ -51,8 +38,8 @@ def generate_nobles(nobles, artwork_dir, output, font_path, high_res=None):
     if high_res:
         high_res.mkdir(parents=True, exist_ok=True)
 
-    for stem, requirements in nobles:
-        artwork = artwork_dir / f"{stem}.webp"
+    for noble in nobles:
+        artwork = artwork_dir / f"{noble.id}.webp"
         with Image.open(artwork) as original:
             if original.width != original.height:
                 raise ValueError(f"Noble artwork must be square: {artwork}")
@@ -62,12 +49,13 @@ def generate_nobles(nobles, artwork_dir, output, font_path, high_res=None):
         # 'lt' anchors the visible numeral top-left. Stroke widths are in
         # high-resolution pixels, matching generate_cards.py's synthetic bold.
         position = (6 * SCALE, 12 * SCALE)
-        draw.text(position, "3", font=fonts[48], fill="white", anchor="lt",
+        draw.text(position, str(noble.points), font=fonts[48], fill="white", anchor="lt",
                   stroke_width=9, stroke_fill="#25394e")
-        draw.text(position, "3", font=fonts[48], fill="white", anchor="lt",
+        draw.text(position, str(noble.points), font=fonts[48], fill="white", anchor="lt",
                   stroke_width=4, stroke_fill="white")
 
-        costs = [(token, requirements[token]) for token in TOKENS if requirements.get(token, 0)]
+        costs = [(token, noble.requirements[token]) for token in TOKENS
+                 if noble.requirements.get(token, 0)]
         for index, (token, amount) in enumerate(costs):
             y = 120 - (len(costs) - 1 - index) * 30
             ink = "#111827" if token == DIAMOND else "white"
@@ -79,11 +67,11 @@ def generate_nobles(nobles, artwork_dir, output, font_path, high_res=None):
             draw.text((19 * SCALE, (y + 13) * SCALE), str(amount), font=fonts[16],
                       fill=ink, anchor="mm", stroke_width=2, stroke_fill=ink)
 
-        path = output / f"{stem}.png"
+        path = output / f"{noble.id}.png"
         im.resize((150, 150), Image.Resampling.LANCZOS).save(path)
         print(f"{artwork} -> {path}")
         if high_res:
-            im.save(high_res / f"{stem}.png")
+            im.save(high_res / f"{noble.id}.png")
 
 
 def main():
@@ -99,7 +87,9 @@ def main():
     parser.add_argument("--high-res", type=Path,
                         help="Also save 1200×1200 compositions in a separate folder")
     args = parser.parse_args()
-    nobles = [NOBLES[args.noble - 1]] if args.noble else NOBLES
+    nobles = create_nobles()
+    if args.noble:
+        nobles = [nobles[args.noble - 1]]
     try:
         generate_nobles(nobles, args.artwork, args.output, args.font, args.high_res)
     except (OSError, ValueError) as error:

@@ -102,7 +102,7 @@ class ReturnTokensTests(unittest.TestCase):
                            selection.can_select_token(RUBY, state), state.can_buy(card)):
             self.assertFalse(permission)
         selection.select_card(card, state)
-        selection.reserve_card(card, state)
+        selection.select_token(GOLD, state)
         selection.select_token(RUBY, state)
         self.assertIsNone(selection.card)
         self.assertEqual(selection.tokens, {})
@@ -122,7 +122,7 @@ class ReturnTokensTests(unittest.TestCase):
         replacement = Card('replacement', 1, RUBY, 0, {})
         state.market[1] = [card]
         state.decks[1] = [replacement]
-        selection.reserve_card(card, state)
+        selection.select_card(card, state)
         self.assertTrue(selection.can_perform_action(state))
         selection.perform_action(state)
         self.assertEqual(player.reserved_cards, [card])
