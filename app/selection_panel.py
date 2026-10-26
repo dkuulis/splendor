@@ -56,9 +56,7 @@ class SelectionPanel(tk.Frame):
         if self.state.selected_card is not None:
             return self.state.can_buy(self.state.selected_card)
         selected = self.state.selected_tokens
-        valid = all(amount == 1 and token in TOKENS and token != "Gold"
-                    and self.state.supply.get(token, 0) for token, amount in selected.items())
-        return valid and sum(selected.values()) <= self.state.max_take
+        return not selected or self.state.take_tokens_error(selected) is None
 
     def go(self):
         if not self.can_go:

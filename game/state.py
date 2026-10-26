@@ -60,17 +60,25 @@ class State:
         self.turn.consecutive_passes += 1
         self.finish_turn()
 
-    def take_tokens(self, tokens):
+    def take_tokens_error(self, tokens):
+        """Return why a gem collection is illegal, or None when it is legal."""
         if self.turn.finished:
-            raise ValueError("The game has already ended.")
+            return "The game has already ended."
         tokens = list(tokens)
         if not 1 <= len(tokens) <= 3 or len(set(tokens)) != len(tokens):
-            raise ValueError("Select one to three different token types.")
+            return "Select one to three different token types."
         if any(token not in TOKENS or token == "Gold" or self.supply.get(token, 0) < 1 for token in tokens):
-            raise ValueError("A selected gem is not available.")
-        player = self.current_player
+            return "A selected gem is not available."
         if len(tokens) > self.max_take:
-            raise ValueError(f"You cannot hold more than {self.token_limit} gems.")
+            return f"You cannot hold more than {self.token_limit} gems."
+        return None
+
+    def take_tokens(self, tokens):
+        tokens = list(tokens)
+        error = self.take_tokens_error(tokens)
+        if error is not None:
+            raise ValueError(error)
+        player = self.current_player
         for token in tokens:
             self.supply[token] -= 1
             player.tokens[token] = player.tokens.get(token, 0) + 1
