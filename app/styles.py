@@ -9,6 +9,7 @@ DISABLED_PALETTE = {"Diamond": "#c4c7cc", "Sapphire": "#899bbd", "Emerald": "#81
 DISABLED_CARD_BORDER = "#a3a3a3"
 DECK_PALETTE = {1: "#166534", 2: "#a16207", 3: "#1e40af"}
 MUTED_TEXT_COLOR = "#64748b"
+LOG_BACKGROUND = "#f8fafc"
 PLAYER_PANEL_BACKGROUND = "#f8fafc"
 ACTIVE_PLAYER_BORDER = "#2563eb"
 DECK_TEXT_COLOR = "white"

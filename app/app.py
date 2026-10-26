@@ -31,18 +31,19 @@ class App:
     def create_ui(self):
         state = self.state
         shell = self.shell
-        self.header = Header(shell, [player.name for player in state.players], self.new_game,
-                             self.control, ("Manual", *STRATEGIES), self.change_control)
-        self.header.pack(fill="x")
-
         body = ttk.Frame(shell)
-        body.pack(fill="both", expand=True, pady=(12, 0))
+        body.pack(fill="both", expand=True)
         body.columnconfigure(0, weight=1)
         body.rowconfigure(0, weight=1)
         self.field = ttk.Frame(body)
         self.field.grid(row=0, column=0, sticky="nsew")
-        self.log = Log(body, state.log)
-        self.log.grid(row=0, column=1, sticky="nsew", padx=(16, 0))
+        sidebar = ttk.Frame(body)
+        sidebar.grid(row=0, column=1, sticky="nsew", padx=(16, 0))
+        self.header = Header(sidebar, self.new_game, self.control,
+                             ("Manual", *STRATEGIES), self.change_control)
+        self.header.pack(fill="x", padx=10, pady=(0, 12))
+        self.log = Log(sidebar, state.log)
+        self.log.pack(fill="both", expand=True)
 
         self.refresh()
 
