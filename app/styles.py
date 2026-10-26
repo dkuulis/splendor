@@ -5,6 +5,7 @@ TEXT_PALETTE = {"Diamond": "#111827", "Sapphire": "white", "Emerald": "white", "
 OUTLINE_PALETTE = {**PALETTE, "Diamond": "#94a3b8"}
 DECK_PALETTE = {1: "#166534", 2: "#a16207", 3: "#1e40af"}
 MUTED_TEXT_COLOR = "#64748b"
+PLAYER_PANEL_BACKGROUND = "#f8fafc"
 DECK_TEXT_COLOR = "white"
 SELECTION_OUTLINE_COLOR = "#f59e0b"
 
