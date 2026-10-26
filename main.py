@@ -137,14 +137,32 @@ class App:
         root.geometry(f"{width}x{height}")
 
     def player_panel(self, parent, name, subtitle, gems, discounts, points):
-        panel = ttk.LabelFrame(parent, text=f"{name}  •  {subtitle}  •  {points} / 15 points", padding=10)
+        panel = ttk.LabelFrame(parent, text=f"{name}  •  {subtitle}", padding=10)
         panel.pack(fill="x")
+        ttk.Label(panel, text=str(points), font=("Helvetica", 28, "bold")).pack(side="left", padx=(0, 20))
         for i, color in enumerate(COLORS):
             column = ttk.Frame(panel)
             column.pack(side="left", expand=True, fill="x")
-            ttk.Label(column, text=color, font=("Helvetica", 12, "bold")).pack(anchor="w")
-            ttk.Label(column, text=f"{gems[i]} gems  /  {discounts[i]} bonus").pack(anchor="w")
-        ttk.Label(panel, text=f"Gems held\n{sum(gems)} / 10", justify="right").pack(side="right")
+            card_count, gem_count = discounts[i], gems[i]
+            spacing = 28
+            group_gap = 10 if card_count and gem_count else 0
+            content_width = (card_count + gem_count) * spacing + group_gap
+            canvas_width = max(100, content_width)
+            resources = tk.Canvas(
+                column, width=canvas_width, height=44, highlightthickness=0,
+                background=parent.winfo_toplevel().cget("background"),
+            )
+            resources.pack()
+            outline = "#94a3b8" if color == "Diamond" else PALETTE[color]
+            start = (canvas_width - content_width) / 2
+            for card in range(card_count):
+                x = start + card * spacing
+                resources.create_rectangle(x + 2, 10, x + 26, 34, fill=PALETTE[color], outline=outline)
+            for gem in range(gem_count):
+                x = start + card_count * spacing + group_gap + gem * spacing
+                resources.create_oval(x + 2, 10, x + 26, 34, fill=PALETTE[color], outline=outline)
+            ttk.Label(column, text=color, foreground="#64748b").pack()
+        ttk.Label(panel, text=f"{sum(gems)} gems", justify="right").pack(side="right")
 
     def toggle_gem(self, selected, available):
         selected.set((selected.get() + 1) % (min(2, available) + 1))
