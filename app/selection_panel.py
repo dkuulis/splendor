@@ -4,79 +4,68 @@ from tkinter import ttk
 from game.constants import TOKENS
 
 from .assets import load_image
-from .styles import CARD_BACKGROUND, TOKEN_SIZE, TOKEN_SPACING, INACTIVE_PLAYER_BORDER, MARKET_CARD_HEIGHT
+from .card_panel import CardPanel
+from .styles import (CARD_BACKGROUND, TOKEN_SIZE, TOKEN_SPACING, INACTIVE_PLAYER_BORDER,
+                     MARKET_CARD_HEIGHT)
 
 
 class SelectionPanel(tk.Frame):
-    def __init__(self, parent, available_tokens, selected_tokens, on_pass, on_take, max_take=3, enabled=True,
-                 on_selection=None):
-        super().__init__(parent, height=MARKET_CARD_HEIGHT, background=CARD_BACKGROUND,
+    def __init__(self, parent, state, on_pass, on_take, on_buy, on_card, on_deselect,
+                 enabled=True):
+        super().__init__(parent, height=MARKET_CARD_HEIGHT + 2, background=CARD_BACKGROUND,
                          highlightthickness=1, highlightbackground=INACTIVE_PLAYER_BORDER,
                          borderwidth=0)
         self.grid_propagate(False)
-        self.available_tokens = available_tokens
-        self.selected_tokens = selected_tokens
+        self.state = state
+        self.enabled = enabled
         self.on_pass = on_pass
         self.on_take = on_take
-        self.max_take = max_take
-        self.enabled = enabled
-        self.on_selection = on_selection
-        self.images = {token: load_image(self, token.lower()) for token in TOKENS}
+        self.on_buy = on_buy
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
-        self.tokens = tk.Canvas(self, width=TOKEN_SIZE + 4 * TOKEN_SPACING, height=TOKEN_SIZE,
-                                background=CARD_BACKGROUND, highlightthickness=0)
-        self.tokens.grid(row=0, column=0, padx=5)
-        self.go_button = ttk.Button(self, text="Go!", command=self.go, state="disabled")
+        self.images = []
+        if state.selected_card is not None:
+            self.card = CardPanel(self, state.selected_card, on_card, affordable=enabled)
+            self.card.grid(row=0, column=0)
+            label = "Buy"
+        else:
+            self.tokens = tk.Canvas(self, width=TOKEN_SIZE + 4 * TOKEN_SPACING, height=TOKEN_SIZE,
+                                    background=CARD_BACKGROUND, highlightthickness=0)
+            self.tokens.grid(row=0, column=0, padx=5)
+            index = 0
+            for token in TOKENS:
+                for _ in range(state.selected_tokens.get(token, 0)):
+                    image = load_image(self, token.lower())
+                    self.images.append(image)
+                    item = self.tokens.create_image(TOKEN_SIZE / 2 + index * TOKEN_SPACING,
+                                                    TOKEN_SIZE / 2, image=image)
+                    if enabled:
+                        self.tokens.tag_bind(item, "<Button-1>",
+                                             lambda event, token=token: on_deselect(token))
+                    index += 1
+            label = "Take" if state.selected_tokens else "Pass"
+        self.go_button = ttk.Button(self, text=label, command=self.go,
+                                    state="normal" if self.can_go else "disabled")
         self.go_button.grid(row=0, column=1, sticky="e", padx=5)
-
-        self.refresh()
-
-    def refresh(self):
-        self.go_button.configure(state="normal" if self.can_go else "disabled")
-        self.tokens.delete("all")
-        index = 0
-        for token in TOKENS:
-            for _ in range(self.selected_tokens.get(token, 0)):
-                item = self.tokens.create_image(TOKEN_SIZE / 2 + index * TOKEN_SPACING,
-                                                TOKEN_SIZE / 2, image=self.images[token])
-                self.tokens.tag_bind(item, "<Button-1>",
-                                     lambda event, token=token: self.deselect(token))
-                index += 1
-        self.tokens.configure(width=max(TOKEN_SIZE + 4 * TOKEN_SPACING,
-                                        TOKEN_SIZE + (index - 1) * TOKEN_SPACING))
-        self.configure(width=self.tokens.winfo_reqwidth() + self.go_button.winfo_reqwidth() + 24)
+        self.configure(width=TOKEN_SIZE + 4 * TOKEN_SPACING + self.go_button.winfo_reqwidth() + 24)
 
     @property
     def can_go(self):
-        count = sum(self.selected_tokens.values())
-        valid = all(amount == 1 and token in TOKENS and token != "Gold" and self.available_tokens.get(token, 0)
-                    for token, amount in self.selected_tokens.items())
-        return self.enabled and valid and count <= self.max_take
+        if not self.enabled or self.state.turn.finished:
+            return False
+        if self.state.selected_card is not None:
+            return self.state.can_buy(self.state.selected_card)
+        selected = self.state.selected_tokens
+        valid = all(amount == 1 and token in TOKENS and token != "Gold"
+                    and self.state.supply.get(token, 0) for token, amount in selected.items())
+        return valid and sum(selected.values()) <= self.state.max_take
 
     def go(self):
         if not self.can_go:
             return
-        tokens = [token for token in TOKENS if self.selected_tokens.get(token, 0)]
-        if tokens:
-            self.on_take(tokens)
+        if self.state.selected_card is not None:
+            self.on_buy(self.state.selected_card)
+        elif self.state.selected_tokens:
+            self.on_take([token for token in TOKENS if self.state.selected_tokens.get(token, 0)])
         else:
             self.on_pass()
-
-    def select(self, token):
-        if (not self.enabled or token not in TOKENS or token == "Gold" or not self.available_tokens.get(token, 0)
-                or self.selected_tokens.get(token, 0)):
-            return
-        self.selected_tokens[token] = 1
-        self.update_selection()
-
-    def deselect(self, token):
-        if not self.enabled:
-            return
-        self.selected_tokens.pop(token, None)
-        self.update_selection()
-
-    def update_selection(self):
-        self.refresh()
-        if self.on_selection:
-            self.on_selection()

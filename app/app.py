@@ -63,15 +63,15 @@ class App:
         table.pack(pady=10)
         for row in range(3):
             table.rowconfigure(row, minsize=MARKET_CARD_HEIGHT + 2 * MARKET_ROW_PADDING)
-        self.market = MarketPanel(table, state.market, self.buy_card,
-                                  lambda card: self.manual_turn and state.can_buy(card))
+        self.market = MarketPanel(table, state.market, self.select_card,
+                                  lambda card: self.manual_turn and state.can_buy(card), state.selected_card)
         self.market.grid(row=0, column=1, rowspan=3, sticky="n")
         self.supply = SupplyPanel(table, state.supply, state.selected_tokens,
-                              lambda token: self.selection.select(token), enabled=self.manual_turn)
+                              self.select_token, enabled=self.manual_turn)
         self.supply.grid(row=0, column=0, rowspan=2, sticky="nsew", padx=(0, 12))
         self.selection = SelectionPanel(
-            table, state.supply, state.selected_tokens, self.pass_turn, self.take_tokens,
-            max_take=state.max_take, enabled=self.manual_turn, on_selection=self.supply.refresh,
+            table, state, self.pass_turn, self.take_tokens, self.buy_card,
+            self.select_card, self.deselect_token, enabled=self.manual_turn,
         )
         self.selection.grid(row=2, column=0, sticky="ew", padx=(0, 12), pady=MARKET_ROW_PADDING)
         self.player = PlayerPanel(field, state.players[0],
@@ -100,6 +100,7 @@ class App:
     def change_control(self):
         strategy_class = STRATEGIES.get(self.control.get())
         self.strategy = strategy_class() if strategy_class else None
+        self.state.clear_selection()
         self.refresh()
 
     def run_ai(self):
@@ -125,6 +126,21 @@ class App:
             return
         self.state.pass_turn()
         self.refresh()
+
+    def select_card(self, card):
+        if self.manual_turn:
+            self.state.select_card(card)
+            self.refresh()
+
+    def select_token(self, token):
+        if self.manual_turn:
+            self.state.select_token(token)
+            self.refresh()
+
+    def deselect_token(self, token):
+        if self.manual_turn:
+            self.state.deselect_token(token)
+            self.refresh()
 
     def take_tokens(self, tokens):
         if not self.manual_turn:

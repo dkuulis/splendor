@@ -15,6 +15,7 @@ class State:
         self.supply = {token: 5 if token == "Gold" else 4 for token in TOKENS}
         # Pending token counts by type; unselected types are omitted.
         self.selected_tokens = {}
+        self.selected_card = None
         # Every tier is always present; no cards means an empty list, not None.
         self.decks = {tier: [] for tier in (1, 2, 3)}
         self.market = {tier: [] for tier in (1, 2, 3)}
@@ -30,6 +31,27 @@ class State:
     @property
     def max_take(self):
         return min(3, max(0, self.token_limit - sum(self.current_player.tokens.values())))
+
+    def select_card(self, card):
+        if not self.can_buy(card):
+            return
+        self.selected_tokens.clear()
+        self.selected_card = None if self.selected_card is card else card
+
+    def select_token(self, token):
+        if (self.turn.finished or token not in TOKENS or token == "Gold"
+                or not self.supply.get(token, 0)):
+            return
+        self.selected_card = None
+        self.selected_tokens[token] = 1
+
+    def deselect_token(self, token):
+        if not self.turn.finished:
+            self.selected_tokens.pop(token, None)
+
+    def clear_selection(self):
+        self.selected_tokens.clear()
+        self.selected_card = None
 
     def pass_turn(self):
         if self.turn.finished:
@@ -101,7 +123,7 @@ class State:
         self.finish_turn()
 
     def finish_turn(self):
-        self.selected_tokens.clear()
+        self.clear_selection()
         if not self.turn.final_round and self.current_player.points >= self.target_points:
             self.turn.final_round = True
             player = self.current_player
