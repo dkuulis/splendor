@@ -1,4 +1,4 @@
-from game.constants import COLORS
+from game.constants import TOKENS
 
 
 class GreedyAI:
@@ -8,7 +8,7 @@ class GreedyAI:
         cards = [card for row in state.market.values() for card in row]
         if self.buy_card(state, cards):
             return
-        if self.take_gems(state, cards):
+        if self.take_tokens(state, cards):
             return
         state.pass_turn()
 
@@ -21,23 +21,23 @@ class GreedyAI:
             return True
         return False
 
-    def take_gems(self, state, cards):
+    def take_tokens(self, state, cards):
         """Collect useful gems and report whether an action was taken."""
         capacity = state.max_take
         if capacity == 0:
             return False
 
-        colors = []
+        tokens = []
         for _, _, available in self.rank_targets(state, cards):
-            available.sort(key=lambda color: state.bank[color])
-            for color in available:
-                if color not in colors and len(colors) < capacity:
-                    colors.append(color)
-            if len(colors) == capacity:
+            available.sort(key=lambda token: state.supply[token])
+            for token in available:
+                if token not in tokens and len(tokens) < capacity:
+                    tokens.append(token)
+            if len(tokens) == capacity:
                 break
-        if not colors:
+        if not tokens:
             return False
-        state.take_gems(colors)
+        state.take_tokens(tokens)
         return True
 
     def rank_targets(self, state, cards):
@@ -46,12 +46,12 @@ class GreedyAI:
         targets = []
         for card in cards:
             cost = state.card_cost(card)
-            missing = {color: max(0, cost.get(color, 0) - player.gems.get(color, 0))
-                       for color in COLORS}
-            available = [color for color in COLORS if missing[color] and state.bank.get(color, 0)]
+            missing = {token: max(0, cost.get(token, 0) - player.tokens.get(token, 0))
+                       for token in TOKENS}
+            available = [token for token in TOKENS if missing[token] and state.supply.get(token, 0)]
             if available:
                 total = sum(missing.values())
-                # At most three gems per turn, and only one of each color.
+                # At most three tokens per turn, and only one of each type.
                 turns = max(max(missing.values()), (total + 2) // 3)
                 targets.append((turns, total, available))
         # Prefer fewer gems when turn counts tie; otherwise keep market order.

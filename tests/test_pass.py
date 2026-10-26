@@ -6,13 +6,13 @@ from game import Card, State
 class PassTests(unittest.TestCase):
     def test_pass_switches_player_without_changing_inventory(self):
         state = State()
-        state.players[0].gems = {'Ruby': 2}
+        state.players[0].tokens = {'Ruby': 2}
         state.pass_turn()
         self.assertEqual(state.turn.active_player, 1)
         self.assertEqual(state.turn.consecutive_passes, 1)
         self.assertFalse(state.turn.finished)
-        self.assertEqual(state.players[0].gems, {'Ruby': 2})
-        self.assertEqual(state.bank['Ruby'], 4)
+        self.assertEqual(state.players[0].tokens, {'Ruby': 2})
+        self.assertEqual(state.supply['Ruby'], 4)
 
     def test_two_passes_end_in_draw_and_reject_further_moves(self):
         state = State()

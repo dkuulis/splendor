@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from game.initialize import create_decks
-from game.constants import COLORS
+from game.constants import TOKENS
 
 # Compose at eight times the displayed size so text, curves, and gem edges
 # remain smooth after downsampling. Layout coordinates below use base pixels;
@@ -23,7 +23,7 @@ from game.constants import COLORS
 SCALE = 8
 SIZE = (150 * SCALE, 210 * SCALE)
 PALETTE = {'Diamond': '#e5e7eb', 'Sapphire': '#2563eb', 'Emerald': '#15803d', 'Ruby': '#be123c', 'Onyx': '#334155'}
-COST_TEXT = {color: "white" for color in COLORS}
+COST_TEXT = {token: "white" for token in TOKENS}
 COST_TEXT["Diamond"] = "#111827"
 
 
@@ -36,13 +36,13 @@ def generate_cards(cards, artwork_dir, output, font_path, high_res=None):
     # Cache by filename so cards can share common artwork or use their own.
     backgrounds = {}
 
-    # Prepare a reusable, card-sized transparent gem overlay for each color.
+    # Prepare a reusable, card-sized transparent gem overlay for each token type.
     gems = {}
-    for color in {card.color for card in cards}:
-        with Image.open(artwork_dir / f"{color.lower()}.webp") as original:
+    for token in {card.token for card in cards}:
+        with Image.open(artwork_dir / f"{token.lower()}.webp") as original:
             gem = original.convert("RGBA")
         if gem.getchannel("A").getbbox() is None:
-            raise ValueError(f"{color} gem is fully transparent.")
+            raise ValueError(f"{token} gem is fully transparent.")
         # The alpha bounding box trims transparent margins. contain() fits the
         # cropped gem inside 42×42 without stretching its aspect ratio.
         gem = ImageOps.contain(gem.crop(gem.getchannel('A').getbbox()), (42 * SCALE, 42 * SCALE), Image.Resampling.LANCZOS)
@@ -55,15 +55,15 @@ def generate_cards(cards, artwork_dir, output, font_path, high_res=None):
         # (one displayed pixel). putalpha applies that mask to the ivory layer;
         # drawing the original gem on top leaves only the expanded rim visible.
         rim.putalpha(layer.getchannel('A').filter(ImageFilter.MaxFilter(17)))
-        gems[color] = Image.alpha_composite(rim, layer)
+        gems[token] = Image.alpha_composite(rim, layer)
 
     for card in cards:
         # IDs begin with card_<nnn>; omit the cost suffix for artwork lookup.
         number = card.id.split("_")[1]
 
-        artwork = artwork_dir / f"card_{number}_l{card.tier}_{card.color.lower()}.webp"
+        artwork = artwork_dir / f"card_{number}_l{card.tier}_{card.token.lower()}.webp"
         if not artwork.is_file():
-            artwork = artwork_dir / f"card_l{card.tier}_{card.color.lower()}.webp"
+            artwork = artwork_dir / f"card_l{card.tier}_{card.token.lower()}.webp"
 
         if artwork not in backgrounds:
             # RGBA provides opacity for overlays. LANCZOS blends neighboring
@@ -72,7 +72,7 @@ def generate_cards(cards, artwork_dir, output, font_path, high_res=None):
                 backgrounds[artwork] = original.convert("RGBA").resize(SIZE, Image.Resampling.LANCZOS)
 
         # Start a fresh composition; shared backgrounds and gem layers stay intact.
-        im = Image.alpha_composite(backgrounds[artwork], gems[card.color])
+        im = Image.alpha_composite(backgrounds[artwork], gems[card.token])
         draw = ImageDraw.Draw(im)
 
         if card.points:
@@ -84,14 +84,14 @@ def generate_cards(cards, artwork_dir, output, font_path, high_res=None):
             draw.text(position, str(card.points), font=fonts[48], fill='white', anchor='lt', stroke_width=4, stroke_fill='white')
 
         # Follow canonical gem order, skipping zero costs regardless of dict order.
-        costs = [(color, card.cost[color]) for color in COLORS if card.cost.get(color, 0)]
-        for index, (color, amount) in enumerate(costs):
+        costs = [(token, card.cost[token]) for token in TOKENS if card.cost.get(token, 0)]
+        for index, (token, amount) in enumerate(costs):
             # Bottom-align the column: last circle starts at y=180; preceding
             # circles step upward by 30px (26px diameter plus a 4px gap).
             y = 180 - (len(costs) - 1 - index) * 30
-            ink = COST_TEXT[color]
+            ink = COST_TEXT[token]
             # Ellipse bounds describe a 26×26 circle, with center (19, y+13).
-            draw.ellipse((6 * SCALE, y * SCALE, 32 * SCALE, (y + 26) * SCALE), fill=PALETTE[color], outline='#c5b58d', width=SCALE)
+            draw.ellipse((6 * SCALE, y * SCALE, 32 * SCALE, (y + 26) * SCALE), fill=PALETTE[token], outline='#c5b58d', width=SCALE)
             # 'mm' anchors text at its horizontal and vertical middle.
             draw.text((19 * SCALE, (y + 13) * SCALE), str(amount), font=fonts[16], fill=ink, anchor='mm', stroke_width=2, stroke_fill=ink)
 

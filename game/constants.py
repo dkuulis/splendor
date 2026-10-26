@@ -1,1 +1,1 @@
-COLORS = ("Diamond", "Sapphire", "Emerald", "Ruby", "Onyx")
+TOKENS = ("Diamond", "Sapphire", "Emerald", "Ruby", "Onyx")

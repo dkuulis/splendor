@@ -1,10 +1,10 @@
-from .constants import COLORS
+from .constants import TOKENS
 from .player import Player
 from .turn import Turn
 
 
 def format_cost(cost):
-    return ", ".join(f"{cost[color]} {color}" for color in COLORS if cost.get(color, 0)) or "no gems"
+    return ", ".join(f"{cost[token]} {token}" for token in TOKENS if cost.get(token, 0)) or "no gems"
 
 
 class State:
@@ -12,16 +12,16 @@ class State:
 
     def __init__(self):
         self.players = [Player("YOU"), Player("COMPUTER", is_ai=True)]
-        self.bank = dict.fromkeys(COLORS, 4)
-        # Pending gem counts by color; unselected colors are omitted.
-        self.selected_gems = {}
+        self.supply = dict.fromkeys(TOKENS, 4)
+        # Pending token counts by type; unselected types are omitted.
+        self.selected_tokens = {}
         # Every tier is always present; no cards means an empty list, not None.
         self.decks = {tier: [] for tier in (1, 2, 3)}
         self.market = {tier: [] for tier in (1, 2, 3)}
         self.turn = Turn()
         self.log = []
         self.target_points = 15
-        self.gem_limit = 10
+        self.token_limit = 10
 
     @property
     def current_player(self):
@@ -29,7 +29,7 @@ class State:
 
     @property
     def max_take(self):
-        return min(3, max(0, self.gem_limit - sum(self.current_player.gems.values())))
+        return min(3, max(0, self.token_limit - sum(self.current_player.tokens.values())))
 
     def pass_turn(self):
         if self.turn.finished:
@@ -38,34 +38,35 @@ class State:
         self.turn.consecutive_passes += 1
         self.finish_turn()
 
-    def take_gems(self, colors):
+    def take_tokens(self, tokens):
         if self.turn.finished:
             raise ValueError("The game has already ended.")
-        colors = list(colors)
-        if not 1 <= len(colors) <= 3 or len(set(colors)) != len(colors):
-            raise ValueError("Select one to three different gem colors.")
-        if any(color not in COLORS or self.bank.get(color, 0) < 1 for color in colors):
+        tokens = list(tokens)
+        if not 1 <= len(tokens) <= 3 or len(set(tokens)) != len(tokens):
+            raise ValueError("Select one to three different token types.")
+        if any(token not in TOKENS or self.supply.get(token, 0) < 1 for token in tokens):
             raise ValueError("A selected gem is not available.")
         player = self.current_player
-        if len(colors) > self.max_take:
-            raise ValueError(f"You cannot hold more than {self.gem_limit} gems.")
-        for color in colors:
-            self.bank[color] -= 1
-            player.gems[color] = player.gems.get(color, 0) + 1
-        gems = ", ".join(color for color in COLORS if color in colors)
-        self.log.append(f"{player.name} took {gems}.")
+        if len(tokens) > self.max_take:
+            raise ValueError(f"You cannot hold more than {self.token_limit} gems.")
+        for token in tokens:
+            self.supply[token] -= 1
+            player.tokens[token] = player.tokens.get(token, 0) + 1
+
+        taken = ", ".join(token for token in TOKENS if token in tokens)
+        self.log.append(f"{player.name} took {taken}.")
         self.turn.consecutive_passes = 0
         self.finish_turn()
 
     def card_cost(self, card):
         discounts = self.current_player.discounts
-        return {color: max(0, amount - discounts.get(color, 0)) for color, amount in card.cost.items()}
+        return {token: max(0, amount - discounts.get(token, 0)) for token, amount in card.cost.items()}
 
     def can_buy(self, card):
         if self.turn.finished or card not in self.market.get(card.tier, []):
             return False
         player = self.current_player
-        return all(player.gems.get(color, 0) >= amount for color, amount in self.card_cost(card).items())
+        return all(player.tokens.get(token, 0) >= amount for token, amount in self.card_cost(card).items())
 
     def buy_card(self, card):
         if self.turn.finished:
@@ -73,15 +74,15 @@ class State:
         if card not in self.market.get(card.tier, []):
             raise ValueError("That card is no longer in the market.")
         if not self.can_buy(card):
-            raise ValueError("You do not have enough gems to buy that card.")
+            raise ValueError("You do not have enough gems/gold to buy that card.")
         player = self.current_player
         cost = self.card_cost(card)
-        for color, amount in cost.items():
+        for token, amount in cost.items():
             if amount:
-                player.gems[color] -= amount
-                self.bank[color] = self.bank.get(color, 0) + amount
-                if player.gems[color] == 0:
-                    del player.gems[color]
+                player.tokens[token] -= amount
+                self.supply[token] = self.supply.get(token, 0) + amount
+                if player.tokens[token] == 0:
+                    del player.tokens[token]
         player.cards[card.id] = card
         row = self.market[card.tier]
         slot = row.index(card)
@@ -92,15 +93,15 @@ class State:
         else:
             row.pop(slot)
         payment = format_cost(cost)
-        self.log.append(f"{card.points}-point {card.color} card (level {card.tier}) bought by {player.name} for {payment}.")
+        self.log.append(f"{card.points}-point {card.token} card (level {card.tier}) bought by {player.name} for {payment}.")
         if revealed is not None:
             revealed_cost = format_cost(revealed.cost)
-            self.log.append(f"Revealed: {revealed.points}-point {revealed.color} card (level {revealed.tier}), costing {revealed_cost}.")
+            self.log.append(f"Revealed: {revealed.points}-point {revealed.token} card (level {revealed.tier}), costing {revealed_cost}.")
         self.turn.consecutive_passes = 0
         self.finish_turn()
 
     def finish_turn(self):
-        self.selected_gems.clear()
+        self.selected_tokens.clear()
         if not self.turn.final_round and self.current_player.points >= self.target_points:
             self.turn.final_round = True
             player = self.current_player

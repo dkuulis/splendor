@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-from game.constants import COLORS
+from game.constants import TOKENS
 
 from .player_column import PlayerColumn
 
@@ -27,11 +27,11 @@ class PlayerPanel(tk.Frame):
         self.panel.pack(fill="both", expand=True)
         self.panel.rowconfigure(0, minsize=MARKET_CARD_HEIGHT)
 
-        for index, color in enumerate(COLORS):
-            cards = [card for card in player.cards.values() if card.color == color]
-            gem_count = player.gems.get(color, 0)
-            if not cards and not gem_count:
+        for index, token in enumerate(TOKENS):
+            cards = [card for card in player.cards.values() if card.token == token]
+            token_count = player.tokens.get(token, 0)
+            if not cards and not token_count:
                 continue
-            column = PlayerColumn(self.panel, color, cards, gem_count)
+            column = PlayerColumn(self.panel, token, cards, token_count)
             self.panel.columnconfigure(index, weight=1)
             column.grid(row=0, column=index, sticky="ew", padx=(0, PLAYER_COLUMN_GAP))

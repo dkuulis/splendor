@@ -5,12 +5,12 @@ from tkinter import StringVar, messagebox, ttk
 from game.initialize import create_initial_state
 from ai import STRATEGIES, GreedyAI
 
-from .bank_panel import BankPanel
+from .supply_panel import SupplyPanel
 from .log import Log
 from .header import Header
 from .market_panel import MarketPanel
 from .player_panel import PlayerPanel
-from .pick_panel import PickPanel
+from .selection_panel import SelectionPanel
 from .score_panel import ScorePanel
 from .styles import MARKET_CARD_HEIGHT, MARKET_ROW_PADDING, WINDOW_MIN_WIDTH, configure_styles
 
@@ -66,14 +66,14 @@ class App:
         self.market = MarketPanel(table, state.market, self.buy_card,
                                   lambda card: self.manual_turn and state.can_buy(card))
         self.market.grid(row=0, column=1, rowspan=3, sticky="n")
-        self.bank = BankPanel(table, state.bank, state.selected_gems,
-                              lambda color: self.pick.select(color), enabled=self.manual_turn)
-        self.bank.grid(row=0, column=0, rowspan=2, sticky="nsew", padx=(0, 12))
-        self.pick = PickPanel(
-            table, state.bank, state.selected_gems, self.pass_turn, self.take_gems,
-            max_take=state.max_take, enabled=self.manual_turn, on_selection=self.bank.refresh,
+        self.supply = SupplyPanel(table, state.supply, state.selected_tokens,
+                              lambda token: self.selection.select(token), enabled=self.manual_turn)
+        self.supply.grid(row=0, column=0, rowspan=2, sticky="nsew", padx=(0, 12))
+        self.selection = SelectionPanel(
+            table, state.supply, state.selected_tokens, self.pass_turn, self.take_tokens,
+            max_take=state.max_take, enabled=self.manual_turn, on_selection=self.supply.refresh,
         )
-        self.pick.grid(row=2, column=0, sticky="ew", padx=(0, 12), pady=MARKET_ROW_PADDING)
+        self.selection.grid(row=2, column=0, sticky="ew", padx=(0, 12), pady=MARKET_ROW_PADDING)
         self.player = PlayerPanel(field, state.players[0],
                                   active=state.player_status(state.players[0]) == "active")
         self.player.pack(fill="x")
@@ -126,11 +126,11 @@ class App:
         self.state.pass_turn()
         self.refresh()
 
-    def take_gems(self, colors):
+    def take_tokens(self, tokens):
         if not self.manual_turn:
             return
         try:
-            self.state.take_gems(colors)
+            self.state.take_tokens(tokens)
         except ValueError as error:
             messagebox.showinfo("Cannot take gems", str(error), parent=self.shell)
             return

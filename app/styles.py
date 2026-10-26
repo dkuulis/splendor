@@ -13,11 +13,11 @@ INACTIVE_PLAYER_BORDER = "#e5e7eb"
 LOG_FONT = ("Helvetica", 11)
 POINTS_FONT = ("Forum", -48, "bold")
 
-GEM_SIZE = 60
-GEM_GAP = 5
-GEM_SPACING = GEM_SIZE + GEM_GAP
-BANK_PILE_WIDTH = 3 * GEM_SIZE + 4
-BANK_PILE_HEIGHT = 2 * GEM_SIZE + 4
+TOKEN_SIZE = 60
+TOKEN_GAP = 5
+TOKEN_SPACING = TOKEN_SIZE + TOKEN_GAP
+TOKEN_PILE_WIDTH = 3 * TOKEN_SIZE + 4
+TOKEN_PILE_HEIGHT = 2 * TOKEN_SIZE + 4
 
 WINDOW_MIN_WIDTH = 1700
 
@@ -26,12 +26,12 @@ MARKET_CARD_HEIGHT = MARKET_CARD_WIDTH * 7 // 5
 MARKET_ROW_PADDING = 4
 PLAYER_CARD_OFFSET = 30
 PLAYER_COLUMN_GAP = 12
-PLAYER_GEM_OVERHANG = 20
-PLAYER_GEMS_PER_COLUMN = 2
+TOKEN_OVERHANG = 20
+PLAYER_TOKENS_PER_COLUMN = 2
 PLAYER_PANEL_PADDING = 5
 
 
-def gem_centers(count, width, spacing):
+def token_centers(count, width, spacing):
     start = (width - (count - 1) * spacing) / 2
     return [start + index * spacing for index in range(count)]
 
