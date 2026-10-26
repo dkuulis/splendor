@@ -8,7 +8,6 @@ from .supply_panel import SupplyPanel
 from .background import Background
 from .divider_panel import DividerPanel
 from .log import Log
-from .header import Header
 from .market_panel import MarketPanel
 from .nobles_panel import NoblesPanel
 from .player_panel import PlayerPanel
@@ -40,8 +39,6 @@ class App:
         self.field.grid(row=0, column=0, sticky="nsew")
         sidebar = ttk.Frame(body)
         sidebar.grid(row=0, column=1, sticky="nsew", padx=(16, 0))
-        self.header = Header(sidebar, self.new_game)
-        self.header.pack(fill="x", padx=10, pady=(0, 12))
         self.scores = ScorePanel(sidebar, self.state.players)
         self.scores.pack(fill="x", padx=10, pady=(0, 12))
         self.log = Log(sidebar)
@@ -63,7 +60,7 @@ class App:
         self.supply = SupplyPanel(table, self.select_token)
         self.supply.grid(row=0, column=1, rowspan=2, sticky="nsew", padx=(0, 12))
         self.selection = SelectionPanel(
-            table, self.perform_action, self.select_card, self.deselect_token,
+            table, self.perform_action, self.select_card, self.deselect_token, self.new_game,
         )
         self.selection.grid(row=2, column=1, sticky="ew", padx=(0, 12), pady=MARKET_ROW_PADDING)
         self.player_divider = DividerPanel(self.field)

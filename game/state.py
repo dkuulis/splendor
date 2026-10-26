@@ -61,7 +61,7 @@ class State:
     def action_label(self):
         if self.selected_card is not None:
             return "Reserve" if self.selected_tokens.get(GOLD, 0) else "Buy"
-        return "Take" if self.selected_tokens else "Pass"
+        return "Take"
 
     @property
     def action_error(self):
@@ -70,9 +70,7 @@ class State:
             if self.selected_tokens.get(GOLD, 0):
                 return self.reserve_card_error()
             return self.buy_card_error()
-        if self.selected_tokens:
-            return self.take_tokens_error()
-        return "The game has already ended." if self.turn.finished else None
+        return self.take_tokens_error()
 
     def perform_action(self):
         """Validate and execute the selection, passing when nothing is selected."""
@@ -81,10 +79,8 @@ class State:
                 self.reserve_card()
             else:
                 self.buy_card()
-        elif self.selected_tokens:
-            self.take_tokens()
         else:
-            self.pass_turn()
+            self.take_tokens()
 
     def pass_turn(self):
         if self.turn.finished:
@@ -97,9 +93,9 @@ class State:
         """Return why a gem collection is illegal, or None when it is legal."""
         if self.turn.finished:
             return "The game has already ended."
-        if (not 1 <= len(self.selected_tokens) <= MAX_TAKE
+        if (len(self.selected_tokens) > MAX_TAKE
                 or any(amount != 1 for amount in self.selected_tokens.values())):
-            return "Select one to three different token types."
+            return "Select up to three different token types."
         if any(token not in TOKENS or token == GOLD or self.supply.get(token, 0) < 1
                for token in self.selected_tokens):
             return "A selected gem is not available."
@@ -111,6 +107,9 @@ class State:
         error = self.take_tokens_error()
         if error is not None:
             raise ValueError(error)
+        if not self.selected_tokens:
+            self.pass_turn()
+            return
         for token in self.selected_tokens:
             self.supply[token] -= 1
             self.current_player.tokens[token] = self.current_player.tokens.get(token, 0) + 1

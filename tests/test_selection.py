@@ -128,11 +128,11 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(self.state.players[0].cards[self.card.token], [self.card])
         self.assertEqual(self.state.market[1], [replacement])
         self.assertEqual(self.state.turn.active_player, 1)
-        self.assertEqual(self.state.action_label, 'Pass')
+        self.assertEqual(self.state.action_label, 'Take')
 
     def test_empty_selection_passes_even_at_token_limit(self):
         self.state.current_player.tokens = {RUBY: 10}
-        self.assertEqual(self.state.action_label, 'Pass')
+        self.assertEqual(self.state.action_label, 'Take')
         self.assertIsNone(self.state.action_error)
         self.state.perform_action()
         self.assertEqual(self.state.log, ['YOU passed.'])
@@ -148,7 +148,7 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(self.state.log, ['YOU took Diamond, Ruby.'])
         self.assertEqual(self.state.turn.active_player, 1)
         self.assertEqual(self.state.selected_tokens, {})
-        self.assertEqual(self.state.action_label, 'Pass')
+        self.assertEqual(self.state.action_label, 'Take')
 
     def test_invalid_actions_report_same_error_and_preserve_state(self):
         cases = ('missing card', 'unaffordable card', 'unavailable gem',

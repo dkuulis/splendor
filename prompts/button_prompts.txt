@@ -1,0 +1,58 @@
+Rectangular enamel-and-gold buttons — approved palette.
+Generated with the built-in image tool, one call per source artwork variant.
+The approved maroon sample is reused as the Take source.
+
+Layout: 140 x 42 px per button. Vertical order: Buy, Reserve, Take, Restart.
+Top positions: 5, 55, 105, 163 px. Gaps: 8, 8, 16 px.
+Total: 5 + 4*42 + 8 + 8 + 16 + 5 = 210 px.
+All sources and runtime assets are fully opaque rectangles with square corners.
+Enabled artwork is action-specific; disabled artwork is shared.
+Labels use font/Forum-Regular.ttf at 20 px, rendered at 8x and downsampled.
+Enabled labels: cream #FFF0CC. Disabled labels: muted cream #C9C2B4.
+
+Labels: Buy, Reserve, Take, Restart. Take keeps its label with zero selected
+gems: clicking it ends the turn without collecting gems and counts toward
+the existing stalemate rule. Nonempty selections keep the existing limits.
+Restart remains available during AI turns and after the game ends.
+
+Palette: Buy sapphire blue #245A86; Reserve emerald green #246747;
+Take maroon #702C3C; Restart charcoal bronze #34332C.
+Disabled: matte gray-brown #504B42 with a dull bronze rim.
+
+Original generated PNGs: images/button_*.png (ignored by Git).
+Source artwork: artwork/button_*.webp (quality 80, fully opaque).
+Runtime assets: assets/button_<action>_<enabled|disabled>.png (140x42 RGB).
+Regenerate runtime assets and an actual-size enabled/disabled preview:
+  .venv/bin/python tools/generate_buttons.py --preview images/buttons_preview.png
+
+Exact image-generation prompts follow. The Take prompt originally requested
+an approval sample; that approved original is now used in production.
+
+=== button_buy_enabled ===
+Use case: ui-mockup.
+Production artwork: ONE text-free enamel-and-gold button background for a Renaissance jewel-trading desktop game. Softly polished antique-gold thin double rim, subtle top highlight, restrained shallow bevel, broad blank clean center for a cream label added later. Fine enamel texture with minimal grain.
+Front-on orthographic, horizontal rectangle exactly 10:3 aspect ratio intended for 140x42 pixels. Four square 90-degree corners. Full-bleed rectangular plaque fills canvas edge to edge. Entire image is fully opaque, including all four corners; gold border runs inside canvas edges, all four border sides completely visible. No outer margin, no transparency, no rounded corners, no clipped corners, no exterior shadow, no backdrop or scene. Border occupies approximately 6 percent of height. No text, letters, icons, gems, watermark, ornament or glow.
+State ENABLED. Rich sapphire-blue enamel face, base color #245A86. Blue rather than teal. Clear contrast with cream lettering added later.
+
+=== button_reserve_enabled ===
+Use case: ui-mockup.
+Production artwork: ONE text-free enamel-and-gold button background for a Renaissance jewel-trading desktop game. Softly polished antique-gold thin double rim, subtle top highlight, restrained shallow bevel, broad blank clean center for a cream label added later. Fine enamel texture with minimal grain.
+Front-on orthographic, horizontal rectangle exactly 10:3 aspect ratio intended for 140x42 pixels. Four square 90-degree corners. Full-bleed rectangular plaque fills canvas edge to edge. Entire image is fully opaque, including all four corners; gold border runs inside canvas edges, all four border sides completely visible. No outer margin, no transparency, no rounded corners, no clipped corners, no exterior shadow, no backdrop or scene. Border occupies approximately 6 percent of height. No text, letters, icons, gems, watermark, ornament or glow.
+State ENABLED. Rich emerald-green enamel face, base color #246747. Green rather than teal. Clear contrast with cream lettering added later.
+
+=== button_take_enabled ===
+Use case: ui-mockup.
+Production artwork SAMPLE for approval: ONE text-free enamel-and-gold button background for a Renaissance jewel-trading desktop game. Deep rich reddish maroon enamel face, base color #702C3C, clearly burgundy red rather than purple or brown. Softly polished antique-gold thin double rim, subtle top highlight, restrained shallow bevel, broad blank clean center for a cream label added later. Active, inviting but refined, not a warning button. Fine enamel texture with minimal grain.
+Front-on orthographic, horizontal rectangle exactly 10:3 aspect ratio intended for 140x42 pixels. Four square 90-degree corners. Full-bleed rectangular plaque fills canvas edge to edge. Entire image is fully opaque, including all four corners; gold border runs inside canvas edges. No outer margin, no transparency, no rounded corners, no clipped corners, no exterior shadow, no backdrop or scene. Border occupies approximately 6 percent of height. No text, letters, icons, gems, watermark, ornament or glow.
+
+=== button_restart_enabled ===
+Use case: ui-mockup.
+Production artwork: ONE text-free enamel-and-gold button background for a Renaissance jewel-trading desktop game. Softly polished antique-gold thin double rim, subtle top highlight, restrained shallow bevel, broad blank clean center for a cream label added later. Fine enamel texture with minimal grain.
+Front-on orthographic, horizontal rectangle exactly 10:3 aspect ratio intended for 140x42 pixels. Four square 90-degree corners. Full-bleed rectangular plaque fills canvas edge to edge. Entire image is fully opaque, including all four corners; gold border runs inside canvas edges, all four border sides completely visible. No outer margin, no transparency, no rounded corners, no clipped corners, no exterior shadow, no backdrop or scene. Border occupies approximately 6 percent of height. No text, letters, icons, gems, watermark, ornament or glow.
+State ENABLED. Quiet dark charcoal-bronze enamel face, base color #34332C. Lower emphasis than the colorful turn actions, with a restrained gold rim.
+
+=== button_disabled ===
+Use case: ui-mockup.
+Production artwork: ONE text-free enamel-and-gold button background for a Renaissance jewel-trading desktop game. Softly polished antique-gold thin double rim, subtle top highlight, restrained shallow bevel, broad blank clean center for a cream label added later. Fine enamel texture with minimal grain.
+Front-on orthographic, horizontal rectangle exactly 10:3 aspect ratio intended for 140x42 pixels. Four square 90-degree corners. Full-bleed rectangular plaque fills canvas edge to edge. Entire image is fully opaque, including all four corners; gold border runs inside canvas edges, all four border sides completely visible. No outer margin, no transparency, no rounded corners, no clipped corners, no exterior shadow, no backdrop or scene. Border occupies approximately 6 percent of height. No text, letters, icons, gems, watermark, ornament or glow.
+State DISABLED, shared by four actions. Matte desaturated gray-brown face, base color #504B42. Override polished-metal treatment: dull low-contrast bronze double rim, no bright highlights, flat finish, minimal depth. Fully opaque square corners, exact same geometry as enabled plaques. Clear blank center for muted cream lettering added later.

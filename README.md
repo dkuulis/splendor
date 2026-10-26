@@ -11,10 +11,11 @@ computer strategy at launch with `--ai` (default: `greedy`):
 .venv/bin/python main.py --ai manual
 ```
 
-Go! passes when no gems are selected; two consecutive passes end
+Take ends the turn without collecting when no gems are selected; two consecutive empty turns end
 the game using score and card-count tie-breaks. The log records actual actions.
-Select one to three different gems and use Go! to collect them. The button is
+Select one to three different gems and use Take to collect them. The button is
 disabled when the selection is invalid.
+Buy, Reserve, Take, and Restart are grouped in the selection panel.
 The 10-gem inventory limit is enforced. Click any market card to move it into
 the selection panel; click it again to deselect it. Buy is enabled only when
 you have enough gems after owned-card discounts, using owned gold as a wildcard

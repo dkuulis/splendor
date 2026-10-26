@@ -31,7 +31,9 @@ Choose one action:
    bank. You may hold at most three reserved cards, and taking the gold must
    not exceed the 10-token inventory limit. Refill the market slot from its
    deck if possible. Reserved cards grant no points or discounts.
-4. **Pass:** take no action and give the turn to the opponent.
+4. **Take zero gems:** click Take with nothing selected to give the turn to
+   the opponent without collecting anything. This counts toward the
+   two-consecutive-pass ending described below.
 
 A player cannot take gems and buy a card on the same turn.
 

@@ -7,14 +7,34 @@ from game import State
 
 
 class TakeTokensTests(unittest.TestCase):
+    def test_taking_zero_keeps_inventory_and_counts_toward_stalemate(self):
+        state = State()
+        state.players[0].tokens = {RUBY: 10}
+        supply = dict(state.supply)
+        state.take_tokens()
+        self.assertEqual(state.players[0].tokens, {RUBY: 10})
+        self.assertEqual(state.supply, supply)
+        self.assertEqual(state.turn.active_player, 1)
+        self.assertEqual(state.turn.consecutive_passes, 1)
+        self.assertFalse(state.turn.finished)
+        state.take_tokens()
+        self.assertEqual(state.supply, supply)
+        self.assertEqual(state.players[1].tokens, {})
+        self.assertEqual(state.turn.consecutive_passes, 2)
+        self.assertTrue(state.turn.finished)
+        with self.assertRaises(ValueError):
+            state.take_tokens()
+
     def test_validation_matches_action_without_changing_state(self):
         cases = [
             ([RUBY], 0, 4, False, None),
             ([RUBY, ONYX, DIAMOND], 0, 4, False, None),
-            ([], 0, 4, False, "Select one to three different token types."),
-            ([RUBY, RUBY], 0, 4, False, "Select one to three different token types."),
+            ([], 0, 4, False, None),
+            ([], 10, 4, False, None),
+            ([], 0, 4, True, "The game has already ended."),
+            ([RUBY, RUBY], 0, 4, False, "Select up to three different token types."),
             ([RUBY, ONYX, DIAMOND, EMERALD], 0, 4, False,
-             "Select one to three different token types."),
+             "Select up to three different token types."),
             ([GOLD], 0, 4, False, "A selected gem is not available."),
             (['unknown'], 0, 4, False, "A selected gem is not available."),
             ([RUBY], 0, 0, False, "A selected gem is not available."),
@@ -58,7 +78,7 @@ class TakeTokensTests(unittest.TestCase):
         self.assertEqual(len(state.log), 2)
 
     def test_invalid_moves_leave_state_unchanged(self):
-        for tokens in ([], [RUBY] * 2, [RUBY, ONYX, DIAMOND, EMERALD], [GOLD], [SAPPHIRE]):
+        for tokens in ([RUBY] * 2, [RUBY, ONYX, DIAMOND, EMERALD], [GOLD], [SAPPHIRE]):
             with self.subTest(tokens=tokens):
                 state = State()
                 state.supply[SAPPHIRE] = 0

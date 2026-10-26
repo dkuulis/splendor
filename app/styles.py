@@ -23,6 +23,9 @@ WINDOW_MIN_WIDTH = 1700
 
 MARKET_CARD_WIDTH = 150
 MARKET_CARD_HEIGHT = MARKET_CARD_WIDTH * 7 // 5
+ACTION_BUTTON_WIDTH = 140
+ACTION_BUTTON_HEIGHT = 42
+ACTION_BUTTON_TOPS = (5, 55, 105, 163)
 NOBLE_SIZE = 150
 MARKET_ROW_PADDING = 4
 PLAYER_CARD_OFFSET = 30
@@ -37,3 +40,6 @@ def configure_styles(root):
     style.configure("TFrame", background=TABLE_BACKGROUND)
     style.configure("TLabel", background=TABLE_BACKGROUND, foreground=TEXT_COLOR)
     style.configure("Player.TFrame", background=PLAYER_PANEL_BACKGROUND)
+    # Use only the image label to avoid platform-dependent native button padding.
+    style.layout("Action.TButton", [("Button.label", {"sticky": "nswe"})])
+    style.configure("Action.TButton", padding=0, borderwidth=0)
