@@ -3,12 +3,12 @@
 import tkinter as tk
 
 from app import App
-from game.preview import create_preview_state
+from game.initialize import create_initial_state
 
 
 def main():
     root = tk.Tk()
-    App(root, create_preview_state())
+    App(root, create_initial_state())
     root.mainloop()
 
 
