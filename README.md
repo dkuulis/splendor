@@ -51,8 +51,11 @@ and gem PNGs in `images`, using attributes from `game/initialize.py`:
 python tools/generate_cards.py images assets --font /path/to/Forum-Regular.ttf
 ```
 
-The input folder must contain `card_l<level>_<gem>.png` backgrounds and
-`<gem>.png` icons (lowercase gem names). Output is fixed at 150×210px, using
+The input folder must contain `<gem>.png` icons (lowercase gem names).
+For artwork, the tool first looks for `card_<nnn>_l<level>_<gem>.png`
+(for example, `card_068_l2_ruby.png`), then falls back to
+`card_l<level>_<gem>.png`. It logs the artwork path and output path for each
+generated file. Output is fixed at 150×210px, using
 card IDs as filenames. Existing output files are replaced. The Forum font
 uses synthetic bold to match the current assets.
 

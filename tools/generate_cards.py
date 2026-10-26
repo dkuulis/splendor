@@ -33,15 +33,8 @@ def generate_cards(cards, images, output, font_path, high_res=None):
     if high_res:
         high_res.mkdir(parents=True, exist_ok=True)
 
-    # Load each needed tier/color background once, even when many cards share it.
-    # RGBA includes an alpha (opacity) channel, required for transparent overlays.
-    # LANCZOS is a high-quality resampling filter that blends neighboring pixels
-    # to retain detail and reduce jagged edges when resizing.
+    # Cache by filename so cards can share common artwork or use their own.
     backgrounds = {}
-    for level, color in {(card.tier, card.color) for card in cards}:
-        name = f"card_l{level}_{color.lower()}.png"
-        with Image.open(images / name) as original:
-            backgrounds[level, color] = original.convert("RGBA").resize(SIZE, Image.Resampling.LANCZOS)
 
     # Prepare a reusable, card-sized transparent gem overlay for each color.
     gems = {}
@@ -65,8 +58,21 @@ def generate_cards(cards, images, output, font_path, high_res=None):
         gems[color] = Image.alpha_composite(rim, layer)
 
     for card in cards:
+        # IDs begin with card_<nnn>; omit the cost suffix for artwork lookup.
+        number = card.id.split("_")[1]
+
+        artwork = images / f"card_{number}_l{card.tier}_{card.color.lower()}.png"
+        if not artwork.is_file():
+            artwork = images / f"card_l{card.tier}_{card.color.lower()}.png"
+
+        if artwork not in backgrounds:
+            # RGBA provides opacity for overlays. LANCZOS blends neighboring
+            # pixels to preserve detail and smooth edges when resizing.
+            with Image.open(artwork) as original:
+                backgrounds[artwork] = original.convert("RGBA").resize(SIZE, Image.Resampling.LANCZOS)
+
         # Start a fresh composition; shared backgrounds and gem layers stay intact.
-        im = Image.alpha_composite(backgrounds[card.tier, card.color], gems[card.color])
+        im = Image.alpha_composite(backgrounds[artwork], gems[card.color])
         draw = ImageDraw.Draw(im)
 
         if card.points:
@@ -88,14 +94,17 @@ def generate_cards(cards, images, output, font_path, high_res=None):
             draw.ellipse((6 * SCALE, y * SCALE, 32 * SCALE, (y + 26) * SCALE), fill=PALETTE[color], outline='#c5b58d', width=SCALE)
             # 'mm' anchors text at its horizontal and vertical middle.
             draw.text((19 * SCALE, (y + 13) * SCALE), str(amount), font=fonts[16], fill=ink, anchor='mm', stroke_width=2, stroke_fill=ink)
-            
+
         # Downsample only after all overlays are composed; optionally retain the
         # full 1200×1680 composition in a separate folder under the same card ID.
         asset = im.resize((150, 210), Image.Resampling.LANCZOS)
         path = output / f'{card.id}.png'
         asset.save(path)
+        print(f"{artwork} -> {path}")
         if high_res:
-            im.save(high_res / f"{card.id}.png")
+            high_res_path = high_res / f"{card.id}.png"
+            im.save(high_res_path)
+            print(f"{artwork} -> {high_res_path}")
 
 
 def main():
