@@ -65,7 +65,9 @@ strategy priorities and control options.
 
 ## Rules omitted or changed from full Splendor
 
-- **Nobles:** no noble tiles, qualification checks, or noble points.
+- **Nobles:** the game state deals three nobles and supports owned nobles
+  contributing points. Display, qualification checks, and awarding nobles
+  are not implemented yet, so nobles do not affect normal play.
 - **Reservations and gold:** no reserved cards, blind reservations, or gold
   wildcard payments. Gold remains in the bank.
 - **Two matching gems:** omitted for now; the full game permits this only

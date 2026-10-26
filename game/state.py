@@ -19,6 +19,7 @@ class State:
         # Every tier is always present; no cards means an empty list, not None.
         self.decks = {tier: [] for tier in (1, 2, 3)}
         self.market = {tier: [] for tier in (1, 2, 3)}
+        self.nobles = []
         self.turn = Turn()
         self.log = []
         self.target_points = 15

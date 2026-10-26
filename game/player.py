@@ -4,10 +4,12 @@ class Player:
         self.is_ai = is_ai
         self.tokens = {}
         self.cards = {}
+        self.nobles = {}
 
     @property
     def points(self):
-        return sum(card.points for card in self.cards.values())
+        return (sum(card.points for card in self.cards.values())
+                + sum(noble.points for noble in self.nobles.values()))
 
     @property
     def discounts(self):

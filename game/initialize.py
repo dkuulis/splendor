@@ -1,8 +1,9 @@
-"""Card definitions transcribed from the supplied list, in its original order."""
+"""Card and noble definitions."""
 
 import random
 
 from .card import Card
+from .noble import Noble
 from .state import State
 
 
@@ -14,8 +15,27 @@ def create_initial_state(seed=None):
         rng.shuffle(deck)
         state.market[tier] = deck[:4]
         state.decks[tier] = deck[4:]
+    nobles = create_nobles()
+    rng.shuffle(nobles)
+    state.nobles = nobles[:len(state.players) + 1]
     state.log.append("New game. Decks shuffled and four cards dealt per level.")
     return state
+
+
+def create_nobles():
+    """Return fresh nobles."""
+    return [
+        Noble("noble_diamond_1", 3, {"Diamond": 4, "Onyx": 4}),
+        Noble("noble_diamond_2", 3, {"Diamond": 4, "Ruby": 4}),
+        Noble("noble_sapphire_3", 3, {"Diamond": 4, "Sapphire": 4}),
+        Noble("noble_sapphire_4", 3, {"Sapphire": 4, "Ruby": 4}),
+        Noble("noble_emerald_5", 3, {"Emerald": 4, "Ruby": 4}),
+        Noble("noble_emerald_6", 3, {"Sapphire": 3, "Emerald": 3, "Onyx": 3}),
+        Noble("noble_ruby_7", 3, {"Diamond": 3, "Sapphire": 3, "Onyx": 3}),
+        Noble("noble_ruby_8", 3, {"Diamond": 3, "Emerald": 3, "Ruby": 3}),
+        Noble("noble_onyx_9", 3, {"Emerald": 3, "Ruby": 3, "Onyx": 3}),
+        Noble("noble_onyx_10", 3, {"Diamond": 3, "Sapphire": 3, "Emerald": 3}),
+    ]
 
 
 def create_decks():
