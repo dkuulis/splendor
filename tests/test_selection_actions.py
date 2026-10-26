@@ -95,12 +95,12 @@ class SelectionActionTests(unittest.TestCase):
                 error = state.action_error
                 self.assertIsNotNone(error)
                 before = copy.deepcopy((state.supply, state.current_player.tokens,
-                                        vars(state.turn), state.log))
+                                        vars(state.turn)))
                 reserved = list(state.current_player.reserved_cards)
                 with self.assertRaisesRegex(ValueError, error):
                     state.perform_action()
                 self.assertEqual((state.supply, state.current_player.tokens,
-                                  vars(state.turn), state.log), before)
+                                  vars(state.turn)), before)
                 self.assertEqual(state.current_player.reserved_cards, reserved)
 
     def test_confirm_purchase_clears_selection_and_refills_slot(self):
@@ -122,7 +122,8 @@ class SelectionActionTests(unittest.TestCase):
         self.assertEqual(self.state.selection.action_kind.capitalize(), 'Pass')
         self.assertIsNone(self.state.action_error)
         self.state.perform_action()
-        self.assertEqual(self.state.log, ['YOU passed.'])
+        self.assertEqual(self.state.players[0].tokens, {RUBY: 10})
+        self.assertEqual(self.state.turn.consecutive_passes, 1)
         self.assertEqual(self.state.turn.active_player, 1)
 
     def test_selected_gems_are_taken_in_one_turn(self):
@@ -132,7 +133,6 @@ class SelectionActionTests(unittest.TestCase):
         self.assertIsNone(self.state.action_error)
         self.state.perform_action()
         self.assertEqual(self.state.players[0].tokens, {RUBY: 1, DIAMOND: 1})
-        self.assertEqual(self.state.log, ['YOU took Diamond, Ruby.'])
         self.assertEqual(self.state.turn.active_player, 1)
         self.assertEqual(self.state.selection.tokens, {})
         self.assertEqual(self.state.selection.action_kind.capitalize(), 'Pass')
@@ -170,7 +170,7 @@ class SelectionActionTests(unittest.TestCase):
                                           state.selection.card.id if state.selection.card else None,
                                           [vars(player) for player in state.players],
                                           {tier: [item.id for item in row] for tier, row in state.market.items()},
-                                          vars(state.turn), state.log))
+                                          vars(state.turn)))
                 before = snapshot()
                 error = state.action_error
                 self.assertIsNotNone(error)

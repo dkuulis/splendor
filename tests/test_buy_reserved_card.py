@@ -42,7 +42,6 @@ class BuyReservedCardTests(unittest.TestCase):
         self.assertEqual(player.discounts, {**dict.fromkeys(GEMS, 0), RUBY: 1, SAPPHIRE: 1})
         self.assertEqual(state.market[2], [market])
         self.assertEqual(state.decks[2], [deck])
-        self.assertEqual(len(state.log), 1)
         self.assertEqual(state.turn.active_player, 1)
         self.assertIsNone(state.selection.card)
 
@@ -59,7 +58,6 @@ class BuyReservedCardTests(unittest.TestCase):
         self.assertEqual(state.current_player.tokens, {})
         self.assertEqual(state.supply[GOLD], gold)
         self.assertEqual(state.turn.active_player, 0)
-        self.assertEqual(state.log, [])
 
     def test_opponents_or_removed_reserved_card_cannot_be_selected_or_bought(self):
         state = self.state

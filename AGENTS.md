@@ -50,7 +50,7 @@ rules without a request.
 
 - Prefer simple objects, dictionaries, and lists. Do not introduce dataclasses
   or typing imports for the models.
-- Use `TOKENS` for display, selection, and log ordering. Payment calculations
+- Use `TOKENS` for display and selection ordering. Payment calculations
   can iterate over cost entries directly.
 - `State.supply` holds available tokens; `Player.tokens` holds owned tokens.
   Selection is pending and does not transfer tokens. Finishing a turn clears it.
@@ -66,7 +66,6 @@ rules without a request.
 - Noble requirements count permanent card bonuses, not tokens. Award at most
   the first qualifying available noble each turn, without spending holdings
   or replacing the noble, before checking turn completion.
-- `State.log` retains internal action history; it is not displayed.
 
 ## Artwork and assets
 

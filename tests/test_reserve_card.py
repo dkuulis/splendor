@@ -39,8 +39,6 @@ class ReserveCardTests(unittest.TestCase):
         self.assertEqual(state.turn.consecutive_passes, 0)
         self.assertIsNone(state.selection.card)
         self.assertEqual(state.selection.tokens, {})
-        self.assertIn('reserved by YOU', state.log[0])
-        self.assertIn('Revealed:', state.log[1])
 
     def test_reserve_from_exhausted_deck_finishes_computer_turn(self):
         state, card = self.make_state()
@@ -72,7 +70,7 @@ class ReserveCardTests(unittest.TestCase):
                 else:
                     state.turn.finished = True
                 before = copy.deepcopy((state.supply, state.current_player.tokens,
-                                        vars(state.turn), state.log, state.selection.tokens))
+                                        vars(state.turn), state.selection.tokens))
                 reserved = list(state.current_player.reserved_cards)
                 market = list(state.market[2])
                 self.assertEqual(state.action_error, state.reserve_card_error())
@@ -80,7 +78,7 @@ class ReserveCardTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     state.perform_action()
                 self.assertEqual((state.supply, state.current_player.tokens,
-                                  vars(state.turn), state.log, state.selection.tokens), before)
+                                  vars(state.turn), state.selection.tokens), before)
                 self.assertEqual(state.current_player.reserved_cards, reserved)
                 self.assertEqual(state.market[2], market)
                 self.assertIs(state.selection.card, card)

@@ -25,7 +25,6 @@ class BuyCardTests(unittest.TestCase):
         supply[GOLD] += 3
         self.assertEqual(state.supply, supply)
         self.assertEqual(player.cards[EMERALD], [card])
-        self.assertIn('for 3 Gold, 1 Ruby.', state.log[0])
 
     def test_matching_gems_and_free_cards_preserve_gold(self):
         for price in (0, 2):
@@ -54,7 +53,6 @@ class BuyCardTests(unittest.TestCase):
         self.assertEqual(state.supply, supply)
         self.assertEqual(state.market[1], [card])
         self.assertEqual(state.turn.active_player, 0)
-        self.assertEqual(state.log, [])
 
     def test_purchase_appends_to_color_and_preserves_other_holdings(self):
         state = State()
@@ -93,10 +91,6 @@ class BuyCardTests(unittest.TestCase):
         self.assertEqual(state.market[2], [replacement])
         self.assertEqual(state.decks[2], [])
         self.assertEqual(state.turn.active_player, 1)
-        self.assertEqual(state.log, [
-            "2-point Emerald card (level 2) bought by YOU for 1 Sapphire, 2 Ruby.",
-            "Revealed: 1-point Diamond card (level 2), costing no gems.",
-        ])
 
     def test_free_purchase_and_exhausted_deck(self):
         state = State()
@@ -110,19 +104,18 @@ class BuyCardTests(unittest.TestCase):
         self.assertEqual(state.market[1], [])
         self.assertEqual(state.turn.consecutive_passes, 0)
         self.assertEqual(state.turn.active_player, 1)
-        self.assertEqual(state.log, ["0-point Onyx card (level 1) bought by YOU for no gems."])
 
     def test_rejected_purchase_is_atomic(self):
         state = State()
         card = Card('costly', 1, RUBY, 0, {RUBY: 2})
         state.market[1] = [card]
         state.players[0].tokens = {RUBY: 1}
-        before = copy.deepcopy((state.supply, state.players[0].tokens, vars(state.turn), state.log))
+        before = copy.deepcopy((state.supply, state.players[0].tokens, vars(state.turn)))
         self.assertFalse(state.can_buy(card))
         with self.assertRaises(ValueError):
             state.selection.card = card
             state.buy_card()
-        self.assertEqual((state.supply, state.players[0].tokens, vars(state.turn), state.log), before)
+        self.assertEqual((state.supply, state.players[0].tokens, vars(state.turn)), before)
         self.assertEqual(state.market[1], [card])
         for cards in state.players[0].cards.values():
             self.assertEqual(cards, [])
@@ -146,14 +139,12 @@ class BuyCardTests(unittest.TestCase):
         state.selection.card = first
         state.buy_card()
         self.assertTrue(state.turn.final_round)
-        self.assertIn("YOU reached 15 points and triggered the final round.", state.log)
         self.assertFalse(state.turn.finished)
         self.assertEqual(state.turn.active_player, 1)
         state.selection.card = second
         state.buy_card()
         self.assertTrue(state.turn.finished)
         self.assertEqual(state.turn.winner, 1)
-        self.assertEqual(sum("triggered the final round" in message for message in state.log), 1)
         self.assertFalse(state.can_buy(first))
         with self.assertRaises(ValueError):
             state.selection.card = first

@@ -15,8 +15,6 @@ def advance_turn(state):
     """Check game completion and advance to the next player when play continues."""
     if not state.turn.final_round and state.current_player.points >= TARGET_POINTS:
         state.turn.final_round = True
-        state.log.append(f"{state.current_player.name} reached {state.current_player.points} points "
-                        "and triggered the final round.")
     round_complete = state.turn.active_player == len(state.players) - 1
     if state.turn.consecutive_passes >= 2 or (state.turn.final_round and round_complete):
         state.turn.finished = True
@@ -25,9 +23,6 @@ def advance_turn(state):
         best = max(scores)
         winners = [index for index, score in enumerate(scores) if score == best]
         state.turn.winner = winners[0] if len(winners) == 1 else None
-        result = "Draw." if state.turn.winner is None else f"{state.players[state.turn.winner].name} wins."
-        reason = "Two consecutive passes." if state.turn.consecutive_passes >= 2 else "Final round complete."
-        state.log.append(f"Game over: {reason} {result}")
     else:
         state.turn.active_player = (state.turn.active_player + 1) % len(state.players)
         if round_complete:

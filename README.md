@@ -12,7 +12,7 @@ computer strategy at launch with `--ai` (default: `greedy`):
 ```
 
 Pass ends the turn without collecting when nothing is selected; two consecutive passes end
-the game using score and card-count tie-breaks. Action history is retained internally without a log panel.
+the game using score and card-count tie-breaks.
 Select one to three different gems and use Take to collect them. The button is
 disabled when the selection is invalid.
 The selection panel has one action button and a separate Restart button.

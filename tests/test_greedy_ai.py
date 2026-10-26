@@ -74,7 +74,6 @@ class GreedyAITests(unittest.TestCase):
         ]
         GreedyAI().play_turn(self.state)
         self.assertEqual(self.player.tokens, {RUBY: 3, DIAMOND: 1})
-        self.assertEqual(self.state.log, ["YOU took Diamond, Ruby."])
 
     def test_prefers_fewer_collection_turns_over_fewer_tokens(self):
         self.state.market[1] = [
@@ -91,7 +90,7 @@ class GreedyAITests(unittest.TestCase):
             Card("one turn", 1, EMERALD, 0, {ONYX: 1, RUBY: 1}),
         ]
         GreedyAI().play_turn(self.state)
-        self.assertEqual(self.state.log, ["YOU took Diamond, Ruby, Onyx."])
+        self.assertEqual(self.player.tokens, {DIAMOND: 1, RUBY: 1, ONYX: 1})
 
     def test_spare_picks_skip_duplicate_token_types_and_use_next_targets(self):
         self.state.market[1] = [
@@ -119,7 +118,6 @@ class GreedyAITests(unittest.TestCase):
         self.state.supply.update(Diamond=4, Sapphire=3, Emerald=1, Ruby=2)
         GreedyAI().play_turn(self.state)
         self.assertEqual(self.player.tokens, {EMERALD: 1, RUBY: 1, SAPPHIRE: 1})
-        self.assertEqual(self.state.log, ["YOU took Sapphire, Emerald, Ruby."])
 
     def test_capacity_limits_collection_to_scarcest_token_type(self):
         self.player.tokens = {ONYX: 9}
@@ -148,7 +146,7 @@ class GreedyAITests(unittest.TestCase):
                 if situation == "full inventory":
                     state.current_player.tokens = {DIAMOND: 10}
                 GreedyAI().play_turn(state)
-                self.assertEqual(state.log, ["YOU passed."])
+                self.assertEqual(state.turn.consecutive_passes, 1)
                 self.assertEqual(state.turn.active_player, 1)
 
 

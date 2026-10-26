@@ -44,7 +44,6 @@ class NobleTests(unittest.TestCase):
         self.assertEqual(player.discounts, {**dict.fromkeys(GEMS, 0), RUBY: 2})
         self.assertEqual(player.points, 3)
         self.assertEqual(state.players[1].nobles, [])
-        self.assertIn('YOU received noble for 3 points.', state.log)
 
     def test_tokens_cannot_replace_missing_card_bonuses(self):
         state = State()

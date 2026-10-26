@@ -6,10 +6,6 @@ from .noble import assign_noble
 from .turn import Turn, advance_turn
 
 
-def format_cost(cost):
-    return ", ".join(f"{cost[token]} {token}" for token in TOKENS if cost.get(token, 0)) or "no gems"
-
-
 class State:
     """Game state and legal turn transitions."""
 
@@ -23,7 +19,6 @@ class State:
         self.market = {tier: [] for tier in (1, 2, 3)}
         self.nobles = []
         self.turn = Turn()
-        self.log = []
 
     @property
     def current_player(self):
@@ -62,7 +57,6 @@ class State:
         error = self.pass_turn_error()
         if error is not None:
             raise ValueError(error)
-        self.log.append(f"{self.current_player.name} passed.")
         self.turn.consecutive_passes += 1
         self.finish_turn()
 
@@ -91,8 +85,6 @@ class State:
             self.supply[token] -= 1
             self.current_player.tokens[token] = self.current_player.tokens.get(token, 0) + 1
 
-        taken = ", ".join(token for token in TOKENS if token in self.selection.tokens)
-        self.log.append(f"{self.current_player.name} took {taken}.")
         self.turn.consecutive_passes = 0
         self.finish_turn()
 
@@ -135,8 +127,6 @@ class State:
             if player.tokens[token] == 0:
                 del player.tokens[token]
         player.add_card(card)
-        payment = format_cost(cost)
-        self.log.append(f"{card.points}-point {card.token} card (level {card.tier}) bought by {player.name} for {payment}.")
         if card in player.reserved_cards:
             player.reserved_cards.remove(card)
         else:
@@ -172,7 +162,6 @@ class State:
         player.reserved_cards.append(card)
         self.supply[GOLD] -= 1
         player.tokens[GOLD] = player.tokens.get(GOLD, 0) + 1
-        self.log.append(f"{card.points}-point {card.token} card (level {card.tier}) reserved by {player.name}, taking 1 Gold.")
         self.remove_market_card(card)
         self.turn.consecutive_passes = 0
         self.finish_turn()
@@ -181,20 +170,13 @@ class State:
         """Remove a purchased or reserved card and reveal its replacement."""
         row = self.market[card.tier]
         slot = row.index(card)
-        revealed = None
         if self.decks[card.tier]:
-            revealed = self.decks[card.tier].pop(0)
-            row[slot] = revealed
+            row[slot] = self.decks[card.tier].pop(0)
         else:
             row.pop(slot)
-        if revealed is not None:
-            revealed_cost = format_cost(revealed.cost)
-            self.log.append(f"Revealed: {revealed.points}-point {revealed.token} card (level {revealed.tier}), costing {revealed_cost}.")
 
     def finish_turn(self):
-        message = assign_noble(self.current_player, self.nobles)
-        if message:
-            self.log.append(message)
+        assign_noble(self.current_player, self.nobles)
         self.selection.clear()
         advance_turn(self)
 

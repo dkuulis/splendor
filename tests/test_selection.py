@@ -22,7 +22,6 @@ class SelectionTests(unittest.TestCase):
         for cards in state.players[0].cards.values():
             self.assertEqual(cards, [])
         self.assertEqual(state.turn.active_player, 0)
-        self.assertEqual(state.log, [])
         state.selection.select_token(SAPPHIRE, state)
         self.assertIsNone(state.selection.card)
         self.assertEqual(state.selection.tokens, {SAPPHIRE: 1})

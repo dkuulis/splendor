@@ -50,11 +50,11 @@ class TakeTokensTests(unittest.TestCase):
                 state.supply[RUBY] = available
                 state.turn.finished = finished
                 before = copy.deepcopy((state.supply, state.current_player.tokens,
-                                        vars(state.turn), state.log))
+                                        vars(state.turn)))
                 state.selection.tokens = dict(Counter(tokens))
                 self.assertEqual(state.take_tokens_error(), expected)
                 self.assertEqual((state.supply, state.current_player.tokens,
-                                  vars(state.turn), state.log), before)
+                                  vars(state.turn)), before)
                 if expected is None:
                     state.take_tokens()
                 else:
@@ -75,18 +75,17 @@ class TakeTokensTests(unittest.TestCase):
         self.assertEqual(state.supply[RUBY], 2)
         self.assertEqual(state.turn.active_player, 0)
         self.assertEqual(state.turn.round_number, 2)
-        self.assertEqual(len(state.log), 2)
 
     def test_invalid_moves_leave_state_unchanged(self):
         for tokens in ([RUBY] * 2, [RUBY, ONYX, DIAMOND, EMERALD], [GOLD], [SAPPHIRE]):
             with self.subTest(tokens=tokens):
                 state = State()
                 state.supply[SAPPHIRE] = 0
-                before = copy.deepcopy((state.supply, state.players[0].tokens, vars(state.turn), state.log))
+                before = copy.deepcopy((state.supply, state.players[0].tokens, vars(state.turn)))
                 with self.assertRaises(ValueError):
                     state.selection.tokens = dict(Counter(tokens))
                     state.take_tokens()
-                self.assertEqual((state.supply, state.players[0].tokens, vars(state.turn), state.log), before)
+                self.assertEqual((state.supply, state.players[0].tokens, vars(state.turn)), before)
 
     def test_limit_and_pass_reset(self):
         state = State()

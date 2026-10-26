@@ -19,7 +19,6 @@ def create_initial_state(seed=None):
     nobles = create_nobles()
     rng.shuffle(nobles)
     state.nobles = nobles[:len(state.players) + 1]
-    state.log.append("New game. Decks shuffled and four cards dealt per level.")
     return state
 
 

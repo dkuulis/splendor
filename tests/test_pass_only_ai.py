@@ -13,7 +13,6 @@ class PassOnlyAITests(unittest.TestCase):
         PassOnlyAI().play_turn(state)
         self.assertEqual(state.turn.active_player, 0)
         self.assertEqual(state.turn.consecutive_passes, 1)
-        self.assertEqual(state.log, ['COMPUTER passed.'])
         self.assertEqual(state.players[1].tokens, {})
         self.assertEqual(state.selection.tokens, {})
 
