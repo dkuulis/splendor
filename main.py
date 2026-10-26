@@ -3,7 +3,9 @@
 import tkinter as tk
 from tkinter import ttk
 
-COLORS = ("Diamond", "Sapphire", "Emerald", "Ruby", "Onyx")
+from game.constants import COLORS
+from game.preview import create_preview_state
+
 PALETTE = {"Diamond": "#e5e7eb", "Sapphire": "#2563eb", "Emerald": "#15803d", "Ruby": "#be123c", "Onyx": "#334155"}
 TEXT_PALETTE = {"Diamond": "#111827", "Sapphire": "white", "Emerald": "white", "Ruby": "white", "Onyx": "white"}
 OUTLINE_PALETTE = {**PALETTE, "Diamond": "#94a3b8"}
@@ -22,16 +24,17 @@ SELECTION_MARKER_FONT = ("Helvetica", 20, "bold")
 
 
 class App:
-    def __init__(self, root):
+    def __init__(self, root, state):
+        self.state = state
         root.title("Splendour • Layout preview")
         shell = ttk.Frame(root, padding=20)
         shell.pack(fill="both", expand=True)
 
         self.create_header(shell)
-        self.create_player_panel(shell, "COMPUTER", "Rules-based AI", (1, 2, 0, 1, 0), (0, 1, 0, 0, 1), 2)
+        self.create_player_panel(shell, 1)
         self.create_market(shell)
         self.create_gem_bank(shell)
-        self.create_player_panel(shell, "YOU", "Your turn", (0, 1, 2, 0, 1), (1, 0, 0, 1, 0), 0)
+        self.create_player_panel(shell, 0)
         self.create_footer(shell)
 
         self.size_window(root)
@@ -49,7 +52,7 @@ class App:
         header = ttk.Frame(parent)
         header.pack(fill="x")
         ttk.Label(header, text="SPLENDOUR", font=TITLE_FONT).pack(side="left")
-        ttk.Label(header, text="YOU  vs  COMPUTER", font=SUBTITLE_FONT).pack(side="left", padx=24)
+        ttk.Label(header, text="  vs  ".join(player.name for player in self.state.players), font=SUBTITLE_FONT).pack(side="left", padx=24)
         ttk.Button(header, text="New game", state="disabled").pack(side="right")
         ttk.Button(header, text="Rules", state="disabled").pack(side="right", padx=8)
 
@@ -74,21 +77,20 @@ class App:
             deck.grid(row=row, column=0, sticky="nsew", padx=(0, 8), pady=4)
             tk.Label(deck, text=f"LEVEL {tier}", bg=DECK_PALETTE[tier], fg=DECK_TEXT_COLOR, font=DECK_LABEL_FONT).pack()
             tk.Label(deck, text="◆" * tier, bg=DECK_PALETTE[tier], fg=DECK_TEXT_COLOR, font=DECK_SYMBOL_FONT).pack(expand=True)
-            tk.Label(deck, text="16 cards", bg=DECK_PALETTE[tier], fg=DECK_TEXT_COLOR).pack(pady=5)
+            tk.Label(deck, text=f"{len(self.state.decks[tier])} cards", bg=DECK_PALETTE[tier], fg=DECK_TEXT_COLOR).pack(pady=5)
 
-            for slot in range(4):
+            for slot, card in enumerate(self.state.market[tier]):
                 market.columnconfigure(slot + 1, weight=1, uniform="cards")
-                bonus = COLORS[(slot + tier) % 5]
                 box = ttk.Frame(market, padding=8, relief="ridge")
                 box.grid(row=row, column=slot + 1, sticky="nsew", padx=4, pady=4)
 
-                title = tk.Frame(box, bg=PALETTE[bonus])
+                title = tk.Frame(box, bg=PALETTE[card.color])
                 title.pack(fill="x")
                 tk.Label(
                     title,
-                    text=str((0, 2, 4)[tier - 1]) if tier > 1 else "",
-                    bg=PALETTE[bonus],
-                    fg=TEXT_PALETTE[bonus],
+                    text=str(card.points) if card.points else "",
+                    bg=PALETTE[card.color],
+                    fg=TEXT_PALETTE[card.color],
                     font=POINTS_FONT,
                     anchor="nw",
                     padx=10,
@@ -96,19 +98,16 @@ class App:
                 ).pack(side="left")
                 tk.Label(
                     title,
-                    text=bonus,
-                    bg=PALETTE[bonus],
-                    fg=TEXT_PALETTE[bonus],
+                    text=card.color,
+                    bg=PALETTE[card.color],
+                    fg=TEXT_PALETTE[card.color],
                     font=CARD_DETAIL_FONT,
                     padx=6,
                 ).pack(side="right")
 
-                costs = [
-                    (COLORS[(slot + offset + 1) % 5], max(1, tier + 1 - offset))
-                    for offset in range(4 if slot >= 2 else 2)
-                ]
+                costs = [(color, amount) for color, amount in card.cost.items() if amount]
                 cost_row = tk.Canvas(
-                    box, height=38, width=160, highlightthickness=0,
+                    box, height=38, width=max(160, len(costs) * 40), highlightthickness=0,
                     background=parent.winfo_toplevel().cget("background"),
                 )
                 cost_row.pack(fill="x", pady=(6, 0))
@@ -135,7 +134,8 @@ class App:
         self.gem_stacks = {}
         self.selection_text = tk.StringVar(value="Click gems to cycle selection: 0 / 1 / 2")
 
-        for color, available in zip(COLORS, (4, 3, 2, 4, 1)):
+        for color in COLORS:
+            available = self.state.bank.get(color, 0)
             column = ttk.Frame(bank)
             column.pack(side="left", expand=True, fill="x", padx=8)
             variable = tk.IntVar(value=0)
@@ -172,16 +172,24 @@ class App:
             tokens.tag_bind("gem", "<Leave>", lambda event, canvas=tokens: canvas.configure(cursor=""))
             ttk.Label(column, text=color).pack()
 
-    def create_player_panel(self, parent, name, subtitle, gems, discounts, points):
-        panel = ttk.LabelFrame(parent, text=f"{name}  •  {subtitle}", padding=10)
+    def create_player_panel(self, parent, player_index):
+        player = self.state.players[player_index]
+        if self.state.turn.finished:
+            subtitle = "Draw" if self.state.turn.winner is None else ("Winner" if self.state.turn.winner == player_index else "Game over")
+        elif self.state.turn.active_player == player_index:
+            subtitle = "Computer's turn" if player.is_ai else "Your turn"
+        else:
+            subtitle = "Rules-based AI" if player.is_ai else "Waiting"
+        discounts = player.discounts
+        panel = ttk.LabelFrame(parent, text=f"{player.name}  •  {subtitle}", padding=10)
         panel.pack(fill="x")
-        ttk.Label(panel, text=str(points), font=POINTS_FONT).pack(side="left", padx=(0, 20))
+        ttk.Label(panel, text=str(player.points), font=POINTS_FONT).pack(side="left", padx=(0, 20))
 
-        for i, color in enumerate(COLORS):
+        for color in COLORS:
             column = ttk.Frame(panel)
             column.pack(side="left", expand=True, fill="x")
 
-            card_count, gem_count = discounts[i], gems[i]
+            card_count, gem_count = discounts.get(color, 0), player.gems.get(color, 0)
             spacing = 28
             group_gap = 10 if card_count and gem_count else 0
             content_width = (card_count + gem_count) * spacing + group_gap
@@ -203,7 +211,7 @@ class App:
                 resources.create_oval(x + 2, 10, x + 26, 34, fill=PALETTE[color], outline=outline)
             ttk.Label(column, text=color, foreground=MUTED_TEXT_COLOR).pack()
 
-        ttk.Label(panel, text=f"{sum(gems)} gems", justify="right").pack(side="right")
+        ttk.Label(panel, text=f"{sum(player.gems.values())} gems", justify="right").pack(side="right")
 
     def toggle_gem(self, selected, available):
         selected.set((selected.get() + 1) % (min(2, available) + 1))
@@ -230,7 +238,7 @@ class App:
 
 def main():
     root = tk.Tk()
-    App(root)
+    App(root, create_preview_state())
     root.mainloop()
 
 
