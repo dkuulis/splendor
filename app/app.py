@@ -54,7 +54,7 @@ class App:
         for child in self.field.winfo_children():
             child.destroy()
         self.computer = PlayerPanel(self.field, state.players[1],
-                                    active=state.player_status(state.players[1]) == "active")
+                                    active=state.is_active_player(state.players[1]))
         self.computer.pack(fill="x")
         table = ttk.Frame(self.field)
         table.pack(pady=10)
@@ -72,7 +72,7 @@ class App:
         )
         self.selection.grid(row=2, column=0, sticky="ew", padx=(0, 12), pady=MARKET_ROW_PADDING)
         self.player = PlayerPanel(self.field, state.players[0],
-                                  active=state.player_status(state.players[0]) == "active")
+                                  active=state.is_active_player(state.players[0]))
         self.player.pack(fill="x")
 
         self.scores.refresh()

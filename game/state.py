@@ -183,11 +183,5 @@ class State:
             if round_complete:
                 self.turn.round_number += 1
 
-    def player_status(self, player):
-        """Return a player's game status without UI-specific wording."""
-        player_index = self.players.index(player)
-        if self.turn.finished:
-            if self.turn.winner is None:
-                return "draw"
-            return "winner" if self.turn.winner == player_index else "lost"
-        return "active" if self.turn.active_player == player_index else "waiting"
+    def is_active_player(self, player):
+        return not self.turn.finished and player is self.current_player
