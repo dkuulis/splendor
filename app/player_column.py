@@ -5,7 +5,6 @@ from .assets import load_image
 from .styles import (
     TOKEN_SIZE,
     TOKEN_SPACING,
-    MARKET_CARD_HEIGHT,
     MARKET_CARD_WIDTH,
     PLAYER_CARD_OFFSET,
     TOKEN_OVERHANG,
@@ -15,7 +14,7 @@ from .styles import (
 
 
 class PlayerColumn(ttk.Frame):
-    def __init__(self, parent, token, cards, token_count, height=MARKET_CARD_HEIGHT):
+    def __init__(self, parent, token, cards, token_count, height):
         super().__init__(parent, style="Player.TFrame")
         self.token = token
         self.height = height

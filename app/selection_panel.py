@@ -11,7 +11,7 @@ from .styles import (CARD_BACKGROUND, TOKEN_SIZE, TOKEN_SPACING, INACTIVE_PLAYER
 
 class SelectionPanel(tk.Frame):
     def __init__(self, parent, state, on_action, on_card, on_deselect,
-                 enabled=True):
+                 enabled):
         super().__init__(parent, height=MARKET_CARD_HEIGHT + 2, background=CARD_BACKGROUND,
                          highlightthickness=1, highlightbackground=INACTIVE_PLAYER_BORDER,
                          borderwidth=0)

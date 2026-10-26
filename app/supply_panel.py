@@ -8,7 +8,7 @@ from .styles import TOKEN_PILE_HEIGHT, TOKEN_PILE_WIDTH
 
 
 class SupplyPanel(ttk.Frame):
-    def __init__(self, parent, available_tokens, selected_tokens, on_pick, enabled=True):
+    def __init__(self, parent, available_tokens, selected_tokens, on_pick, enabled):
         super().__init__(parent, padding=5)
         self.available_tokens = available_tokens
         self.selected_tokens = selected_tokens

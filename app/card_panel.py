@@ -5,18 +5,18 @@ from .styles import CARD_BACKGROUND, MARKET_CARD_WIDTH, MARKET_CARD_HEIGHT
 
 
 class CardPanel(tk.Canvas):
-    def __init__(self, parent, card=None, on_select=None, affordable=False, owned=False):
+    def __init__(self, parent, on_select, card=None, affordable=False):
         super().__init__(parent, width=MARKET_CARD_WIDTH, height=MARKET_CARD_HEIGHT,
                          highlightthickness=0, borderwidth=0, background=CARD_BACKGROUND)
         self.on_select = on_select
         self.art = self.create_image(0, 0, anchor="nw")
         self.overlay = self.create_image(0, 0, anchor="nw", image=load_image(self, "enabled2"))
         self.bind("<Button-1>", self.select)
-        self.refresh(card, affordable, owned)
+        self.refresh(card, affordable)
 
-    def refresh(self, card, affordable=False, owned=False):
+    def refresh(self, card, affordable):
         self.card = card
-        self.enabled = bool(card and self.on_select and affordable and not owned)
+        self.enabled = bool(card and affordable)
         self.configure(cursor="hand2" if self.enabled else "")
         self.itemconfigure(self.art, image=load_image(self, card.id) if card else "")
         self.itemconfigure(self.overlay, state="normal" if self.enabled else "hidden")

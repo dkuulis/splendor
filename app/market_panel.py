@@ -7,7 +7,7 @@ from .styles import DECK_PALETTE, MARKET_ROW_PADDING, MARKET_CARD_WIDTH, MARKET_
 
 
 class MarketPanel(ttk.Frame):
-    def __init__(self, parent, market, decks, on_select=None, can_buy=None, selected_card=None):
+    def __init__(self, parent, market, decks, on_select, can_buy, selected_card):
         super().__init__(parent)
         self.cards = []
         self.slots = {}
@@ -33,7 +33,7 @@ class MarketPanel(ttk.Frame):
                 self.slots[tier].append(panel)
         self.refresh(market, decks, selected_card)
 
-    def refresh(self, market, decks, selected_card=None):
+    def refresh(self, market, decks, selected_card):
         self.cards = []
         for tier, deck in self.decks.items():
             if decks[tier]:
@@ -43,7 +43,7 @@ class MarketPanel(ttk.Frame):
         for tier, panels in self.slots.items():
             for slot, panel in enumerate(panels):
                 card = market[tier][slot] if slot < len(market[tier]) else None
-                panel.refresh(card, self.can_buy(card) if card and self.can_buy else False)
+                panel.refresh(card, self.can_buy(card) if card else False)
                 self.cards.append((card, panel))
         self.refresh_selection(selected_card)
 

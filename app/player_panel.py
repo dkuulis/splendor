@@ -17,7 +17,7 @@ from .styles import (
 
 
 class PlayerPanel(tk.Frame):
-    def __init__(self, parent, player, active=False):
+    def __init__(self, parent, player, active):
         border = ACTIVE_PLAYER_BORDER if active else INACTIVE_PLAYER_BORDER
         super().__init__(parent, background=PLAYER_PANEL_BACKGROUND, highlightthickness=2,
                          highlightbackground=border, highlightcolor=border, borderwidth=0)
@@ -37,7 +37,7 @@ class PlayerPanel(tk.Frame):
             self.columns[token] = column
         self.refresh(player, active)
 
-    def refresh(self, player, active=False):
+    def refresh(self, player, active):
         border = ACTIVE_PLAYER_BORDER if active else INACTIVE_PLAYER_BORDER
         self.configure(highlightbackground=border, highlightcolor=border)
         for index, (token, column) in enumerate(self.columns.items()):
