@@ -32,6 +32,16 @@ and class in `ai/__init__.py`. The dropdown uses this registry automatically.
 Strategies should run quickly because they execute on the UI thread; a future
 search-based AI will need background execution.
 
+## Resizing token assets
+
+The optional asset tool requires Pillow (`python -m pip install Pillow`). It
+crops transparent margins, preserves proportions, and writes a centered,
+transparent 60×60 PNG:
+
+```sh
+python tools/resize_token.py images/gold.png assets/gold.png
+```
+
 ## Setup
 
 On macOS, use Homebrew Python with a modern Tk. Apple's system Python uses
