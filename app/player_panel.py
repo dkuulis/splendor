@@ -9,7 +9,6 @@ from .styles import (
     ACTIVE_PLAYER_BORDER,
     MARKET_CARD_HEIGHT,
     PLAYER_COLUMN_GAP,
-    PLAYER_GEM_OVERHANG,
     PLAYER_PANEL_BACKGROUND,
     PLAYER_PANEL_PADDING,
 )
@@ -23,9 +22,9 @@ class PlayerPanel(tk.Frame):
         # Grid's row minimum takes effect only when there are children. Reserve
         # the same content height plus vertical padding for an empty inventory.
         self.panel = ttk.Frame(self, padding=PLAYER_PANEL_PADDING, style="Player.TFrame",
-                               height=MARKET_CARD_HEIGHT + PLAYER_GEM_OVERHANG + 2 * PLAYER_PANEL_PADDING)
+                               height=MARKET_CARD_HEIGHT + 2 * PLAYER_PANEL_PADDING)
         self.panel.pack(fill="both", expand=True)
-        self.panel.rowconfigure(0, minsize=MARKET_CARD_HEIGHT + PLAYER_GEM_OVERHANG)
+        self.panel.rowconfigure(0, minsize=MARKET_CARD_HEIGHT)
 
         for index, color in enumerate(COLORS):
             cards = [card for card in player.cards.values() if card.color == color]

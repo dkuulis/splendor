@@ -10,7 +10,7 @@ class ScorePanel(ttk.Frame):
         self.scores = []
         self.columnconfigure(0, weight=1)
         for row, player in enumerate(players):
-            ttk.Label(self, text=player.name).grid(row=row, column=0, sticky="w", padx=(0, 12))
+            ttk.Label(self, text=player.name, font=POINTS_FONT).grid(row=row, column=0, sticky="w", padx=(0, 12))
             score = ttk.Label(self, font=POINTS_FONT)
             score.grid(row=row, column=1, sticky="e")
             self.scores.append(score)
