@@ -7,12 +7,13 @@ from .gem_column import GemColumn
 
 
 class BankPanel(ttk.Frame):
-    def __init__(self, parent, bank, on_pass=None, on_take=None, max_take=3, enabled=True):
+    def __init__(self, parent, bank, on_pass=None, on_take=None, max_take=3, enabled=True, disabled_text="Game over"):
         super().__init__(parent, padding=10)
         self.bank = bank
         self.on_take = on_take
         self.max_take = max_take
         self.enabled = enabled
+        self.disabled_text = disabled_text
         self.columns = {}
         self.selection_text = tk.StringVar(master=self, value="Click gems to select or deselect")
 
@@ -50,6 +51,6 @@ class BankPanel(ttk.Frame):
         )
         self.take_button.configure(state="normal" if self.on_take and self.enabled and 1 <= len(selected) <= self.max_take else "disabled")
         if not self.enabled:
-            self.selection_text.set("Game over")
+            self.selection_text.set(self.disabled_text)
         elif len(colors) > self.max_take:
             self.selection_text.set(f"Select at most {self.max_take} gems; your inventory limit is included.")
