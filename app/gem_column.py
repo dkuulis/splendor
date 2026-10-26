@@ -1,13 +1,19 @@
 import tkinter as tk
 from tkinter import ttk
 
+from .drawing import draw_gem, row_centers
 from .styles import (
     OUTLINE_PALETTE,
-    PALETTE,
     SELECTION_MARKER_FONT,
     SELECTION_OUTLINE_COLOR,
     TEXT_PALETTE,
 )
+
+BANK_GEM_RADIUS = 19
+BANK_GEM_GAP = 4
+BANK_GEM_SPACING = BANK_GEM_RADIUS * 2 + BANK_GEM_GAP
+BANK_CANVAS_WIDTH = 176
+BANK_CANVAS_HEIGHT = 48
 
 
 class GemColumn(ttk.Frame):
@@ -21,23 +27,18 @@ class GemColumn(ttk.Frame):
         self.gem_items = []
 
         self.tokens = tk.Canvas(
-            self, width=176, height=48, highlightthickness=0,
+            self, width=BANK_CANVAS_WIDTH, height=BANK_CANVAS_HEIGHT, highlightthickness=0,
             background=self.winfo_toplevel().cget("background"),
         )
         self.tokens.pack()
 
-        start = (176 - available * 42) / 2
-        for token in range(available):
-            x = start + token * 42
-            gem = self.tokens.create_oval(
-                x + 2, 5, x + 40, 43,
-                fill=PALETTE[color],
-                outline=OUTLINE_PALETTE[color],
-                width=2,
-                tags=("gem",),
+        y = BANK_CANVAS_HEIGHT / 2
+        for x in row_centers(available, BANK_CANVAS_WIDTH, BANK_GEM_SPACING):
+            gem = draw_gem(
+                self.tokens, color, x, y, BANK_GEM_RADIUS, width=2, tags=("gem",),
             )
             marker = self.tokens.create_text(
-                x + 21, 24, text="✓",
+                x, y, text="✓",
                 fill=TEXT_PALETTE[color],
                 font=SELECTION_MARKER_FONT,
                 state="hidden", tags=("gem",),

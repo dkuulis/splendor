@@ -3,13 +3,19 @@ from tkinter import ttk
 
 from game.constants import COLORS
 
+from .drawing import draw_gem, row_centers
 from .styles import (
     CARD_DETAIL_FONT,
-    OUTLINE_PALETTE,
     PALETTE,
     POINTS_FONT,
     TEXT_PALETTE,
 )
+
+COST_GEM_RADIUS = 16
+COST_GEM_GAP = 8
+COST_GEM_SPACING = COST_GEM_RADIUS * 2 + COST_GEM_GAP
+COST_ROW_HEIGHT = 38
+COST_ROW_MIN_WIDTH = 160
 
 
 class CardPanel(ttk.Frame):
@@ -39,19 +45,17 @@ class CardPanel(ttk.Frame):
 
         costs = [(color, card.cost[color]) for color in COLORS if card.cost.get(color, 0)]
         cost_row = tk.Canvas(
-            self, height=38, width=max(160, len(costs) * 40), highlightthickness=0,
+            self, height=COST_ROW_HEIGHT,
+            width=max(COST_ROW_MIN_WIDTH, len(costs) * COST_GEM_SPACING), highlightthickness=0,
             background=parent.winfo_toplevel().cget("background"),
         )
         cost_row.pack(fill="x", pady=(6, 0))
-        for index, (color, amount) in enumerate(costs):
-            x = 20 + index * 40
-            cost_row.create_oval(
-                x - 16, 3, x + 16, 35,
-                fill=PALETTE[color],
-                outline=OUTLINE_PALETTE[color],
-            )
+        y = COST_ROW_HEIGHT / 2
+        centers = row_centers(len(costs), len(costs) * COST_GEM_SPACING, COST_GEM_SPACING)
+        for x, (color, amount) in zip(centers, costs):
+            draw_gem(cost_row, color, x, y, COST_GEM_RADIUS)
             cost_row.create_text(
-                x, 19, text=str(amount),
+                x, y, text=str(amount),
                 fill=TEXT_PALETTE[color],
                 font=CARD_DETAIL_FONT,
             )

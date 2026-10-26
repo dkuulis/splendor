@@ -1,29 +1,32 @@
 import tkinter as tk
 from tkinter import ttk
 
-from .styles import MUTED_TEXT_COLOR, OUTLINE_PALETTE, PALETTE, PLAYER_PANEL_BACKGROUND
+from .drawing import draw_card_marker, draw_gem, row_centers
+from .styles import MUTED_TEXT_COLOR, PLAYER_PANEL_BACKGROUND
+
+MARKER_SIZE = 24
+MARKER_GAP = 4
+MARKER_SPACING = MARKER_SIZE + MARKER_GAP
+INVENTORY_MIN_WIDTH = 100
+INVENTORY_HEIGHT = 72
+CARD_ROW_Y = 18
+GEM_ROW_Y = 52
 
 
 class PlayerColumn(ttk.Frame):
     def __init__(self, parent, color, card_count, gem_count):
         super().__init__(parent, style="Player.TFrame")
-        spacing = 28
-        content_width = max(card_count, gem_count) * spacing
-        canvas_width = max(100, content_width)
+        content_width = max(card_count, gem_count) * MARKER_SPACING
+        canvas_width = max(INVENTORY_MIN_WIDTH, content_width)
 
         resources = tk.Canvas(
-            self, width=canvas_width, height=72, highlightthickness=0,
+            self, width=canvas_width, height=INVENTORY_HEIGHT, highlightthickness=0,
             background=PLAYER_PANEL_BACKGROUND,
         )
         resources.pack()
 
-        outline = OUTLINE_PALETTE[color]
-        start = (canvas_width - card_count * spacing) / 2
-        for card in range(card_count):
-            x = start + card * spacing
-            resources.create_rectangle(x + 2, 6, x + 26, 30, fill=PALETTE[color], outline=outline)
-        start = (canvas_width - gem_count * spacing) / 2
-        for gem in range(gem_count):
-            x = start + gem * spacing
-            resources.create_oval(x + 2, 40, x + 26, 64, fill=PALETTE[color], outline=outline)
+        for x in row_centers(card_count, canvas_width, MARKER_SPACING):
+            draw_card_marker(resources, color, x, CARD_ROW_Y, MARKER_SIZE)
+        for x in row_centers(gem_count, canvas_width, MARKER_SPACING):
+            draw_gem(resources, color, x, GEM_ROW_Y, MARKER_SIZE / 2)
         ttk.Label(self, text=color, foreground=MUTED_TEXT_COLOR, style="Player.TLabel").pack()
