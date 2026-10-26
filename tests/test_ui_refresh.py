@@ -15,6 +15,8 @@ class SelectionRefreshTests(unittest.TestCase):
         app.strategy = None
         app.supply = Mock()
         app.market = Mock()
+        app.player = Mock()
+        app.computer = Mock()
         app.selection = Mock()
         app.refresh = Mock()
         app.cancel_ai = Mock()

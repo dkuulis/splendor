@@ -24,7 +24,8 @@ Choose one action:
    take gems that would bring your inventory above 10. You cannot return
    or exchange gems to make room; gems leave your inventory only when spent
    on a card.
-2. **Buy a card:** purchase one face-up market card you can afford.
+2. **Buy a card:** purchase one face-up market card or one of your reserved
+   cards you can afford. Reserved cards cannot be reserved again.
 3. **Reserve a card:** select a face-up market card, then gold, and confirm
    Reserve. Move the card to your reserved cards and take one gold from the
    bank. You may hold at most three reserved cards, and taking the gold must
@@ -51,7 +52,8 @@ the bank.
 Return payment to the bank and add the card to your inventory. Its points
 count immediately; its discount applies to later purchases. A free card
 still uses your turn. Refill the market from the matching deck; an exhausted
-deck leaves fewer cards available.
+deck leaves fewer cards available. Buying a reserved card removes it from your
+reserved list without changing the market or decks.
 
 ## Nobles
 
@@ -88,8 +90,7 @@ strategy priorities and control options.
 - **Nobles:** when several qualify, the first in displayed order is awarded
   automatically rather than letting the player choose.
 - **Reservations and gold:** reservations require taking one available gold
-  without exceeding the token limit. Blind reservations and purchasing reserved
-  cards are not implemented yet.
+  without exceeding the token limit. Blind reservations are not implemented.
 - **Two matching gems:** omitted for now; the full game permits this only
   when at least four gems of that color are available before taking them.
 - **Player count:** only two players; no three- or four-player setup.

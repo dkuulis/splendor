@@ -6,7 +6,8 @@ class GreedyAI:
 
     def play_turn(self, state):
         state.clear_selection()
-        cards = [card for row in state.market.values() for card in row]
+        cards = ([card for row in state.market.values() for card in row]
+                 + state.current_player.reserved_cards)
         if self.buy_card(state, cards):
             return
         if self.take_tokens(state, cards):

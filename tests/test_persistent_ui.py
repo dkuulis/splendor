@@ -324,6 +324,58 @@ class PersistentUITests(unittest.TestCase):
         app.refresh()
         self.assertFalse(app.selection.go_button.instate(['disabled']))
 
+    def test_reserved_stack_selects_each_card_and_buys_without_market_refill(self):
+        app = self.app
+        player = app.state.current_player
+        cards = app.state.market[1][:3]
+        del app.state.market[1][:3]
+        player.reserved_cards.extend(cards)
+        for card in cards:
+            card.cost = {RUBY: 1}
+        player.tokens = {GOLD: 1}
+        app.state.supply[GOLD] -= 1
+        other = app.state.market[2].pop()
+        app.state.players[1].reserved_cards.append(other)
+        app.refresh()
+        self.root.update()
+        stack = app.computer.reserved.stack
+        stack.event_generate('<Motion>', x=75, y=100)
+        stack.event_generate('<Button-1>', x=75, y=100)
+        self.assertIsNone(app.state.selected_card)
+        stack = app.player.reserved.stack
+        for index, card in enumerate(cards):
+            x, y = stack.coords(app.player.reserved.card_items[index])
+            stack.event_generate('<Motion>', x=int(x) + 10, y=int(y) + 100)
+            stack.event_generate('<Button-1>', x=int(x) + 10, y=int(y) + 100)
+            self.assertIs(app.state.selected_card, card)
+            self.assertEqual(app.selection.go_button.cget('text'), 'Buy')
+            self.assertFalse(app.selection.go_button.instate(['disabled']))
+            for slot, item in enumerate(app.player.reserved.card_items):
+                expected = 'hidden' if slot == index else 'normal'
+                self.assertEqual(stack.itemcget(item, 'state'), expected)
+                self.assertEqual(stack.itemcget(app.player.reserved.overlay_items[slot], 'state'), expected)
+            app.refresh()
+            self.assertEqual(stack.itemcget(app.player.reserved.card_items[index], 'state'), 'hidden')
+            app.selection.card.select(None)
+            self.assertIsNone(app.state.selected_card)
+            self.assertEqual(stack.itemcget(app.player.reserved.card_items[index], 'state'), 'normal')
+            app.select_card(card)
+            app.select_token(GOLD)
+            self.assertEqual(app.state.selected_tokens, {})
+        market = {tier: list(row) for tier, row in app.state.market.items()}
+        decks = {tier: list(row) for tier, row in app.state.decks.items()}
+        app.selection.go_button.invoke()
+        self.assertEqual(player.reserved_cards, cards[:2])
+        self.assertIn(cards[-1], player.cards[cards[-1].token])
+        self.assertEqual(app.state.market, market)
+        self.assertEqual(app.state.decks, decks)
+        app.control.set('Greedy AI')
+        app.change_control()
+        stack = app.computer.reserved.stack
+        stack.event_generate('<Motion>', x=75, y=100)
+        stack.event_generate('<Button-1>', x=75, y=100)
+        self.assertIsNone(app.state.selected_card)
+
     def test_log_scroll_and_label_reuse(self):
         app = self.app
         app.state.log.extend(f'Message {index}' for index in range(100))
@@ -370,7 +422,11 @@ class PersistentUITests(unittest.TestCase):
                 self.assertEqual(items.index(overlay), items.index(item) + 1)
                 self.assertEqual(reserved.stack.itemcget(overlay, 'state'), 'normal')
             reserved.stack.event_generate('<Button-1>', x=75, y=100)
-            self.assertIsNone(app.state.selected_card)
+            if player is app.state.current_player:
+                self.assertIn(app.state.selected_card, player.reserved_cards)
+                app.select_card(app.state.selected_card)
+            else:
+                self.assertIsNone(app.state.selected_card)
             player.reserved_cards.pop(0)
             app.refresh()
             self.assertEqual(reserved.stack.itemcget(reserved.card_items[0], 'image'),

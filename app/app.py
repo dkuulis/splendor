@@ -49,7 +49,8 @@ class App:
 
         state = self.state
         self.computer = PlayerPanel(self.field, state.players[1],
-                                    active=state.is_active_player(state.players[1]))
+                                    active=state.is_active_player(state.players[1]),
+                                    on_select=self.select_card, enabled=self.manual_turn)
         self.computer.pack(fill="x")
         table = ttk.Frame(self.field)
         table.pack(pady=10)
@@ -70,7 +71,8 @@ class App:
         )
         self.selection.grid(row=2, column=1, sticky="ew", padx=(0, 12), pady=MARKET_ROW_PADDING)
         self.player = PlayerPanel(self.field, state.players[0],
-                                  active=state.is_active_player(state.players[0]))
+                                  active=state.is_active_player(state.players[0]),
+                                  on_select=self.select_card, enabled=self.manual_turn)
         self.player.pack(fill="x")
 
         self.refresh()
@@ -78,8 +80,10 @@ class App:
     def refresh(self):
         self.cancel_ai()
         state = self.state
-        self.computer.refresh(state.players[1], state.is_active_player(state.players[1]))
-        self.player.refresh(state.players[0], state.is_active_player(state.players[0]))
+        self.computer.refresh(state.players[1], state.is_active_player(state.players[1]), self.manual_turn)
+        self.player.refresh(state.players[0], state.is_active_player(state.players[0]), self.manual_turn)
+        self.computer.refresh_selection(state.selected_card)
+        self.player.refresh_selection(state.selected_card)
         self.market.refresh(state.market, state.decks, state.selected_card, enabled=self.manual_turn)
         self.nobles.refresh(state.nobles)
         self.supply.available_tokens = state.supply
@@ -100,6 +104,8 @@ class App:
     def refresh_selection(self):
         self.supply.refresh()
         self.market.refresh_selection(self.state.selected_card)
+        self.computer.refresh_selection(self.state.selected_card)
+        self.player.refresh_selection(self.state.selected_card)
         self.selection.refresh()
 
     @property

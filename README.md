@@ -14,8 +14,9 @@ you have enough gems after owned-card discounts, using owned gold as a wildcard
 for missing colors. Buying spends matching gems first and returns the actual
 gem and gold payment to the bank.
 Select a card and then gold to enable Reserve. This takes the card and one gold,
-subject to the three-reservation and 10-token limits. Reserved cards appear in
-the last player-panel block; purchasing them is not implemented yet.
+subject to the three-reservation and 10-token limits. Click your reserved cards
+in the last player-panel block to select and buy them using discounts and gold.
+Already reserved cards cannot be reserved again.
 Purchases update scores, replace market cards, and trigger the final round at
 15 points. Manual lets you control both players. Pass-only AI automatically
 passes on the computer's turn. You can switch modes at any time; switching to

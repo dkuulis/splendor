@@ -46,6 +46,15 @@ class GreedyAITests(unittest.TestCase):
         self.assertEqual(self.player.cards[EMERALD], [card])
         self.assertEqual(self.player.tokens, {})
 
+    def test_buys_own_reserved_card(self):
+        card = Card('reserved', 2, EMERALD, 3, {RUBY: 1})
+        self.player.reserved_cards.append(card)
+        self.player.tokens = {GOLD: 1}
+        GreedyAI().play_turn(self.state)
+        self.assertEqual(self.player.cards[EMERALD], [card])
+        self.assertEqual(self.player.reserved_cards, [])
+        self.assertEqual(self.player.tokens, {})
+
     def test_equal_points_use_discounted_payment(self):
         self.player.add_card(Card("owned", 1, RUBY, 0, {}))
         expensive = Card("expensive", 1, EMERALD, 1, {DIAMOND: 2})

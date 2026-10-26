@@ -7,14 +7,7 @@ Outstanding tasks
 * allow 2 gem selection in 4 gems available
 
 * allow card reservation
-  * select all cards
-  * autoselect gold if card is unavailable
-  * allow gold selection if card is selected
   * allow to select card from deck
-  * allow payment in gold
-  * allow selection of reserved cards for purchase
-  * display reserved cards on player area
-  * display gold on player area
 
 * allow gem drops if more than 10 gem
 

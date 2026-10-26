@@ -34,7 +34,7 @@ class State:
         return min(MAX_TAKE, max(0, TOKEN_LIMIT - sum(self.current_player.tokens.values())))
 
     def select_card(self, card):
-        if self.turn.finished or card not in self.market.get(card.tier, []):
+        if self.turn.finished or not self.card_available(card):
             return
         self.selected_tokens.clear()
         self.selected_card = None if self.selected_card is card else card
@@ -44,6 +44,8 @@ class State:
                 or not self.supply.get(token, 0)):
             return
         if token == GOLD:
+            if self.selected_card in self.current_player.reserved_cards:
+                return
             self.selected_tokens.clear()
         else:
             self.selected_card = None
@@ -126,10 +128,14 @@ class State:
         return {token: max(0, amount - discounts.get(token, 0)) for token, amount in card.cost.items()}
 
     def can_buy(self, card):
-        if self.turn.finished or card not in self.market.get(card.tier, []):
+        if self.turn.finished or not self.card_available(card):
             return False
         return all(self.current_player.tokens.get(token, 0) >= amount
                    for token, amount in self.card_payment(card).items())
+
+    def card_available(self, card):
+        return (card in self.market.get(card.tier, [])
+                or card in self.current_player.reserved_cards)
 
     def card_payment(self, card):
         """Use matching gems first, then gold for discounted cost shortfalls."""
@@ -152,9 +158,8 @@ class State:
             return "The game has already ended."
         if self.selected_tokens.get(GOLD, 0):
             return "Deselect gold before buying a card."
-        if (self.selected_card is None
-                or self.selected_card not in self.market.get(self.selected_card.tier, [])):
-            return "That card is no longer in the market."
+        if self.selected_card is None or not self.card_available(self.selected_card):
+            return "That card is not in the market or your reserved cards."
         if not self.can_buy(self.selected_card):
             return "You do not have enough gems/gold to buy that card."
         return None
@@ -175,7 +180,10 @@ class State:
         player.add_card(card)
         payment = format_cost(cost)
         self.log.append(f"{card.points}-point {card.token} card (level {card.tier}) bought by {player.name} for {payment}.")
-        self.remove_market_card(card)
+        if card in player.reserved_cards:
+            player.reserved_cards.remove(card)
+        else:
+            self.remove_market_card(card)
         self.turn.consecutive_passes = 0
         self.finish_turn()
 
@@ -183,6 +191,8 @@ class State:
         """Return why a reservation is illegal, or None when it is legal."""
         if self.turn.finished:
             return "The game has already ended."
+        if self.selected_card in self.current_player.reserved_cards:
+            return "That card is already reserved."
         if (self.selected_card is None
                 or self.selected_card not in self.market.get(self.selected_card.tier, [])):
             return "That card is no longer in the market."

@@ -17,10 +17,11 @@ from .styles import (
 
 
 class PlayerPanel(tk.Frame):
-    def __init__(self, parent, player, active):
+    def __init__(self, parent, player, active, on_select, enabled):
         border = ACTIVE_PLAYER_BORDER if active else INACTIVE_PLAYER_BORDER
         super().__init__(parent, background=PLAYER_PANEL_BACKGROUND, highlightthickness=2,
                          highlightbackground=border, highlightcolor=border, borderwidth=0)
+        self.on_select = on_select
         # Grid's row minimum takes effect only when there are children. Reserve
         # the same content height plus vertical padding for an empty inventory.
         self.panel = ttk.Frame(self, padding=PLAYER_PANEL_PADDING, style="Player.TFrame",
@@ -38,9 +39,13 @@ class PlayerPanel(tk.Frame):
         self.reserved = PlayerColumn(self.panel, None, [], 0,
                                      height=MARKET_CARD_HEIGHT, disabled=True)
         self.reserved.grid(row=0, column=len(TOKENS), sticky="ew")
-        self.refresh(player, active)
+        self.reserved.stack.bind("<Button-1>", self.select_reserved)
+        self.refresh(player, active, enabled)
 
-    def refresh(self, player, active):
+    def refresh(self, player, active, enabled):
+        self.player = player
+        self.enabled = enabled and active
+        self.reserved.stack.configure(cursor="hand2" if self.enabled else "")
         border = ACTIVE_PLAYER_BORDER if active else INACTIVE_PLAYER_BORDER
         self.configure(highlightbackground=border, highlightcolor=border)
         for index, (token, column) in enumerate(self.columns.items()):
@@ -60,3 +65,20 @@ class PlayerPanel(tk.Frame):
             self.reserved.grid()
         else:
             self.reserved.grid_remove()
+
+    def refresh_selection(self, selected_card):
+        for index, card in enumerate(self.player.reserved_cards):
+            state = "hidden" if card is selected_card else "normal"
+            self.reserved.stack.itemconfigure(self.reserved.card_items[index], state=state)
+            self.reserved.stack.itemconfigure(self.reserved.overlay_items[index], state=state)
+
+    def select_reserved(self, event):
+        if not self.enabled:
+            return
+        # Tk's "current" tag identifies the topmost canvas item under the pointer.
+        current = self.reserved.stack.find_withtag("current")
+        for index, card in enumerate(self.player.reserved_cards):
+            if (self.reserved.card_items[index] in current
+                    or self.reserved.overlay_items[index] in current):
+                self.on_select(card)
+                return
