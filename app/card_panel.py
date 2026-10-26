@@ -10,7 +10,7 @@ class CardPanel(tk.Canvas):
                          highlightthickness=0, borderwidth=0, background=CARD_BACKGROUND)
         self.on_select = on_select
         self.art = self.create_image(0, 0, anchor="nw")
-        self.overlay = self.create_image(0, 0, anchor="nw", image=load_image(self, "disabled"))
+        self.overlay = self.create_image(0, 0, anchor="nw", image=load_image(self, "enabled"))
         self.bind("<Button-1>", self.select)
         self.refresh(card, affordable, owned)
 
@@ -19,7 +19,7 @@ class CardPanel(tk.Canvas):
         self.enabled = bool(card and self.on_select and affordable and not owned)
         self.configure(cursor="hand2" if self.enabled else "")
         self.itemconfigure(self.art, image=load_image(self, card.id) if card else "")
-        self.itemconfigure(self.overlay, state="normal" if card and not self.enabled and not owned else "hidden")
+        self.itemconfigure(self.overlay, state="normal" if self.enabled else "hidden")
 
     def select(self, event):
         if self.enabled:
