@@ -61,7 +61,8 @@ The human starts; the computer can use manual control or AI.
 - `images/`: high-resolution originals and previews, ignored by Git.
 - `artwork/`: tracked quality-80 WebP source artwork. Preserve alpha for
   tokens, piles, and overlays; card/deck backgrounds may use RGB.
-- `assets/`: runtime PNGs and Forum font/license.
+- `assets/`: runtime PNGs.
+- `font/`: Forum font and license.
 - `prompts/`: image and artwork generation prompts.
 - Card assets are 150×210; card IDs match asset filenames without extensions.
   The generator prefers `card_<nnn>_l<level>_<token>.webp`, falling back to

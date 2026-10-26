@@ -53,7 +53,7 @@ Optional high-resolution composed previews belong in images/noble_previews/, usi
 Asset layout and finishing
 All coordinates and sizes below refer to the final 150×150px tile. Compose at 8× resolution (1200×1200px), scaling every position, font, stroke, border, square, and gap by the same factor; downsample once using LANCZOS. Preserve aspect ratio and do not stretch the portraits.
 
-Top-left: Always display the victory-point numeral 3. Match tools/generate_cards.py: bundled assets/Forum-Regular.ttf at 48px with synthetic bold, visible top-left anchor at (6, 12), white fill, dark #25394e outline. At 8× resolution draw the numeral first with a 9px dark stroke, then with a 4px white stroke. These stroke widths are high-resolution pixels, matching the card generator. No point label, badge, or extra symbol.
+Top-left: Always display the victory-point numeral 3. Match tools/generate_cards.py: bundled font/Forum-Regular.ttf at 48px with synthetic bold, visible top-left anchor at (6, 12), white fill, dark #25394e outline. At 8× resolution draw the numeral first with a 9px dark stroke, then with a 4px white stroke. These stroke widths are high-resolution pixels, matching the card generator. No point label, badge, or extra symbol.
 
 Top-right: Artwork only; nobles have no bonus-gem icon.
 

@@ -111,7 +111,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("artwork", type=Path, nargs="?", default=ROOT / "artwork", help="Folder containing card and gem WebP originals (default: artwork)")
     parser.add_argument("output", type=Path, nargs="?", default=ROOT / "assets", help="Destination folder for 150×210 PNG assets (default: assets)")
-    parser.add_argument("--font", type=Path, default=ROOT / "assets" / "Forum-Regular.ttf", help="Font file (default: bundled assets/Forum-Regular.ttf)")
+    parser.add_argument("--font", type=Path, default=ROOT / "font" / "Forum-Regular.ttf", help="Font file (default: bundled font/Forum-Regular.ttf)")
     parser.add_argument("--card", type=int, choices=range(1, 91), metavar="1-90", help="Generate only this card number; default: all cards")
     parser.add_argument("--high-res", type=Path, help="Also save 1200×1680 cards in this folder")
     args = parser.parse_args()

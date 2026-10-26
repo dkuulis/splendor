@@ -81,7 +81,7 @@ uses synthetic bold to match the current assets.
 
 Use `--card 78` to render one card, and `--high-res images/cards` to also save
 1200×1680 versions. Input and output default to `artwork` and `assets`; the
-bundled `assets/Forum-Regular.ttf` is used unless overridden with `--font`.
+bundled `font/Forum-Regular.ttf` is used unless overridden with `--font`.
 The `images` folder is ignored by Git.
 
 ## Setup

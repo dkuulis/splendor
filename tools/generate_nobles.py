@@ -92,7 +92,7 @@ def main():
                         help="Folder containing clean noble WebPs (default: artwork)")
     parser.add_argument("output", type=Path, nargs="?", default=ROOT / "assets",
                         help="Destination for 150×150 PNG assets (default: assets)")
-    parser.add_argument("--font", type=Path, default=ROOT / "assets" / "Forum-Regular.ttf",
+    parser.add_argument("--font", type=Path, default=ROOT / "font" / "Forum-Regular.ttf",
                         help="Forum font file (default: bundled Forum-Regular.ttf)")
     parser.add_argument("--noble", type=int, choices=range(1, 11), metavar="1-10",
                         help="Generate only this noble number; default: all ten")
