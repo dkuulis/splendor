@@ -1,0 +1,7 @@
+Shared prompt
+Create a full-bleed 5:7 portrait playing-card back with realistic embossed arabesque ornament and fine cardstock texture. Use a {background} background, antique-gold scrolling vines, floral motifs, a thin double border, and a central medallion containing {diamonds}. Keep the composition symmetrical and readable at 150×210px. Flat front view; no text, title plaque, surrounding scene, shadows, logos, or watermark.
+
+Deck variants
+deck_level_1.png: Deep emerald green background; one ivory diamond.
+deck_level_2.png: Dark antique gold background; two ivory diamonds in a horizontal row.
+deck_level_3.png: Deep sapphire blue background; three ivory diamonds in a horizontal row.

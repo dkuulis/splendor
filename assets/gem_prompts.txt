@@ -1,0 +1,10 @@
+Shared prompt
+Create a single {gem} game token in a realistic jeweled style matching ornate arabesque playing cards. Use a polished gemstone with {appearance} and only a few large, clearly defined facets (roughly 6–10 visible faces). Avoid tiny facets, dense reflections, microtexture, and fine detail that becomes clutter at 60×60px. Keep the prescribed outer silhouette independent of the facet count. Normal gems must be brightly lit and brilliant, with luminous facets and clearly recognizable colors rather than dark, subdued shading. Center it in a square image with genuine alpha transparency and a small transparent margin. Front view, crisp silhouette, readable at 60×60px. No text, checkmarks, surrounding scene, cast shadow, or rendered checkerboard.
+
+Gem variants
+Use the specified shape for the outer silhouette, not just the internal facets.
+diamond.png: Diamond — clear white brilliance, octagonal cut with eight sides.
+sapphire.png: Sapphire — vivid blue, heptagonal cut with seven sides.
+emerald.png: Emerald — rich bright green, cushion cut with a rounded-square silhouette.
+ruby.png: Ruby — luminous red, round brilliant cut with a circular silhouette.
+onyx.png: Onyx — glossy near-black, cushion cut with bright reflective facets; preserve its black identity.

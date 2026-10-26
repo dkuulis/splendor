@@ -4,12 +4,14 @@ from tkinter import ttk
 from .assets import load_image
 from .styles import (
     GEM_SPACING,
+    GEM_SIZE,
+    GEM_SELECTION_RAISE,
     MUTED_TEXT_COLOR,
     gem_centers,
 )
 
-BANK_CANVAS_WIDTH = 176
-BANK_CANVAS_HEIGHT = 48
+BANK_CANVAS_WIDTH = GEM_SIZE + 3 * GEM_SPACING
+BANK_CANVAS_HEIGHT = GEM_SIZE + GEM_SELECTION_RAISE
 
 
 class GemSelector(ttk.Frame):
@@ -27,9 +29,7 @@ class GemSelector(ttk.Frame):
         )
         self.tokens.pack()
         self.image = load_image(self, color.lower())
-        self.selected_image = load_image(self, f"{color.lower()}_selected")
-
-        y = BANK_CANVAS_HEIGHT / 2
+        y = GEM_SELECTION_RAISE + GEM_SIZE / 2
         for x in gem_centers(available, BANK_CANVAS_WIDTH, GEM_SPACING):
             gem = self.tokens.create_image(x, y, image=self.image, tags=("gem",))
             self.gem_items.append(gem)
@@ -50,7 +50,6 @@ class GemSelector(ttk.Frame):
     def update_selection(self):
         for index, gem in enumerate(self.gem_items):
             selected = index < self.selected
-            self.tokens.itemconfigure(
-                gem,
-                image=self.selected_image if selected else self.image,
-            )
+            x, _ = self.tokens.coords(gem)
+            y = GEM_SIZE / 2 + (0 if selected else GEM_SELECTION_RAISE)
+            self.tokens.coords(gem, x, y)

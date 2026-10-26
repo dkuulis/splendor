@@ -4,7 +4,7 @@ from tkinter import ttk
 from .card_panel import CardPanel
 from .assets import load_image
 from .styles import (
-    GEM_RADIUS,
+    GEM_SIZE,
     GEM_SPACING,
     MARKET_CARD_HEIGHT,
     MARKET_CARD_WIDTH,
@@ -19,7 +19,7 @@ class PlayerColumn(ttk.Frame):
     def __init__(self, parent, color, cards, gem_count):
         super().__init__(parent, style="Player.TFrame")
         stack_width = MARKET_CARD_WIDTH + max(0, len(cards) - 1) * PLAYER_CARD_OFFSET
-        width = max(stack_width, gem_count * GEM_SPACING)
+        width = max(stack_width, GEM_SIZE + max(0, gem_count - 1) * GEM_SPACING)
 
         stack = tk.Canvas(self, width=width, height=MARKET_CARD_HEIGHT,
                           highlightthickness=0, borderwidth=0,
@@ -36,4 +36,4 @@ class PlayerColumn(ttk.Frame):
         if gem_count:
             self.gem_image = load_image(self, color.lower())
             for x in gem_centers(gem_count, width, GEM_SPACING):
-                stack.create_image(x, MARKET_CARD_HEIGHT - GEM_RADIUS - 5, image=self.gem_image)
+                stack.create_image(x, MARKET_CARD_HEIGHT - GEM_SIZE / 2 - 5, image=self.gem_image)
