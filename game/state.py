@@ -22,6 +22,27 @@ class State:
             raise ValueError("The game has already ended.")
         self.log.append(f"{self.players[self.turn.active_player].name} passed.")
         self.turn.consecutive_passes += 1
+        self.finish_turn()
+
+    def take_gems(self, colors):
+        if self.turn.finished:
+            raise ValueError("The game has already ended.")
+        colors = list(colors)
+        if not 1 <= len(colors) <= 3 or len(set(colors)) != len(colors):
+            raise ValueError("Select one to three different gem colors.")
+        if any(color not in COLORS or self.bank.get(color, 0) < 1 for color in colors):
+            raise ValueError("A selected gem is not available.")
+        player = self.players[self.turn.active_player]
+        if sum(player.gems.values()) + len(colors) > self.gem_limit:
+            raise ValueError(f"You cannot hold more than {self.gem_limit} gems.")
+        for color in colors:
+            self.bank[color] -= 1
+            player.gems[color] = player.gems.get(color, 0) + 1
+        self.log.append(f"{player.name} took " + ", ".join(f"1 {color}" for color in colors) + ".")
+        self.turn.consecutive_passes = 0
+        self.finish_turn()
+
+    def finish_turn(self):
         if self.players[self.turn.active_player].points >= self.target_points:
             self.turn.final_round = True
         round_complete = self.turn.active_player == len(self.players) - 1

@@ -5,7 +5,8 @@ A two-player Splendour desktop UI using Tkinter and themed `ttk` widgets.
 The app starts with shuffled decks and empty player inventories. You control
 both players manually for now. Pass switches turns; two consecutive passes end
 the game using score and card-count tie-breaks. The log records actual actions.
-Gem selection is available, while purchasing and taking gems remain disabled.
+Select one to three different gems and use Take selected gems to collect them.
+The 10-gem inventory limit is enforced. Purchasing remains disabled.
 
 ## Setup
 

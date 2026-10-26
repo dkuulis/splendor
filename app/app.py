@@ -1,6 +1,6 @@
 """Assemble the game UI components."""
 
-from tkinter import ttk
+from tkinter import messagebox, ttk
 
 from game.initialize import create_initial_state
 
@@ -30,16 +30,26 @@ class App:
         body.pack(fill="both", expand=True, pady=(12, 0))
         body.columnconfigure(0, weight=1)
         body.rowconfigure(0, weight=1)
-        field = ttk.Frame(body)
-        field.grid(row=0, column=0, sticky="nsew")
+        self.field = ttk.Frame(body)
+        self.field.grid(row=0, column=0, sticky="nsew")
         self.log = Log(body, state.log)
         self.log.grid(row=0, column=1, sticky="nsew", padx=(16, 0))
 
+        self.refresh_field()
+
+    def refresh_field(self):
+        state = self.state
+        field = self.field
+        for child in field.winfo_children():
+            child.destroy()
         self.computer = PlayerPanel(field, state.players[1], self.player_subtitle(state.players[1]))
         self.computer.pack(fill="x")
         self.market = MarketPanel(field, state.market, state.decks)
         self.market.pack(fill="both", expand=True, pady=10)
-        self.bank = BankPanel(field, state.bank, self.pass_turn)
+        self.bank = BankPanel(
+            field, state.bank, self.pass_turn, self.take_gems,
+            max_take=min(3, max(0, state.gem_limit - sum(state.players[state.turn.active_player].gems.values()))),
+        )
         self.bank.pack(fill="x", pady=(0, 10))
         self.player = PlayerPanel(field, state.players[0], self.player_subtitle(state.players[0]))
         self.player.pack(fill="x")
@@ -57,9 +67,16 @@ class App:
             return
         self.state.pass_turn()
         self.log.refresh()
-        self.bank.reset_selection(self.state.turn.finished)
-        for panel, player in ((self.player, self.state.players[0]), (self.computer, self.state.players[1])):
-            panel.configure(text=f"{player.name}  •  {self.player_subtitle(player)}")
+        self.refresh_field()
+
+    def take_gems(self, colors):
+        try:
+            self.state.take_gems(colors)
+        except ValueError as error:
+            messagebox.showinfo("Cannot take gems", str(error), parent=self.shell)
+            return
+        self.refresh_field()
+        self.log.refresh()
 
     def player_subtitle(self, player):
         status = self.state.player_status(player)
