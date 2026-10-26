@@ -10,12 +10,16 @@ from .styles import (
 )
 
 
-class DeckPanel(tk.Frame):
+class DeckPanel(tk.Canvas):
     def __init__(self, parent, tier, cards):
-        super().__init__(parent, bg=DECK_PALETTE[tier], padx=12, pady=12,
-                         width=MARKET_CARD_WIDTH, height=MARKET_CARD_HEIGHT)
-        self.pack_propagate(False)
+        super().__init__(parent, background=DECK_PALETTE[tier],
+                         width=MARKET_CARD_WIDTH, height=MARKET_CARD_HEIGHT,
+                         highlightthickness=0, borderwidth=0)
 
-        tk.Label(self, text=f"LEVEL {tier}", bg=DECK_PALETTE[tier], fg=DECK_TEXT_COLOR, font=DECK_LABEL_FONT).pack()
-        tk.Label(self, text="◆" * tier, bg=DECK_PALETTE[tier], fg=DECK_TEXT_COLOR, font=DECK_SYMBOL_FONT).pack(expand=True)
-        tk.Label(self, text=f"{len(cards)} cards", bg=DECK_PALETTE[tier], fg=DECK_TEXT_COLOR).pack(pady=5)
+        center_x = MARKET_CARD_WIDTH / 2
+        self.create_text(center_x, 24, text=f"LEVEL {tier}",
+                         fill=DECK_TEXT_COLOR, font=DECK_LABEL_FONT)
+        self.create_text(center_x, MARKET_CARD_HEIGHT / 2, text="◆" * tier,
+                         fill=DECK_TEXT_COLOR, font=DECK_SYMBOL_FONT)
+        self.create_text(center_x, MARKET_CARD_HEIGHT - 24, text=f"{len(cards)} cards",
+                         fill=DECK_TEXT_COLOR, font="TkDefaultFont")
