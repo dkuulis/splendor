@@ -1,4 +1,38 @@
-Rectangular enamel-and-gold buttons — approved palette.
+Tall action buttons — variant 2 (current runtime artwork).
+Disabled result labels (both sizes): Win in gold #E5BD61, Loose in silver
+#C0C0C0, Tie in the usual disabled cream #C9C2B4. All reuse the matching
+shared disabled background and the existing Forum 20 px label renderer.
+Small assets: assets/button_<win|loose|tie>_disabled.png (140x42).
+Big assets: assets/button_<win|loose|tie>_disabled2.png (140x120).
+Regenerate only these labels:
+  .venv/bin/python tools/generate_buttons.py --buttons win loose tie --preview images/result_buttons_preview.png
+  .venv/bin/python tools/generate_buttons.py --variant 2 --buttons win loose tie --preview images/result_buttons_preview2.png
+
+Generated with the built-in image tool, one edit call per source artwork.
+Sources: artwork/button_<action>_enabled2.webp and artwork/button_disabled2.webp.
+Runtime: assets/button_<action>_<enabled|disabled>2.png (140x120 RGB),
+plus assets/button_disabled2.png. Actions: Buy, Reserve, Take, Pass.
+Restart keeps the original unsuffixed 140x42 assets.
+Action top: 0 px. Restart top: 168 px, bottom: 210 px.
+Labels retain the existing Forum 20 px renderer and cream colors.
+Regenerate: .venv/bin/python tools/generate_buttons.py --variant 2 --preview images/buttons_preview2.png
+
+Return assets (available in both sizes): reuse the matching Take source artwork
+and shared disabled artwork, with the label Return rendered in Forum at 20 px.
+No additional image generation or duplicate source artwork is needed.
+Small: assets/button_return_enabled.png and assets/button_return_disabled.png (140x42).
+Big: assets/button_return_enabled2.png and assets/button_return_disabled2.png (140x120).
+Regenerate only Return:
+  .venv/bin/python tools/generate_buttons.py --buttons return --preview images/return_buttons_preview.png
+  .venv/bin/python tools/generate_buttons.py --variant 2 --buttons return --preview images/return_buttons_preview2.png
+
+Shared exact image-generation prompt, applied to each original action source
+and the shared disabled source as the edit target:
+Use case: precise-object-edit. Edit target: reference button artwork. Make a taller almost square version, exact width:height 7:6, intended runtime 140 x 120 pixels. Preserve reference enamel color and texture, gold/bronze double rim, restrained bevel and top highlight, four square corners. Recompose geometry, do not stretch border thickness: equally thin physical border on all four sides. Full-bleed opaque rectangle fills entire canvas, no outside margins, no shadow or background. Broad completely blank enamel center. NO TEXT, letters, icons, ornaments or watermark. Label will be added by application font renderer.
+Enabled prompt ending: Keep the reference enabled-state palette exactly.
+Disabled prompt ending: Keep matte desaturated gray-brown face and dull low-contrast bronze rim, disabled state.
+
+Original rectangular enamel-and-gold buttons — retained variant 1.
 Generated with the built-in image tool, one call per source artwork variant.
 The approved maroon sample is reused as the Take source.
 

@@ -44,20 +44,22 @@ class PersistentUITests(unittest.TestCase):
         self.assertEqual([child for child in panel.actions.winfo_children()
                           if isinstance(child, ttk.Button)], list(buttons))
         positions = []
-        for button in buttons:
+        for button, height in zip(buttons, (120, 42)):
             self.assertTrue(button.winfo_ismapped())
-            self.assertEqual((button.winfo_width(), button.winfo_height()), (140, 42))
+            self.assertEqual((button.winfo_width(), button.winfo_height()), (140, height))
             self.assertGreaterEqual(button.winfo_y(), 0)
             self.assertLessEqual(button.winfo_y() + button.winfo_height(), 210)
             positions.append((button.winfo_x(), button.winfo_y()))
         self.assertLess(action.winfo_y() + action.winfo_height(), restart.winfo_y())
         self.assertEqual(panel.actions.winfo_height(), 210)
+        self.assertEqual(action.winfo_y(), 0)
+        self.assertEqual(restart.winfo_y() + restart.winfo_height(), panel.actions.winfo_height())
         self.assertFalse(action.instate(['disabled']))
         self.assertEqual(action.cget('text'), 'Pass')
-        self.assertEqual(action.cget('image')[0], str(load_image(panel, 'button_pass_enabled')))
+        self.assertEqual(action.cget('image')[0], str(load_image(panel, 'button_pass_enabled2')))
         app.select_token(RUBY)
         self.assertEqual(action.cget('text'), 'Take')
-        self.assertEqual(action.cget('image')[0], str(load_image(panel, 'button_take_enabled')))
+        self.assertEqual(action.cget('image')[0], str(load_image(panel, 'button_take_enabled2')))
         action.invoke()
         self.assertEqual(app.state.players[0].tokens, {RUBY: 1})
         self.assertEqual(action.cget('text'), 'Pass')
@@ -69,11 +71,11 @@ class PersistentUITests(unittest.TestCase):
         card.cost = {RUBY: 1}
         app.select_card(card)
         self.assertEqual(action.cget('text'), 'Buy')
-        self.assertEqual(action.cget('image')[0], str(load_image(panel, 'button_buy_enabled')))
+        self.assertEqual(action.cget('image')[0], str(load_image(panel, 'button_buy_enabled2')))
         self.assertFalse(action.instate(['disabled']))
         app.select_token(GOLD)
         self.assertEqual(action.cget('text'), 'Reserve')
-        self.assertEqual(action.cget('image')[0], str(load_image(panel, 'button_reserve_enabled')))
+        self.assertEqual(action.cget('image')[0], str(load_image(panel, 'button_reserve_enabled2')))
         self.assertFalse(action.instate(['disabled']))
         self.assertIs(panel.action_button, action)
         self.assertEqual(positions, [(button.winfo_x(), button.winfo_y()) for button in buttons])
@@ -89,6 +91,44 @@ class PersistentUITests(unittest.TestCase):
         self.assertIs(panel.action_button, action)
         self.assertEqual(action.cget('text'), 'Pass')
         self.assertEqual(positions, [(button.winfo_x(), button.winfo_y()) for button in buttons])
+
+    def test_finished_action_shows_result_and_restart_restores_play(self):
+        app = self.app
+        panel = app.selection
+        action = panel.action_button
+        restart = panel.restart_button
+        for winner, result in ((0, 'win'), (1, 'loose'), (None, 'tie')):
+            with self.subTest(result=result):
+                if winner is not None:
+                    app.state.players[winner].nobles.append(app.state.nobles.pop())
+                app.perform_action()
+                app.perform_action()
+                self.root.update()
+                self.assertTrue(app.state.turn.finished)
+                self.assertEqual(app.state.turn.winner, winner)
+                self.assertEqual(action.cget('text'), result.capitalize())
+                self.assertEqual(action.cget('image')[0],
+                                 str(load_image(panel, f'button_{result}_disabled2')))
+                self.assertTrue(action.instate(['disabled']))
+                with patch.object(app, 'refresh') as refresh:
+                    action.invoke()
+                    panel.go()
+                refresh.assert_not_called()
+                self.assertFalse(restart.instate(['disabled']))
+                old_state = app.state
+                restart.invoke()
+                self.root.update()
+                self.assertIsNot(app.state, old_state)
+                self.assertFalse(app.state.turn.finished)
+                self.assertIs(panel.action_button, action)
+                self.assertEqual(action.cget('text'), 'Pass')
+                self.assertEqual(action.cget('image')[0],
+                                 str(load_image(panel, 'button_pass_enabled2')))
+                self.assertFalse(action.instate(['disabled']))
+                app.select_token(RUBY)
+                action.invoke()
+                self.assertEqual(app.state.players[0].tokens, {RUBY: 1})
+                app.new_game()
 
     def test_gold_first_selects_and_toggles_a_reservation(self):
         app = self.app

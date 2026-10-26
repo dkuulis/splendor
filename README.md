@@ -17,6 +17,8 @@ Select one to three different gems and use Take to collect them. The button is
 disabled when the selection is invalid.
 The selection panel has one action button and a separate Restart button.
 The action button shows Buy, Reserve, Take, or Pass to match the selection.
+When the game finishes, it shows a disabled Win, Loose, or Tie from your
+perspective. Restart remains available and restores the normal action button.
 At game end, the winner's divider stays highlighted with gold laurels beside
 the score plaque. A draw leaves both dividers inactive without laurels.
 The 10-gem inventory limit is enforced. Click any market card to move it into
@@ -113,6 +115,26 @@ Use `--card 78` to render one card, and `--high-res images/cards` to also save
 1200×1680 versions. Input and output default to `artwork` and `assets`; the
 bundled `font/Forum-Regular.ttf` is used unless overridden with `--font`.
 The `images` folder is ignored by Git.
+
+## Generating button assets
+
+The action button uses the 140×120 assets with suffix `2`; Restart keeps its
+original 140×42 assets. The action button sits at the top of the 210-pixel
+selection area and Restart sits at the bottom.
+
+Regenerate the tall buttons from the matching WebP sources with Pillow:
+
+```sh
+.venv/bin/python tools/generate_buttons.py --variant 2 --preview images/buttons_preview2.png
+```
+
+Without `--variant 2`, the tool generates the original small buttons. Use
+`--buttons restart` to regenerate only Restart. Matching outputs are overwritten.
+Return assets are available in both sizes and reuse Take's maroon artwork;
+generate them with `--buttons return`, adding `--variant 2` for the tall version.
+Disabled result assets are also available in both sizes: `Win` has gold letters,
+`Loose` has silver letters, and `Tie` uses the usual disabled label color.
+Generate them with `--buttons win loose tie`, adding `--variant 2` for tall assets.
 
 ## Setup
 

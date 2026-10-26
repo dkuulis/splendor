@@ -7,7 +7,7 @@ from .assets import load_image
 from .card_panel import CardPanel
 from .styles import (CARD_BACKGROUND, TOKEN_SIZE, TOKEN_SPACING,
                      MARKET_CARD_HEIGHT, ACTION_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT,
-                     ACTION_BUTTON_TOPS)
+                     ACTION_BUTTON_TOPS, RESTART_BUTTON_HEIGHT)
 
 
 class SelectionPanel(tk.Frame):
@@ -44,9 +44,10 @@ class SelectionPanel(tk.Frame):
                                         command=self.go, state="disabled", compound="none")
         self.restart_button = ttk.Button(self.actions, style="Action.TButton",
                                          command=on_restart, state="disabled", compound="none")
-        for button, action, top in zip((self.action_button, self.restart_button),
-                                       ("pass", "restart"), ACTION_BUTTON_TOPS):
-            button.place(x=0, y=top, width=ACTION_BUTTON_WIDTH, height=ACTION_BUTTON_HEIGHT)
+        for button, action, top, height in zip(
+                (self.action_button, self.restart_button), ("pass", "restart"),
+                ACTION_BUTTON_TOPS, (ACTION_BUTTON_HEIGHT, RESTART_BUTTON_HEIGHT)):
+            button.place(x=0, y=top, width=ACTION_BUTTON_WIDTH, height=height)
             self.set_button(button, action, False)
         self.configure(width=TOKEN_SIZE + 4 * TOKEN_SPACING + ACTION_BUTTON_WIDTH + 24)
 
@@ -75,14 +76,21 @@ class SelectionPanel(tk.Frame):
                 self.tokens.coords(item, TOKEN_SIZE / 2 + index * TOKEN_SPACING, TOKEN_SIZE / 2)
                 index += 1
         self.tokens.configure(width=TOKEN_SIZE + max(0, index - 1) * TOKEN_SPACING)
-        self.set_button(self.action_button, state.selection.action_kind, self.can_go)
+        if state.turn.finished:
+            result = {0: "win", 1: "loose", None: "tie"}[state.turn.winner]
+            self.set_button(self.action_button, result, False)
+        else:
+            self.set_button(self.action_button, state.selection.action_kind, self.can_go)
         self.set_button(self.restart_button, "restart", True)
 
     def set_button(self, button, action, enabled):
+        suffix = "" if action == "restart" else "2"
+        disabled_image = load_image(self, f"button_{action}_disabled{suffix}")
+        image = (load_image(self, f"button_{action}_enabled{suffix}"),
+                 "disabled", disabled_image) if enabled else (disabled_image,)
         button.configure(
             text=action.capitalize(),
-            image=(load_image(self, f"button_{action}_enabled"),
-                   "disabled", load_image(self, f"button_{action}_disabled")),
+            image=image,
             state="normal" if enabled else "disabled")
 
     def deselect(self, token):
