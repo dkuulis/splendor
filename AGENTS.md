@@ -26,7 +26,8 @@ The human starts; the computer can use manual control or AI.
 - `main.py`: creates Tk and explicitly passes `create_initial_state()` to App.
 - `game/`: plain Python model objects, legal actions, turn transitions, and
   initialization. Keep this package independent of Tkinter.
-- `game/initialize.py`: all 90 card definitions and shuffled initial setup.
+- `game/initialize.py`: all 90 card definitions, ten noble definitions, and
+  shuffled initial setup.
 - `ai/`: strategies implementing `play_turn(state)`. Each performs one legal
   action through State. Register strategies in `ai/__init__.py`.
 - `app/app.py`: assembles panels, dispatches actions, refreshes the UI, and
@@ -34,6 +35,9 @@ The human starts; the computer can use manual control or AI.
   strategies quick and preserve cancellation when changing mode/new game.
 - Other `app/` modules implement market, card, deck, player, score, header, supply, selection
   and log controls. Keep shared visual constants in `app/styles.py`.
+- `app/nobles_panel.py` displays available nobles left of supply and selection.
+  The player panel's leftmost column stacks owned nobles with gold coins
+  overlaid, using the same display code as cards and gems.
 - `tests/`: standard-library unittest coverage for actions and AI.
 - `tools/`: optional command-line artwork conversion and asset generation.
 
@@ -50,8 +54,14 @@ The human starts; the computer can use manual control or AI.
   Finishing a turn clears selection.
 - Missing dictionary entries mean zero.
 - `Card.token` identifies its permanent discount type. `Card.cost` is a token
-  count dictionary. `Player.cards` is keyed by card ID; points and discounts
-  are derived from owned cards.
+  count dictionary. `Player.cards` is keyed by card ID. Discounts are derived
+  only from owned cards; points include owned cards and nobles.
+- `State.nobles` is a list of available nobles; `Player.nobles` is a list of
+  owned nobles. `Noble.requirements` counts permanent card bonuses, not tokens.
+  Qualifying for a noble does not spend cards or tokens.
+- `finish_turn()` awards the first qualifying available noble, at most one
+  per turn, before checking the final round and switching players. Awarded
+  nobles leave `State.nobles` without replacement.
 - `State.market` and `State.decks` always contain tiers 1, 2, and 3, with empty
   lists for exhausted tiers.
 - `State.log` is a list of action messages rendered by the log panel.
@@ -95,4 +105,6 @@ output directory for smoke checks, and regenerate only requested assets.
   defensive guards around established model invariants.
 - Run relevant unit tests for logic changes. For UI changes, also check Tk
   construction, callbacks, and the affected layout where possible.
+- Prefer behavioral tests; avoid tests that merely duplicate static
+  definitions or style constants.
 - Add comments for rare/obscure library calls/parameters/options.
