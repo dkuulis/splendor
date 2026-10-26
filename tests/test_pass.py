@@ -28,18 +28,16 @@ class PassTests(unittest.TestCase):
         for points, expected in ((3, 0), (2, 1)):
             with self.subTest(points=points):
                 state = State()
-                state.players[0].cards = {
-                    'a': Card('a', 1, 'Ruby', points),
-                    'b': Card('b', 1, 'Onyx', 0),
-                }
-                state.players[1].cards = {'c': Card('c', 1, 'Diamond', 2)}
+                state.players[0].cards['Ruby'].append(Card('a', 1, 'Ruby', points))
+                state.players[0].cards['Ruby'].append(Card('b', 1, 'Ruby', 0))
+                state.players[1].cards['Diamond'].append(Card('c', 1, 'Diamond', 2))
                 state.pass_turn()
                 state.pass_turn()
                 self.assertEqual(state.turn.winner, expected)
 
     def test_final_round_waits_for_second_player(self):
         state = State()
-        state.players[0].cards = {'a': Card('a', 3, 'Ruby', 15)}
+        state.players[0].cards['Ruby'].append(Card('a', 3, 'Ruby', 15))
         state.pass_turn()
         self.assertTrue(state.turn.final_round)
         self.assertFalse(state.turn.finished)

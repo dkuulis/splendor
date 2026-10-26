@@ -5,10 +5,28 @@ from game import Card, State
 
 
 class BuyCardTests(unittest.TestCase):
+    def test_purchase_appends_to_color_and_preserves_other_holdings(self):
+        state = State()
+        player = state.current_player
+        owned = Card('owned', 1, 'Ruby', 1)
+        other = Card('other', 1, 'Onyx', 2)
+        player.cards['Ruby'].append(owned)
+        player.cards['Onyx'].append(other)
+        card = Card('buy', 2, 'Ruby', 3, {'Ruby': 1})
+        state.market[2] = [card]
+        state.select_card(card)
+        state.buy_card()
+        self.assertEqual(player.cards['Ruby'], [owned, card])
+        self.assertEqual(player.cards['Onyx'], [other])
+        self.assertEqual(player.points, 6)
+        self.assertEqual(player.discounts, {'Ruby': 2, 'Onyx': 1})
+        for cards in state.players[1].cards.values():
+            self.assertEqual(cards, [])
+
     def test_discount_payment_and_replacement(self):
         state = State()
         player = state.players[0]
-        player.cards = {'owned': Card('owned', 1, 'Ruby', 0)}
+        player.cards['Ruby'].append(Card('owned', 1, 'Ruby', 0))
         player.tokens = {'Ruby': 2, 'Sapphire': 1}
         card = Card('buy', 2, 'Emerald', 2, {'Ruby': 3, 'Sapphire': 1})
         replacement = Card('next', 2, 'Diamond', 1)
@@ -20,7 +38,7 @@ class BuyCardTests(unittest.TestCase):
         self.assertEqual(player.tokens, {})
         self.assertEqual(state.supply['Ruby'], 6)
         self.assertEqual(state.supply['Sapphire'], 5)
-        self.assertIs(player.cards['buy'], card)
+        self.assertEqual(player.cards['Emerald'], [card])
         self.assertEqual(player.points, 2)
         self.assertEqual(player.discounts, {'Ruby': 1, 'Emerald': 1})
         self.assertEqual(state.market[2], [replacement])
@@ -33,7 +51,7 @@ class BuyCardTests(unittest.TestCase):
 
     def test_free_purchase_and_exhausted_deck(self):
         state = State()
-        state.players[0].cards = {'owned': Card('owned', 1, 'Ruby', 0)}
+        state.players[0].cards['Ruby'].append(Card('owned', 1, 'Ruby', 0))
         card = Card('free', 1, 'Onyx', 0, {'Ruby': 1})
         state.market[1] = [card]
         state.turn.consecutive_passes = 1
@@ -57,7 +75,8 @@ class BuyCardTests(unittest.TestCase):
             state.buy_card()
         self.assertEqual((state.supply, state.players[0].tokens, vars(state.turn), state.log), before)
         self.assertEqual(state.market[1], [card])
-        self.assertEqual(state.players[0].cards, {})
+        for cards in state.players[0].cards.values():
+            self.assertEqual(cards, [])
         with self.assertRaises(ValueError):
             state.selected_card = Card('missing', 1, 'Ruby', 0)
             state.buy_card()
@@ -71,7 +90,7 @@ class BuyCardTests(unittest.TestCase):
     def test_both_players_buy_and_finish_round(self):
         state = State()
         for i, player in enumerate(state.players):
-            player.cards = {f'owned-{i}': Card(f'owned-{i}', 3, 'Ruby', 14)}
+            player.cards['Ruby'].append(Card(f'owned-{i}', 3, 'Ruby', 14))
         first = Card('first', 3, 'Onyx', 1)
         second = Card('second', 3, 'Diamond', 2)
         state.market[3] = [first, second]

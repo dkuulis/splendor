@@ -57,7 +57,7 @@ class PersistentUITests(unittest.TestCase):
         self.assertIsNone(app.state.selected_card)
         panel.select(None)
         app.selection.go_button.invoke()
-        self.assertIn(card.id, app.state.players[0].cards)
+        self.assertIn(card, app.state.players[0].cards[card.token])
         replacement = app.state.market[1][0]
         self.assertIs(panel.card, replacement)
         app.state.decks[1].clear()
@@ -148,7 +148,7 @@ class PersistentUITests(unittest.TestCase):
             self.assertTrue(column.winfo_ismapped())
             self.assertEqual(len(column.token_items), 5)
             player.nobles = list(nobles)
-            player.cards[card.id] = card
+            player.cards[card.token].append(card)
             app.refresh()
             self.root.update()
             gem_column = panel.columns[card.token]

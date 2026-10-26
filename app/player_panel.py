@@ -43,7 +43,7 @@ class PlayerPanel(tk.Frame):
         self.configure(highlightbackground=border, highlightcolor=border)
         for index, (token, column) in enumerate(self.columns.items()):
             cards = (list(player.nobles) if token == "Gold" else
-                     [card for card in player.cards.values() if card.token == token])
+                     player.cards[token])
             token_count = player.tokens.get(token, 0)
             column.refresh(cards, token_count)
             visible = bool(cards or token_count)

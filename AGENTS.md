@@ -54,7 +54,8 @@ The human starts; the computer can use manual control or AI.
   Finishing a turn clears selection.
 - Missing dictionary entries mean zero.
 - `Card.token` identifies its permanent discount type. `Card.cost` is a token
-  count dictionary. `Player.cards` is keyed by card ID. Discounts are derived
+  count dictionary. `Player.cards` maps each gem color (excluding Gold) to a
+  list of owned cards, initialized empty. Discounts are derived
   only from owned cards; points include owned cards and nobles.
 - `State.nobles` is a list of available nobles; `Player.nobles` is a list of
   owned nobles. `Noble.requirements` counts permanent card bonuses, not tokens.

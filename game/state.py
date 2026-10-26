@@ -146,7 +146,7 @@ class State:
                 self.supply[token] = self.supply.get(token, 0) + amount
                 if player.tokens[token] == 0:
                     del player.tokens[token]
-        player.cards[card.id] = card
+        player.cards[card.token].append(card)
         row = self.market[card.tier]
         slot = row.index(card)
         revealed = None
@@ -185,7 +185,8 @@ class State:
         round_complete = self.turn.active_player == len(self.players) - 1
         if self.turn.consecutive_passes >= 2 or (self.turn.final_round and round_complete):
             self.turn.finished = True
-            scores = [(player.points, -len(player.cards)) for player in self.players]
+            scores = [(player.points, -sum(len(cards) for cards in player.cards.values()))
+                      for player in self.players]
             best = max(scores)
             winners = [index for index, score in enumerate(scores) if score == best]
             self.turn.winner = winners[0] if len(winners) == 1 else None

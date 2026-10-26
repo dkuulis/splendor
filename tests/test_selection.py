@@ -18,7 +18,8 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(state.selected_tokens, {})
         self.assertIs(state.selected_card, self.card)
         self.assertEqual(state.market[1], [self.card])
-        self.assertEqual(state.players[0].cards, {})
+        for cards in state.players[0].cards.values():
+            self.assertEqual(cards, [])
         self.assertEqual(state.turn.active_player, 0)
         self.assertEqual(state.log, [])
         state.select_token('Sapphire')
@@ -58,7 +59,7 @@ class SelectionTests(unittest.TestCase):
         self.state.perform_action()
         self.assertIsNone(self.state.selected_card)
         self.assertEqual(self.state.selected_tokens, {})
-        self.assertIs(self.state.players[0].cards[self.card.id], self.card)
+        self.assertEqual(self.state.players[0].cards[self.card.token], [self.card])
         self.assertEqual(self.state.market[1], [replacement])
         self.assertEqual(self.state.turn.active_player, 1)
         self.assertEqual(self.state.action_label, 'Pass')

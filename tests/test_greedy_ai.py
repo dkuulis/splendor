@@ -22,7 +22,7 @@ class GreedyAITests(unittest.TestCase):
         self.state.market[1] = [card]
         self.state.select_card(card)
         GreedyAI().play_turn(self.state)
-        self.assertEqual(self.player.cards, {'free': card})
+        self.assertEqual(self.player.cards['Ruby'], [card])
         self.assertIsNone(self.state.selected_card)
         self.assertEqual(self.state.turn.active_player, 1)
 
@@ -33,23 +33,23 @@ class GreedyAITests(unittest.TestCase):
         self.state.market[2] = [valuable]
         self.player.tokens = {"Diamond": 2}
         GreedyAI().play_turn(self.state)
-        self.assertEqual(self.player.cards, {"valuable": valuable})
+        self.assertEqual(self.player.cards["Emerald"], [valuable])
         self.assertEqual(self.player.tokens, {})
         self.assertEqual(self.state.turn.active_player, 1)
 
     def test_equal_points_use_discounted_payment(self):
         owned = Card("owned", 1, "Ruby", 0)
-        self.player.cards[owned.id] = owned
+        self.player.cards[owned.token].append(owned)
         expensive = Card("expensive", 1, "Emerald", 1, {"Diamond": 2})
         discounted = Card("discounted", 1, "Onyx", 1, {"Ruby": 2})
         self.state.market[1] = [expensive, discounted]
         self.player.tokens = {"Diamond": 2, "Ruby": 1}
         GreedyAI().play_turn(self.state)
-        self.assertIn("discounted", self.player.cards)
+        self.assertIn(discounted, self.player.cards["Onyx"])
         self.assertEqual(self.player.tokens, {"Diamond": 2})
 
     def test_closest_card_accounts_for_owned_tokens_and_discounts(self):
-        self.player.cards["owned"] = Card("owned", 1, "Ruby", 0)
+        self.player.cards["Ruby"].append(Card("owned", 1, "Ruby", 0))
         self.player.tokens = {"Ruby": 2}
         self.state.market[1] = [
             Card("far", 1, "Onyx", 0, {"Diamond": 2}),

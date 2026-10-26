@@ -19,7 +19,7 @@ class NobleTests(unittest.TestCase):
     def test_owned_nobles_score_without_granting_discounts(self):
         state = State()
         player = state.current_player
-        player.cards['card'] = Card('card', 1, 'Ruby', 1)
+        player.cards['Ruby'].append(Card('card', 1, 'Ruby', 1))
         noble = Noble('noble', 3, {'Ruby': 4})
         player.nobles.append(noble)
         self.assertEqual(player.points, 4)
@@ -30,7 +30,7 @@ class NobleTests(unittest.TestCase):
     def test_purchase_qualifies_using_new_card_without_spending_bonuses(self):
         state = State()
         player = state.current_player
-        player.cards['owned'] = Card('owned', 1, 'Ruby', 0)
+        player.cards['Ruby'].append(Card('owned', 1, 'Ruby', 0))
         player.tokens = {'Diamond': 1}
         card = Card('buy', 1, 'Ruby', 0, {'Diamond': 1})
         noble = Noble('noble', 3, {'Ruby': 2})
@@ -47,7 +47,7 @@ class NobleTests(unittest.TestCase):
 
     def test_tokens_cannot_replace_missing_card_bonuses(self):
         state = State()
-        state.current_player.cards['ruby'] = Card('ruby', 1, 'Ruby', 0)
+        state.current_player.cards['Ruby'].append(Card('ruby', 1, 'Ruby', 0))
         state.current_player.tokens = {'Ruby': 4, 'Onyx': 4, 'Gold': 2}
         nobles = [Noble('short', 3, {'Ruby': 2}),
                   Noble('missing', 3, {'Ruby': 1, 'Onyx': 1})]
@@ -59,7 +59,7 @@ class NobleTests(unittest.TestCase):
     def test_first_qualifying_noble_only_and_cannot_be_awarded_twice(self):
         state = State()
         for player in state.players:
-            player.cards['ruby'] = Card('ruby', 1, 'Ruby', 0)
+            player.cards['Ruby'].append(Card('ruby', 1, 'Ruby', 0))
         unavailable = Noble('unavailable', 3, {'Onyx': 1})
         first = Noble('first', 3, {'Ruby': 1})
         second = Noble('second', 3, {'Ruby': 1})
@@ -77,7 +77,7 @@ class NobleTests(unittest.TestCase):
         state = State()
         noble = Noble('noble', 3, {'Ruby': 1})
         state.nobles = [noble]
-        state.current_player.cards['ruby'] = Card('ruby', 1, 'Ruby', 0)
+        state.current_player.cards['Ruby'].append(Card('ruby', 1, 'Ruby', 0))
         with self.assertRaises(ValueError):
             state.take_tokens()
         self.assertEqual(state.nobles, [noble])
@@ -86,8 +86,8 @@ class NobleTests(unittest.TestCase):
     def test_computer_noble_can_end_game_and_change_winner(self):
         state = State()
         state.turn.active_player = 1
-        state.players[0].cards['human'] = Card('human', 3, 'Onyx', 14)
-        state.current_player.cards['computer'] = Card('computer', 3, 'Ruby', 12)
+        state.players[0].cards['Onyx'].append(Card('human', 3, 'Onyx', 14))
+        state.current_player.cards['Ruby'].append(Card('computer', 3, 'Ruby', 12))
         noble = Noble('noble', 3, {'Ruby': 1})
         state.nobles = [noble]
         state.pass_turn()
@@ -101,7 +101,7 @@ class NobleTests(unittest.TestCase):
     def test_noble_points_count_toward_final_round(self):
         state = State()
         player = state.current_player
-        player.cards['card'] = Card('card', 3, 'Ruby', 12)
+        player.cards['Ruby'].append(Card('card', 3, 'Ruby', 12))
         state.nobles = [Noble('noble', 3, {'Ruby': 1})]
         state.pass_turn()
         self.assertTrue(state.turn.final_round)
