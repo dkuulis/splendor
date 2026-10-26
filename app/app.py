@@ -6,6 +6,7 @@ from game.initialize import create_initial_state
 
 from .supply_panel import SupplyPanel
 from .background import Background
+from .divider_panel import DividerPanel
 from .log import Log
 from .header import Header
 from .market_panel import MarketPanel
@@ -48,8 +49,10 @@ class App:
 
         self.computer = PlayerPanel(self.field, on_select=self.select_card)
         self.computer.pack(fill="x")
+        self.computer_divider = DividerPanel(self.field)
+        self.computer_divider.pack(fill="x")
         table = ttk.Frame(self.field)
-        table.pack(pady=10)
+        table.pack(pady=4)
         for row in range(3):
             table.rowconfigure(row, minsize=MARKET_CARD_HEIGHT + 2 * MARKET_ROW_PADDING)
         self.nobles = NoblesPanel(table)
@@ -63,6 +66,8 @@ class App:
             table, self.perform_action, self.select_card, self.deselect_token,
         )
         self.selection.grid(row=2, column=1, sticky="ew", padx=(0, 12), pady=MARKET_ROW_PADDING)
+        self.player_divider = DividerPanel(self.field)
+        self.player_divider.pack(fill="x")
         self.player = PlayerPanel(self.field, on_select=self.select_card)
         self.player.pack(fill="x")
 
@@ -73,6 +78,8 @@ class App:
         state = self.state
         self.computer.refresh(state.players[1], state.is_active_player(state.players[1]), self.manual_turn)
         self.player.refresh(state.players[0], state.is_active_player(state.players[0]), self.manual_turn)
+        self.computer_divider.refresh(state.is_active_player(state.players[1]))
+        self.player_divider.refresh(state.is_active_player(state.players[0]))
         self.computer.refresh_selection(state.selected_card)
         self.player.refresh_selection(state.selected_card)
         self.market.refresh(state.market, state.decks, state.selected_card, enabled=self.manual_turn)

@@ -1,11 +1,18 @@
 Thin horizontal divider for a Renaissance jewel-trading game, viewed directly
-from above. Two fine parallel antique-brass lines with a small diamond-shaped
-ornament at the center. Slightly worn, muted gold, restrained and elegant,
+from above. Two fine, continuous parallel antique-brass rails with small
+pointed end caps. Keep the center straight and uninterrupted: no central
+ornament, diamond, medallion, collars, or raised decoration.
+Slightly worn, muted gold, restrained and elegant,
 matching ornate card borders and a warm taupe suede tabletop. Subtle metal
 highlights, minimal depth, clearly readable at UI size. Wide, shallow asset
-with transparent background. No text, gemstones, heavy shadows, or enclosing
-frame.
+designed for a 1200×52px runtime image. Crop tightly around the rails and end
+caps, with minimal vertical padding, without clipping the edges or glow. Use genuine
+alpha transparency outside the metal; no painted checkerboard or opaque
+background. No text, gemstones, heavy shadows, or enclosing frame.
 
 Placement: beneath the computer's area and above the player's area, leaving
-the other panel edges open. Use a warmer gold tint for the active player's
-divider.
+the other panel edges open. Produce matching active and inactive variants
+with identical dimensions, rail positions, and end-cap silhouettes. Use warm,
+bright gold with a restrained glow for the active player's divider and muted
+antique brass for the inactive divider. Switching states must not shift the
+divider or change its vertical space.

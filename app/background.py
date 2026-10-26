@@ -69,7 +69,7 @@ class Background:
                 # covers the frame without contributing to its requested size.
                 label = tk.Label(widget, borderwidth=0, highlightthickness=0)
                 # ttk's padding counts as an internal border to place(). Paint
-                # over it too; classic frames retain their active-player outline.
+                # over it too so the background covers the entire panel.
                 label.place(x=0, y=0, relwidth=1, relheight=1,
                             bordermode="ignore" if isinstance(widget, ttk.Frame) else "inside")
                 label.lower()

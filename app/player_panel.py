@@ -6,8 +6,6 @@ from game.constants import GOLD, TOKENS
 from .player_column import PlayerColumn
 
 from .styles import (
-    ACTIVE_PLAYER_BORDER,
-    INACTIVE_PLAYER_BORDER,
     MARKET_CARD_HEIGHT,
     NOBLE_SIZE,
     PLAYER_COLUMN_GAP,
@@ -18,9 +16,8 @@ from .styles import (
 
 class PlayerPanel(tk.Frame):
     def __init__(self, parent, on_select):
-        border = INACTIVE_PLAYER_BORDER
-        super().__init__(parent, background=PLAYER_PANEL_BACKGROUND, highlightthickness=2,
-                         highlightbackground=border, highlightcolor=border, borderwidth=0)
+        super().__init__(parent, background=PLAYER_PANEL_BACKGROUND,
+                         highlightthickness=0, borderwidth=0)
         self.on_select = on_select
         self.enabled = False
         # Grid's row minimum takes effect only when there are children. Reserve
@@ -46,8 +43,6 @@ class PlayerPanel(tk.Frame):
         self.player = player
         self.enabled = enabled and active
         self.reserved.stack.configure(cursor="hand2" if self.enabled else "")
-        border = ACTIVE_PLAYER_BORDER if active else INACTIVE_PLAYER_BORDER
-        self.configure(highlightbackground=border, highlightcolor=border)
         for index, (token, column) in enumerate(self.columns.items()):
             cards = (list(player.nobles) if token == GOLD else
                      player.cards[token])
