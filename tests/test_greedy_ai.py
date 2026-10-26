@@ -40,7 +40,7 @@ class GreedyAITests(unittest.TestCase):
         ]
         GreedyAI().play_turn(self.state)
         self.assertEqual(self.player.gems, {"Ruby": 3, "Diamond": 1})
-        self.assertEqual(self.state.log, ["YOU took 1 Ruby, 1 Diamond."])
+        self.assertEqual(self.state.log, ["YOU took Diamond, Ruby."])
 
     def test_prefers_fewer_collection_turns_over_fewer_gems(self):
         self.state.market[1] = [
@@ -57,7 +57,7 @@ class GreedyAITests(unittest.TestCase):
             Card("one turn", 1, "Emerald", 0, {"Onyx": 1, "Ruby": 1}),
         ]
         GreedyAI().play_turn(self.state)
-        self.assertEqual(self.state.log, ["YOU took 1 Ruby, 1 Onyx, 1 Diamond."])
+        self.assertEqual(self.state.log, ["YOU took Diamond, Ruby, Onyx."])
 
     def test_spare_picks_skip_duplicate_colors_and_use_next_targets(self):
         self.state.market[1] = [
@@ -85,7 +85,7 @@ class GreedyAITests(unittest.TestCase):
         self.state.bank.update(Diamond=4, Sapphire=3, Emerald=1, Ruby=2)
         GreedyAI().play_turn(self.state)
         self.assertEqual(self.player.gems, {"Emerald": 1, "Ruby": 1, "Sapphire": 1})
-        self.assertEqual(self.state.log, ["YOU took 1 Emerald, 1 Ruby, 1 Sapphire."])
+        self.assertEqual(self.state.log, ["YOU took Sapphire, Emerald, Ruby."])
 
     def test_capacity_limits_collection_to_scarcest_color(self):
         self.player.gems = {"Onyx": 9}

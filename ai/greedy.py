@@ -23,30 +23,36 @@ class GreedyAI:
 
     def take_gems(self, state, cards):
         """Collect useful gems and report whether an action was taken."""
-        player = state.current_player
         capacity = state.max_take
-        if capacity > 0:
-            targets = []
-            for card in cards:
-                cost = state.card_cost(card)
-                missing = {color: max(0, cost.get(color, 0) - player.gems.get(color, 0))
-                           for color in COLORS}
-                available = [color for color in COLORS if missing[color] and state.bank.get(color, 0)]
-                if available:
-                    total = sum(missing.values())
-                    # At most three gems per turn, and only one of each color.
-                    turns = max(max(missing.values()), (total + 2) // 3)
-                    targets.append((turns, total, available))
-            colors = []
-            # Prefer fewer gems when turn counts tie; otherwise keep market order.
-            for _, _, available in sorted(targets, key=lambda target: target[:2]):
-                available.sort(key=lambda color: state.bank[color])
-                for color in available:
-                    if color not in colors and len(colors) < capacity:
-                        colors.append(color)
-                if len(colors) == capacity:
-                    break
-            if colors:
-                state.take_gems(colors)
-                return True
-        return False
+        if capacity == 0:
+            return False
+
+        colors = []
+        for _, _, available in self.rank_targets(state, cards):
+            available.sort(key=lambda color: state.bank[color])
+            for color in available:
+                if color not in colors and len(colors) < capacity:
+                    colors.append(color)
+            if len(colors) == capacity:
+                break
+        if not colors:
+            return False
+        state.take_gems(colors)
+        return True
+
+    def rank_targets(self, state, cards):
+        """Rank collectible targets by turns needed, then missing gem count."""
+        player = state.current_player
+        targets = []
+        for card in cards:
+            cost = state.card_cost(card)
+            missing = {color: max(0, cost.get(color, 0) - player.gems.get(color, 0))
+                       for color in COLORS}
+            available = [color for color in COLORS if missing[color] and state.bank.get(color, 0)]
+            if available:
+                total = sum(missing.values())
+                # At most three gems per turn, and only one of each color.
+                turns = max(max(missing.values()), (total + 2) // 3)
+                targets.append((turns, total, available))
+        # Prefer fewer gems when turn counts tie; otherwise keep market order.
+        return sorted(targets, key=lambda target: target[:2])

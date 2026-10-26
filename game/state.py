@@ -50,7 +50,8 @@ class State:
         for color in colors:
             self.bank[color] -= 1
             player.gems[color] = player.gems.get(color, 0) + 1
-        self.log.append(f"{player.name} took " + ", ".join(f"1 {color}" for color in colors) + ".")
+        gems = ", ".join(color for color in COLORS if color in colors)
+        self.log.append(f"{player.name} took {gems}.")
         self.turn.consecutive_passes = 0
         self.finish_turn()
 
