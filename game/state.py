@@ -13,6 +13,8 @@ class State:
     def __init__(self):
         self.players = [Player("YOU"), Player("COMPUTER", is_ai=True)]
         self.bank = dict.fromkeys(COLORS, 4)
+        # Pending gem counts by color; unselected colors are omitted.
+        self.selected_gems = {}
         # Every tier is always present; no cards means an empty list, not None.
         self.decks = {tier: [] for tier in (1, 2, 3)}
         self.market = {tier: [] for tier in (1, 2, 3)}
@@ -98,6 +100,7 @@ class State:
         self.finish_turn()
 
     def finish_turn(self):
+        self.selected_gems.clear()
         if not self.turn.final_round and self.current_player.points >= self.target_points:
             self.turn.final_round = True
             player = self.current_player

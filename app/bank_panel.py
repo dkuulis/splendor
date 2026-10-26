@@ -6,12 +6,15 @@ from .gem_selector import GemSelector
 
 
 class BankPanel(ttk.Frame):
-    def __init__(self, parent, bank, on_pass=None, on_take=None, max_take=3, enabled=True):
-        super().__init__(parent, padding=10)
+    def __init__(self, parent, bank, selected_gems, on_pass=None, on_take=None, max_take=3, enabled=True,
+                 on_selection=None):
+        super().__init__(parent, padding=5)
         self.on_pass = on_pass
+        self.selected_gems = selected_gems
         self.on_take = on_take
         self.max_take = max_take
         self.enabled = enabled
+        self.on_selection = on_selection
         self.columns = {}
 
         gem_rows = ttk.Frame(self)
@@ -20,22 +23,25 @@ class BankPanel(ttk.Frame):
             available = bank.get(color, 0)
             if not available:
                 continue
-            column = GemSelector(gem_rows, color, available, self.update_selection, enabled=enabled)
-            column.pack(expand=True, fill="x", pady=8)
+            column = GemSelector(gem_rows, color, available, selected_gems,
+                                 self.update_selection, enabled=enabled)
+            column.pack(expand=True, fill="x", pady=2)
             self.columns[color] = column
 
-        self.go_button = ttk.Button(self, text="Go!", command=self.go, state="disabled")
-        self.go_button.pack(fill="x", pady=(12, 0))
         self.update_selection()
 
     @property
     def selected_colors(self):
-        return [color for color, column in self.columns.items() if column.selected]
+        return [color for color in COLORS if self.selected_gems.get(color, 0)]
 
     @property
     def can_go(self):
-        count = len(self.selected_colors)
-        return self.enabled and bool(self.on_pass if count == 0 else self.on_take and count <= self.max_take)
+        count = sum(self.selected_gems.values())
+        valid = all(amount == 1 and color in self.columns
+                    for color, amount in self.selected_gems.items())
+        return self.enabled and valid and bool(
+            self.on_pass if count == 0 else self.on_take and count <= self.max_take
+        )
 
     def go(self):
         if not self.can_go:
@@ -47,4 +53,13 @@ class BankPanel(ttk.Frame):
             self.on_pass()
 
     def update_selection(self):
-        self.go_button.configure(state="normal" if self.can_go else "disabled")
+        for column in self.columns.values():
+            column.update_selection()
+        if self.on_selection:
+            self.on_selection(self.can_go)
+
+    def deselect(self, color):
+        if not self.enabled:
+            return
+        self.selected_gems.pop(color, None)
+        self.update_selection()

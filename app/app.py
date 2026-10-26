@@ -10,8 +10,9 @@ from .log import Log
 from .header import Header
 from .market_panel import MarketPanel
 from .player_panel import PlayerPanel
+from .pick_panel import PickPanel
 from .score_panel import ScorePanel
-from .styles import WINDOW_MIN_WIDTH, configure_styles
+from .styles import MARKET_CARD_HEIGHT, MARKET_ROW_PADDING, WINDOW_MIN_WIDTH, configure_styles
 
 
 class App:
@@ -60,15 +61,21 @@ class App:
         self.computer.pack(fill="x")
         table = ttk.Frame(field)
         table.pack(pady=10)
+        for row in range(3):
+            table.rowconfigure(row, minsize=MARKET_CARD_HEIGHT + 2 * MARKET_ROW_PADDING)
         self.market = MarketPanel(table, state.market, self.buy_card,
                                   lambda card: self.manual_turn and state.can_buy(card))
-        self.market.grid(row=0, column=1)
+        self.market.grid(row=0, column=1, rowspan=3, sticky="n")
+        self.pick = PickPanel(table, state.selected_gems, lambda: self.bank.go(),
+                              lambda color: self.bank.deselect(color))
+        self.pick.grid(row=2, column=0, sticky="ew", padx=(0, 12), pady=MARKET_ROW_PADDING)
         self.bank = BankPanel(
-            table, state.bank, self.pass_turn, self.take_gems,
+            table, state.bank, state.selected_gems, self.pass_turn, self.take_gems,
             enabled=self.manual_turn,
             max_take=state.max_take,
+            on_selection=self.pick.refresh,
         )
-        self.bank.grid(row=0, column=0, sticky="ns", padx=(0, 12))
+        self.bank.grid(row=0, column=0, rowspan=2, sticky="nsew", padx=(0, 12))
         self.player = PlayerPanel(field, state.players[0],
                                   active=state.player_status(state.players[0]) == "active")
         self.player.pack(fill="x")

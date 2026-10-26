@@ -2,6 +2,7 @@ from tkinter import ttk
 
 from .card_panel import CardPanel
 from .deck_panel import DeckPanel
+from .styles import MARKET_ROW_PADDING
 
 
 class MarketPanel(ttk.Frame):
@@ -10,8 +11,8 @@ class MarketPanel(ttk.Frame):
 
         for row, tier in enumerate((3, 2, 1)):
             deck = DeckPanel(self, tier)
-            deck.grid(row=row, column=0, padx=4, pady=4)
+            deck.grid(row=row, column=0, padx=4, pady=MARKET_ROW_PADDING)
 
             for slot, card in enumerate(market[tier]):
                 panel = CardPanel(self, card, on_buy, can_buy(card) if can_buy else False)
-                panel.grid(row=row, column=slot + 1, padx=4, pady=4)
+                panel.grid(row=row, column=slot + 1, padx=4, pady=MARKET_ROW_PADDING)
