@@ -26,6 +26,8 @@ class DividerPanel(tk.Canvas):
         self.configure(width=1, height=self.height)
         self.divider = self.create_image(0, self.height / 2, anchor="w", image=self.images[False])
         self.plaque = self.create_image(SCORE_CENTER_X, self.height / 2, image=self.plaque_images[False])
+        self.laurels = self.create_image(SCORE_CENTER_X, self.height / 2,
+                                         image=load_image(self, "victory_laurels"), state="hidden")
         self.points = self.create_text(SCORE_CENTER_X, self.height / 2, text="0",
                                        font=self.points_font, fill=TEXT_COLOR)
         self.bind("<Configure>", lambda event: self.resize())
@@ -51,8 +53,9 @@ class DividerPanel(tk.Canvas):
                     image.tk.call(str(image), "copy", str(tile),
                                   "-from", 0, 0, width, tile.height(), "-to", x, 0)
 
-    def refresh(self, active, points):
+    def refresh(self, active, points, winner):
         self.itemconfigure(self.divider, image=self.images[active])
         self.itemconfigure(self.plaque, image=self.plaque_images[active])
         self.itemconfigure(self.points, text=str(points))
+        self.itemconfigure(self.laurels, state="normal" if winner else "hidden")
         self.resize()

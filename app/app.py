@@ -63,8 +63,10 @@ class App:
         state = self.state
         self.computer.refresh(state.players[1], state.is_active_player(state.players[1]), self.manual_turn)
         self.player.refresh(state.players[0], state.is_active_player(state.players[0]), self.manual_turn)
-        self.computer_divider.refresh(state.is_active_player(state.players[1]), state.players[1].points)
-        self.player_divider.refresh(state.is_active_player(state.players[0]), state.players[0].points)
+        for index, divider in enumerate((self.player_divider, self.computer_divider)):
+            winner = state.turn.finished and state.turn.winner == index
+            active = winner if state.turn.finished else state.is_active_player(state.players[index])
+            divider.refresh(active, state.players[index].points, winner)
         self.computer.refresh_selection(state.selected_card)
         self.player.refresh_selection(state.selected_card)
         self.market.refresh(state.market, state.decks, state.selected_card, enabled=self.manual_turn)

@@ -126,6 +126,42 @@ class PersistentUITests(unittest.TestCase):
         self.assertEqual(app.computer_divider.itemcget(app.computer_divider.plaque, 'image'),
                          str(app.computer_divider.plaque_images[False]))
 
+    def test_winner_laurels_and_highlight_preserve_height_and_reset(self):
+        app = self.app
+        dividers = (app.player_divider, app.computer_divider)
+        heights = [divider.winfo_height() for divider in dividers]
+        items = [divider.find_all() for divider in dividers]
+        for winner in (0, 1, None):
+            with self.subTest(winner=winner):
+                app.new_game()
+                if winner is not None:
+                    app.state.players[winner].nobles.append(app.state.nobles.pop())
+                app.perform_action()
+                app.perform_action()
+                self.assertTrue(app.state.turn.finished)
+                self.assertEqual(app.state.turn.winner, winner)
+                app.refresh()
+                self.root.update()
+                for index, divider in enumerate(dividers):
+                    highlighted = index == winner
+                    self.assertEqual(divider.itemcget(divider.divider, 'image'),
+                                     str(divider.images[highlighted]))
+                    self.assertEqual(divider.itemcget(divider.plaque, 'image'),
+                                     str(divider.plaque_images[highlighted]))
+                    self.assertEqual(divider.itemcget(divider.laurels, 'state'),
+                                     'normal' if highlighted else 'hidden')
+                    self.assertEqual(divider.winfo_height(), heights[index])
+                    self.assertEqual(divider.find_all(), items[index])
+                    if highlighted:
+                        bounds = divider.bbox(divider.laurels)
+                        self.assertGreaterEqual(bounds[1], 0)
+                        self.assertLessEqual(bounds[3], heights[index])
+        app.new_game()
+        for index, divider in enumerate(dividers):
+            self.assertEqual(divider.itemcget(divider.laurels, 'state'), 'hidden')
+            self.assertEqual(divider.itemcget(divider.divider, 'image'),
+                             str(divider.images[index == 0]))
+
     def test_divider_points_follow_cards_nobles_and_restart(self):
         app = self.app
         player, computer = app.state.players

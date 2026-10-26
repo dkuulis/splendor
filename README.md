@@ -16,6 +16,8 @@ the game using score and card-count tie-breaks. Action history is retained inter
 Select one to three different gems and use Take to collect them. The button is
 disabled when the selection is invalid.
 Buy, Reserve, Take, and Restart are grouped in the selection panel.
+At game end, the winner's divider stays highlighted with gold laurels beside
+the score plaque. A draw leaves both dividers inactive without laurels.
 The 10-gem inventory limit is enforced. Click any market card to move it into
 the selection panel; click it again to deselect it. Buy is enabled only when
 you have enough gems after owned-card discounts, using owned gold as a wildcard

@@ -1,0 +1,12 @@
+Use case: ui-mockup.
+Production transparent game ornament sprite: ONE symmetric paired laurel ornament made of polished golden brass, for the two sides of a Renaissance game's victory score plaque. Two short elegant upright laurel sprigs, one on the far left and its mirrored partner on the far right. Each sprig curves gently inward toward the top and bottom; 5 to 6 clearly separated broad pointed leaves per sprig and a thin curved stem. Realistic warm yellow-gold polished brass, amber midtones, bronze bevel shadows, restrained highlights matching a golden divider rod. Readable at tiny UI size.
+Composition: overall ornament bounds aspect ratio 176:64. Left sprig occupies only leftmost 34/176 of width, right sprig occupies only rightmost 34/176. The central 108/176 width is COMPLETELY EMPTY TRANSPARENT SPACE for an existing 96-pixel-wide score plaque. Sprigs must not connect across center, no top or bottom arch, no full wreath, no ribbon, no crown, no plaque or medallion or background. Each branch fits within the same vertical extent. Entire ornament visible with minimal transparent outer margin.
+Return actual transparent RGBA PNG, alpha zero in all empty space including the large center gap. NO rendered checkerboard. No text, numbers, frame, gems, backdrop or cast shadow.
+
+Generated with the built-in image tool.
+Original: images/victory_laurels.png
+Source: artwork/victory_laurels.webp (quality 80, alpha preserved)
+Runtime: assets/victory_laurels.png (176x64, alpha preserved)
+Crop with tools.image_utils.load_cropped_rgba; resize with Lanczos.
+Center the ornament on the score plaque without changing divider height.
+Show only for the winner of a finished game; hide for draws and normal play.
