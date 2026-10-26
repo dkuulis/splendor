@@ -10,8 +10,6 @@ PALETTE = {"Diamond": "#e5e7eb", "Sapphire": "#2563eb", "Emerald": "#15803d", "R
 class App:
     def __init__(self, root):
         root.title("Splendour • Layout preview")
-        root.geometry("1100x820")
-        root.minsize(1000, 780)
         shell = ttk.Frame(root, padding=20)
         shell.pack(fill="both", expand=True)
 
@@ -63,6 +61,14 @@ class App:
         ttk.Button(actions, text="Take selected gems", state="disabled").pack(side="right")
         ttk.Button(actions, text="Pass", state="disabled").pack(side="right", padx=8)
         ttk.Label(shell, text="ACTIVITY   •   A new game will appear here once gameplay is connected.", foreground="#64748b").pack(anchor="w", pady=(14, 0))
+
+        # Measure the complete layout using the current platform's fonts and
+        # widget sizes, including the footer, before setting window bounds.
+        root.update_idletasks()
+        width = max(1100, root.winfo_reqwidth())
+        height = root.winfo_reqheight()
+        root.minsize(width, height)
+        root.geometry(f"{width}x{height}")
 
     def player_panel(self, parent, name, subtitle, gems, discounts, points):
         panel = ttk.LabelFrame(parent, text=f"{name}  •  {subtitle}  •  {points} / 15 points", padding=10)
