@@ -118,7 +118,8 @@ class PersistentUITests(unittest.TestCase):
             self.root.geometry(f"{width}x1400")
             self.root.update()
             for index, divider in enumerate(dividers):
-                self.assertEqual(divider.winfo_width(), app.field.winfo_width())
+                self.assertEqual(divider.winfo_width(),
+                                 app.field.winfo_width() - 2 * divider.winfo_x())
                 self.assertEqual(divider.winfo_height(), divider.height)
                 self.assertEqual(divider.find_all(), items[index])
                 active = index == app.state.turn.active_player
@@ -217,12 +218,12 @@ class PersistentUITests(unittest.TestCase):
             self.root.update()
             self.assertEqual(background.size,
                              (self.root.winfo_width(), self.root.winfo_height()))
-            for frame in (self.app.shell, self.app.player.panel, self.app.supply):
+            for frame in (self.app.field, self.app.player.panel, self.app.supply):
                 surface, _, _ = background.surfaces[frame]
                 self.assertEqual((surface.winfo_x(), surface.winfo_y()), (0, 0))
                 self.assertEqual((surface.winfo_width(), surface.winfo_height()),
                                  (frame.winfo_width(), frame.winfo_height()))
-            for widget in (self.app.shell, self.app.player.panel,
+            for widget in (self.app.field, self.app.player.panel,
                            self.app.supply.cells[RUBY], self.app.selection.tokens,
                            self.app.player_divider, self.app.computer_divider):
                 surface, item, image = background.surfaces[widget]

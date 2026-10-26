@@ -16,47 +16,61 @@ from .styles import MARKET_CARD_HEIGHT, MARKET_ROW_PADDING, WINDOW_MIN_WIDTH, co
 
 class App:
     def __init__(self, root, state, strategy):
-        self.state = state
         self.root = root
+        self.state = state
         self.strategy = strategy
+
         self.pending_ai = None
+
+        root.title("Splendor")
         root.bind("<Destroy>", self.on_destroy, add="+")
         configure_styles(root)
-        root.title("Splendor")
-        self.shell = ttk.Frame(root, padding=20)
-        self.shell.pack(fill="both", expand=True)
+
         self.create_ui()
+
         self.background = Background(root)
 
     def create_ui(self):
-        self.field = ttk.Frame(self.shell)
-        self.field.pack(fill="both", expand=True)
+        self.create_panels()
+        self.assemble_panels()
+        self.refresh()
+
+    def create_panels(self):
+        self.field = ttk.Frame(self.root)
+        self.table = ttk.Frame(self.field)
 
         self.computer = PlayerPanel(self.field, on_select=self.select_card)
-        self.computer.pack(fill="x")
         self.computer_divider = DividerPanel(self.field)
-        self.computer_divider.pack(fill="x")
-        table = ttk.Frame(self.field)
-        table.pack(pady=4)
-        for row in range(3):
-            table.rowconfigure(row, minsize=MARKET_CARD_HEIGHT + 2 * MARKET_ROW_PADDING)
-        self.nobles = NoblesPanel(table)
-        self.nobles.grid(row=0, column=0, rowspan=3, padx=(0, 12))
-        self.market = MarketPanel(table, self.select_card,
-                                  lambda card: self.state.can_buy(card))
-        self.market.grid(row=0, column=2, rowspan=3, sticky="n")
-        self.supply = SupplyPanel(table, self.select_token)
-        self.supply.grid(row=0, column=1, rowspan=2, sticky="nsew", padx=(0, 12))
-        self.selection = SelectionPanel(
-            table, self.perform_action, self.select_card, self.deselect_token, self.new_game,
-        )
-        self.selection.grid(row=2, column=1, sticky="ew", padx=(0, 12), pady=MARKET_ROW_PADDING)
-        self.player_divider = DividerPanel(self.field)
-        self.player_divider.pack(fill="x")
-        self.player = PlayerPanel(self.field, on_select=self.select_card)
-        self.player.pack(fill="x")
 
-        self.refresh()
+        self.nobles = NoblesPanel(self.table)
+        self.market = MarketPanel(self.table, self.select_card, lambda card: self.state.can_buy(card))
+        self.supply = SupplyPanel(self.table, self.select_token)
+
+        self.selection = SelectionPanel(
+            self.table, self.perform_action, self.select_card, self.deselect_token, self.new_game,
+        )
+
+        self.player_divider = DividerPanel(self.field)
+        self.player = PlayerPanel(self.field, on_select=self.select_card)
+
+    def assemble_panels(self):
+        self.field.configure(padding=20)
+        self.field.pack(fill="both", expand=True)
+
+        self.computer.pack(fill="x")
+        self.computer_divider.pack(fill="x")
+
+        for row in range(3):
+            self.table.rowconfigure(row, minsize=MARKET_CARD_HEIGHT + 2 * MARKET_ROW_PADDING)
+        self.table.pack(pady=4)
+
+        self.nobles.grid(row=0, column=0, rowspan=3, padx=(0, 12))
+        self.supply.grid(row=0, column=1, rowspan=2, sticky="nsew", padx=(0, 12))
+        self.selection.grid(row=2, column=1, sticky="ew", padx=(0, 12), pady=MARKET_ROW_PADDING)
+        self.market.grid(row=0, column=2, rowspan=3, sticky="n")
+
+        self.player_divider.pack(fill="x")
+        self.player.pack(fill="x")
 
     def refresh(self):
         self.cancel_ai()
@@ -137,7 +151,7 @@ class App:
         try:
             self.state.perform_action()
         except ValueError as error:
-            messagebox.showinfo("Cannot perform action", str(error), parent=self.shell)
+            messagebox.showinfo("Cannot perform action", str(error), parent=self.field)
             return
         self.refresh()
 
