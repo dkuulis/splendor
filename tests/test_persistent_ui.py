@@ -30,6 +30,35 @@ class PersistentUITests(unittest.TestCase):
     def widgets(self, widget):
         return [widget] + [child for item in widget.winfo_children() for child in self.widgets(item)]
 
+    def test_dividers_tile_across_resizes_and_switch_with_turns(self):
+        app = self.app
+        dividers = (app.player_divider, app.computer_divider)
+        items = [divider.find_all() for divider in dividers]
+        for width in (1900, 2207, 1800):
+            self.root.geometry(f"{width}x1400")
+            self.root.update()
+            for index, divider in enumerate(dividers):
+                self.assertEqual(divider.winfo_width(), app.field.winfo_width())
+                self.assertEqual(divider.winfo_height(), divider.height)
+                self.assertEqual(divider.find_all(), items[index])
+                active = index == app.state.turn.active_player
+                image = divider.images[active]
+                self.assertEqual(divider.itemcget(divider.divider, 'image'), str(image))
+                self.assertEqual(image.width(), divider.winfo_width())
+                left, middle, right = divider.tiles[active]
+                self.assertEqual(image.get(30, 26), left.get(30, 26))
+                self.assertEqual(image.get(image.width() - 30, 26),
+                                 right.get(right.width() - 30, 26))
+                for x in range(left.width(), image.width() - right.width()):
+                    self.assertEqual(image.get(x, 26),
+                                     middle.get((x - left.width()) % middle.width(), 26))
+            app.select_token(RUBY)
+            app.perform_action()
+            self.root.update()
+        app.new_game()
+        self.assertEqual(app.player_divider.itemcget(app.player_divider.divider, 'image'),
+                         str(app.player_divider.images[True]))
+
     def test_background_stays_aligned_after_resize_and_new_game(self):
         background = self.app.background
         for width, height in ((1900, 1300), (2560, 1600), (2100, 1450)):

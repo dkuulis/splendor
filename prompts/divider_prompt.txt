@@ -5,14 +5,21 @@ ornament, diamond, medallion, collars, or raised decoration.
 Slightly worn, muted gold, restrained and elegant,
 matching ornate card borders and a warm taupe suede tabletop. Subtle metal
 highlights, minimal depth, clearly readable at UI size. Wide, shallow asset
-designed for a 1200×52px runtime image. Crop tightly around the rails and end
-caps, with minimal vertical padding, without clipping the edges or glow. Use genuine
+designed for a tightly cropped, approximately 41px-high runtime divider of
+variable width. Deliver three pieces per state: a left end cap, a seamlessly
+repeating middle rail tile, and a right end cap. Keep all six pieces at the
+same height with aligned rails, allowing transparent vertical padding in the
+middle tiles. Use shared vertical crop bounds that preserve the visible end
+caps and glow, and trim each state's outer horizontal margins independently.
+End caps retain their size while the middle tile repeats
+horizontally to fill the available space. Do not clip the edges or visible
+glow. Use genuine
 alpha transparency outside the metal; no painted checkerboard or opaque
 background. No text, gemstones, heavy shadows, or enclosing frame.
 
 Placement: beneath the computer's area and above the player's area, leaving
 the other panel edges open. Produce matching active and inactive variants
-with identical dimensions, rail positions, and end-cap silhouettes. Use warm,
+with matching assembled rail positions and end-cap silhouettes. Use warm,
 bright gold with a restrained glow for the active player's divider and muted
 antique brass for the inactive divider. Switching states must not shift the
 divider or change its vertical space.

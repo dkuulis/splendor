@@ -10,25 +10,37 @@ class DividerPanel(tk.Canvas):
     def __init__(self, parent):
         super().__init__(parent, background=TABLE_BACKGROUND,
                          highlightthickness=0, borderwidth=0)
-        self.images = {active: self.load_rail(name)
-                       for active, name in ((True, "active"), (False, "inactive"))}
-        image = self.images[False]
-        self.configure(width=image.width(), height=image.height())
-        self.divider = self.create_image(image.width() / 2, image.height() / 2, image=image)
+        self.tiles = {
+            active: [load_image(self, f"divider_{name}_{section}")
+                     for section in ("left", "middle", "right")]
+            for active, name in ((True, "active"), (False, "inactive"))
+        }
+        self.images = {active: tk.PhotoImage(master=self) for active in self.tiles}
+        self.height = self.tiles[False][0].height()
+        self.width = None
+        self.configure(width=1, height=self.height)
+        self.divider = self.create_image(0, 0, anchor="nw", image=self.images[False])
         self.bind("<Configure>", self.resize)
 
-    def load_rail(self, name):
-        source = load_image(self, f"divider_{name}")
-        image = tk.PhotoImage(master=self, width=1200, height=52)
-        # Copy the end sections and bridge the ornament with an adjacent rail
-        # segment. Tcl's exclusive crop bounds preserve the source alpha.
-        for left, right, destination in ((0, 560, 0), (480, 560, 560), (640, 1200, 640)):
-            image.tk.call(str(image), "copy", str(source),
-                          "-from", left, 22, right, 74, "-to", destination, 0)
-        return image
-
     def resize(self, event):
-        self.coords(self.divider, event.width / 2, event.height / 2)
+        if event.width == self.width:
+            return
+        self.width = event.width
+        for active, (left, middle, right) in self.tiles.items():
+            image = self.images[active]
+            image.configure(width=self.width, height=self.height)
+            image.blank()
+            right_x = max(left.width(), self.width - right.width())
+            sections = [(left, 0, min(left.width(), self.width))]
+            sections.extend((middle, x, min(middle.width(), right_x - x))
+                            for x in range(left.width(), right_x, middle.width()))
+            sections.append((right, right_x, self.width - right_x))
+            for tile, x, width in sections:
+                if width > 0:
+                    # Tcl's exclusive crop bounds clip the last repeat while
+                    # preserving alpha and the native size of the end caps.
+                    image.tk.call(str(image), "copy", str(tile),
+                                  "-from", 0, 0, width, tile.height(), "-to", x, 0)
 
     def refresh(self, active):
         self.itemconfigure(self.divider, image=self.images[active])
