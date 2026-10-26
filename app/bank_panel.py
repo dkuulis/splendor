@@ -1,65 +1,50 @@
+import tkinter as tk
 from tkinter import ttk
 
 from game.constants import COLORS
 
-from .gem_selector import GemSelector
+from .assets import load_image
+from .styles import BANK_PILE_HEIGHT, BANK_PILE_WIDTH
 
 
 class BankPanel(ttk.Frame):
-    def __init__(self, parent, bank, selected_gems, on_pass=None, on_take=None, max_take=3, enabled=True,
-                 on_selection=None):
+    def __init__(self, parent, bank, selected_gems, on_pick, enabled=True):
         super().__init__(parent, padding=5)
-        self.on_pass = on_pass
+        self.bank = bank
         self.selected_gems = selected_gems
-        self.on_take = on_take
-        self.max_take = max_take
-        self.enabled = enabled
-        self.on_selection = on_selection
-        self.columns = {}
+        self.cells = {}
+        self.images = []
 
-        gem_rows = ttk.Frame(self)
-        gem_rows.pack(fill="both", expand=True)
-        for color in COLORS:
-            available = bank.get(color, 0)
-            if not available:
-                continue
-            column = GemSelector(gem_rows, color, available, selected_gems,
-                                 self.update_selection, enabled=enabled)
-            column.pack(expand=True, fill="x", pady=2)
-            self.columns[color] = column
+        for row in range(3):
+            self.rowconfigure(row, weight=1)
+        for column in range(2):
+            self.columnconfigure(column, weight=1)
+        for index, color in enumerate((*COLORS, "Gold")):
+            cell = tk.Canvas(
+                self, width=BANK_PILE_WIDTH, height=BANK_PILE_HEIGHT, highlightthickness=0,
+                background=self.winfo_toplevel().cget("background"),
+            )
+            cell.grid(row=index // 2, column=index % 2, padx=5, pady=2)
+            cell.create_image(BANK_PILE_WIDTH / 2, BANK_PILE_HEIGHT / 2, tags=("gem",))
+            self.cells[color] = cell
+            if enabled and color != "Gold":
+                cell.tag_bind("gem", "<Button-1>", lambda event, color=color: on_pick(color))
+                cell.tag_bind("gem", "<Enter>", lambda event, cell=cell: cell.configure(cursor="hand2"))
+                cell.tag_bind("gem", "<Leave>", lambda event, cell=cell: cell.configure(cursor=""))
+        self.refresh()
 
-        self.update_selection()
-
-    @property
-    def selected_colors(self):
-        return [color for color in COLORS if self.selected_gems.get(color, 0)]
-
-    @property
-    def can_go(self):
-        count = sum(self.selected_gems.values())
-        valid = all(amount == 1 and color in self.columns
-                    for color, amount in self.selected_gems.items())
-        return self.enabled and valid and bool(
-            self.on_pass if count == 0 else self.on_take and count <= self.max_take
-        )
-
-    def go(self):
-        if not self.can_go:
-            return
-        colors = self.selected_colors
-        if colors:
-            self.on_take(colors)
-        else:
-            self.on_pass()
-
-    def update_selection(self):
-        for column in self.columns.values():
-            column.update_selection()
-        if self.on_selection:
-            self.on_selection(self.can_go)
-
-    def deselect(self, color):
-        if not self.enabled:
-            return
-        self.selected_gems.pop(color, None)
-        self.update_selection()
+    def refresh(self):
+        self.images.clear()
+        for color, cell in self.cells.items():
+            # Gold is a display-only placeholder until joker rules are implemented.
+            count = 5 if color == "Gold" else max(
+                0, self.bank.get(color, 0) - self.selected_gems.get(color, 0)
+            )
+            cell.configure(cursor="")
+            if count:
+                name = color.lower() + (str(count) if count > 1 else "")
+                image = load_image(self, name)
+                self.images.append(image)  # Keep displayed images alive for Tkinter.
+                cell.itemconfigure("gem", image=image, state="normal")
+            else:
+                cell.itemconfigure("gem", image="", state="hidden")

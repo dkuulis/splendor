@@ -66,16 +66,14 @@ class App:
         self.market = MarketPanel(table, state.market, self.buy_card,
                                   lambda card: self.manual_turn and state.can_buy(card))
         self.market.grid(row=0, column=1, rowspan=3, sticky="n")
-        self.pick = PickPanel(table, state.selected_gems, lambda: self.bank.go(),
-                              lambda color: self.bank.deselect(color))
-        self.pick.grid(row=2, column=0, sticky="ew", padx=(0, 12), pady=MARKET_ROW_PADDING)
-        self.bank = BankPanel(
-            table, state.bank, state.selected_gems, self.pass_turn, self.take_gems,
-            enabled=self.manual_turn,
-            max_take=state.max_take,
-            on_selection=self.pick.refresh,
-        )
+        self.bank = BankPanel(table, state.bank, state.selected_gems,
+                              lambda color: self.pick.select(color), enabled=self.manual_turn)
         self.bank.grid(row=0, column=0, rowspan=2, sticky="nsew", padx=(0, 12))
+        self.pick = PickPanel(
+            table, state.bank, state.selected_gems, self.pass_turn, self.take_gems,
+            max_take=state.max_take, enabled=self.manual_turn, on_selection=self.bank.refresh,
+        )
+        self.pick.grid(row=2, column=0, sticky="ew", padx=(0, 12), pady=MARKET_ROW_PADDING)
         self.player = PlayerPanel(field, state.players[0],
                                   active=state.player_status(state.players[0]) == "active")
         self.player.pack(fill="x")
