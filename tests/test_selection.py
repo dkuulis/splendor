@@ -38,7 +38,7 @@ class SelectionTests(unittest.TestCase):
         for count in range(1, 5):
             selection.select_token(RUBY, state)
             self.assertEqual(selection.tokens, {RUBY: count})
-            self.assertEqual(selection.can_take_tokens(state), count <= 2)
+            self.assertEqual(selection.can_take_tokens(state), count == 2)
         self.assertFalse(selection.can_select_token(RUBY, state))
         selection.select_token(RUBY, state)
         self.assertEqual(selection.tokens, {RUBY: 4})
@@ -79,7 +79,7 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(selection.tokens, {RUBY: 1})
         selection.select_token(SAPPHIRE, state)
         self.assertEqual(selection.tokens, {RUBY: 1, SAPPHIRE: 1})
-        self.assertTrue(selection.can_perform_action(state))
+        self.assertFalse(selection.can_perform_action(state))
 
     def test_finished_game_cannot_select(self):
         self.state.turn.finished = True

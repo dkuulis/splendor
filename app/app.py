@@ -24,6 +24,7 @@ class App:
         self.state = state
         self.selection = Selection()
         self.strategy = strategy
+        self.state.players[1].is_ai = strategy is not None
 
         self.pending_ai = None
 
@@ -45,8 +46,10 @@ class App:
         self.table = ttk.Frame(self.field)
 
         can_select_card = lambda card: self.selection.can_select_card(card, self.state)
+        can_return_token = lambda token: self.selection.can_select_return_token(token, self.state)
         self.computer = PlayerPanel(self.field, on_select=self.select_card,
-                                    can_select=can_select_card)
+                                    can_select=can_select_card, on_token=self.select_return_token,
+                                    can_select_token=can_return_token)
         self.computer_divider = DividerPanel(self.field)
 
         self.nobles = NoblesPanel(self.table)
@@ -61,7 +64,8 @@ class App:
 
         self.player_divider = DividerPanel(self.field)
         self.player = PlayerPanel(self.field, on_select=self.select_card,
-                                 can_select=can_select_card)
+                                 can_select=can_select_card, on_token=self.select_return_token,
+                                 can_select_token=can_return_token)
 
     def assemble_panels(self):
         self.field.configure(padding=20)
@@ -91,22 +95,32 @@ class App:
             winner = state.turn.finished and state.turn.winner == index
             active = winner if state.turn.finished else state.is_active_player(state.players[index])
             divider.refresh(active, state.players[index].points, winner)
-        self.computer.refresh_selection(self.selection.card)
-        self.player.refresh_selection(self.selection.card)
-        self.market.refresh(state.market, state.decks, self.selection.card, enabled=self.manual_turn)
+        self.refresh_player_selection()
+        self.market.refresh(state.market, state.decks, self.selection.card,
+                            enabled=self.manual_turn and not state.return_required)
         self.nobles.refresh(state.nobles)
-        self.supply.refresh(state.supply, self.selection.tokens, enabled=self.manual_turn)
+        self.refresh_supply_selection()
         self.selection_panel.refresh(state, self.selection, enabled=self.manual_turn)
         self.size_window(self.root)
         if self.ai_turn:
             self.pending_ai = self.root.after(AI_DELAY_MS, self.perform_ai_selection)
 
     def refresh_selection(self):
-        self.supply.refresh(self.state.supply, self.selection.tokens, enabled=self.manual_turn)
+        self.refresh_supply_selection()
         self.market.refresh_selection(self.selection.card)
-        self.computer.refresh_selection(self.selection.card)
-        self.player.refresh_selection(self.selection.card)
+        self.refresh_player_selection()
         self.selection_panel.refresh(self.state, self.selection, enabled=self.manual_turn)
+
+    def refresh_supply_selection(self):
+        selected = {} if self.selection.returning else self.selection.tokens
+        self.supply.refresh(self.state.supply, selected,
+                            enabled=self.manual_turn and not self.state.return_required)
+
+    def refresh_player_selection(self):
+        for index, panel in enumerate((self.player, self.computer)):
+            selected = (self.selection.tokens if self.selection.returning
+                        and index == self.state.turn.active_player else {})
+            panel.refresh_selection(self.selection.card, selected)
 
     @property
     def ai_turn(self):
@@ -143,6 +157,7 @@ class App:
     def new_game(self):
         self.cancel_ai()
         self.state = create_initial_state()
+        self.state.players[1].is_ai = self.strategy is not None
         self.selection = Selection()
         self.refresh()
 
@@ -159,6 +174,11 @@ class App:
     def deselect_token(self, token):
         if self.manual_turn:
             self.selection.deselect_token(token, self.state)
+            self.refresh_selection()
+
+    def select_return_token(self, token):
+        if self.manual_turn:
+            self.selection.select_return_token(token, self.state)
             self.refresh_selection()
 
     def perform_action(self):

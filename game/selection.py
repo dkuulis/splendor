@@ -8,9 +8,12 @@ class Selection:
         self.card = None
         # Pending token counts by type; unselected types are omitted.
         self.tokens = {}
+        self.returning = False
 
     @property
     def action_kind(self):
+        if self.returning:
+            return "return"
         if GOLD in self.tokens:
             return "reserve"
         if self.card is not None:
@@ -20,7 +23,8 @@ class Selection:
         return "pass"
 
     def can_select_card(self, card, state):
-        if state.turn.finished or card is None or not state.card_available(card):
+        if (state.turn.finished or state.return_required or card is None
+                or not state.card_available(card)):
             return False
         # README rules 3 and 7: reserved cards must be affordable to select;
         # an already selected card can still be deselected.
@@ -28,7 +32,7 @@ class Selection:
                 or state.can_buy(card))
 
     def can_select_token(self, token, state):
-        if (state.turn.finished or token not in TOKENS
+        if (state.turn.finished or state.return_required or token not in TOKENS
                 or state.supply.get(token, 0) < 1
                 or self.tokens.get(token, 0) >= state.supply[token]):
             return False
@@ -41,20 +45,38 @@ class Selection:
         # README rules 5–6: only selected tokens can be removed, and an
         # unaffordable market card must retain its gold.
         return (not state.turn.finished and token in self.tokens
-                and (token != GOLD or state.can_buy(self.card)))
+                and (self.returning or token != GOLD or state.can_buy(self.card)))
+
+    def can_select_return_token(self, token, state):
+        return (not state.turn.finished and self.returning and state.return_required
+                and token in TOKENS
+                and self.tokens.get(token, 0) < state.current_player.tokens.get(token, 0))
+
+    def select_return_token(self, token, state):
+        if self.can_select_return_token(token, state):
+            self.tokens[token] = self.tokens.get(token, 0) + 1
+
+    def can_return_tokens(self, state):
+        return (not state.turn.finished and self.returning and state.return_required
+                and self.card is None
+                and sum(self.tokens.values()) == state.current_player.token_count - TOKEN_LIMIT
+                and all(token in TOKENS and amount > 0
+                        and amount <= state.current_player.tokens.get(token, 0)
+                        for token, amount in self.tokens.items()))
 
     def can_pass_turn(self, state):
-        return not state.turn.finished
+        return not state.turn.finished and not state.return_required
 
     def can_take_tokens(self, state):
         count = sum(self.tokens.values())
-        if (state.turn.finished or self.card is not None or not self.tokens
-                or count > state.current_player.max_take
+        if (state.turn.finished or state.return_required
+                or self.card is not None or not self.tokens
                 or not all(token in TOKENS and token != GOLD and amount > 0
                            and state.supply.get(token, 0) >= amount
                            for token, amount in self.tokens.items())):
             return False
-        return (count <= MAX_TAKE and all(amount == 1 for amount in self.tokens.values())
+        return ((count == MAX_TAKE or state.current_player.is_ai and count < MAX_TAKE)
+                and all(amount == 1 for amount in self.tokens.values())
                 or len(self.tokens) == 1 and count == 2
                 and state.supply[next(iter(self.tokens))] >= 4)
 
@@ -62,15 +84,16 @@ class Selection:
         return not self.tokens and state.can_buy(self.card)
 
     def can_reserve_card(self, state):
-        return (not state.turn.finished and self.card is not None
+        return (not state.turn.finished and not state.return_required and self.card is not None
                 and self.card in state.market[self.card.tier]
                 and self.card not in state.current_player.reserved_cards
                 and self.tokens == {GOLD: 1} and state.supply.get(GOLD, 0) >= 1
-                and len(state.current_player.reserved_cards) < MAX_RESERVATIONS
-                and state.current_player.token_count < TOKEN_LIMIT)
+                and len(state.current_player.reserved_cards) < MAX_RESERVATIONS)
 
     def can_perform_action(self, state):
         kind = self.action_kind
+        if kind == "return":
+            return self.can_return_tokens(state)
         if kind == "reserve":
             return self.can_reserve_card(state)
         if kind == "buy":
@@ -82,7 +105,9 @@ class Selection:
     def perform_action(self, state):
         """Dispatch an allowed action; callers check can_perform_action first."""
         kind = self.action_kind
-        if kind == "reserve":
+        if kind == "return":
+            state.return_tokens(self.tokens)
+        elif kind == "reserve":
             state.reserve_card(self.card)
         elif kind == "buy":
             state.buy_card(self.card)
@@ -91,6 +116,7 @@ class Selection:
         else:
             state.take_tokens(self.tokens)
         self.clear()
+        self.returning = state.return_required
 
     def select_card(self, card, state):
         if not self.can_select_card(card, state):
@@ -109,7 +135,7 @@ class Selection:
 
     def reserve_card(self, card, state):
         """Explicitly select a market card with gold for reservation."""
-        if (state.turn.finished or card is None
+        if (state.turn.finished or state.return_required or card is None
                 or card not in state.market[card.tier]):
             return
         # README rule 7: toggling the reservation off clears card and gold.
@@ -140,5 +166,6 @@ class Selection:
             self.tokens.pop(token)
 
     def clear(self):
+        """Clear pending choices without leaving the required return phase."""
         self.tokens.clear()
         self.card = None

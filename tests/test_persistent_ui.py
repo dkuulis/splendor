@@ -8,7 +8,7 @@ from unittest.mock import patch
 from ai import GreedyAI
 from app.app import App
 from app.assets import load_image
-from game.constants import RUBY, GOLD, SAPPHIRE
+from game.constants import RUBY, GOLD, SAPPHIRE, DIAMOND
 from game.initialize import create_initial_state
 
 
@@ -58,10 +58,12 @@ class PersistentUITests(unittest.TestCase):
         self.assertEqual(action.cget('text'), 'Pass')
         self.assertEqual(action.cget('image')[0], str(load_image(panel, 'button_pass_enabled2')))
         app.select_token(RUBY)
+        self.assertTrue(action.instate(['disabled']))
+        app.select_token(RUBY)
         self.assertEqual(action.cget('text'), 'Take')
         self.assertEqual(action.cget('image')[0], str(load_image(panel, 'button_take_enabled2')))
         action.invoke()
-        self.assertEqual(app.state.players[0].tokens, {RUBY: 1})
+        self.assertEqual(app.state.players[0].tokens, {RUBY: 2})
         self.assertEqual(action.cget('text'), 'Pass')
         action.invoke()
         self.assertEqual(app.state.players[1].tokens, {})
@@ -126,8 +128,9 @@ class PersistentUITests(unittest.TestCase):
                                  str(load_image(panel, 'button_pass_enabled2')))
                 self.assertFalse(action.instate(['disabled']))
                 app.select_token(RUBY)
+                app.select_token(RUBY)
                 action.invoke()
-                self.assertEqual(app.state.players[0].tokens, {RUBY: 1})
+                self.assertEqual(app.state.players[0].tokens, {RUBY: 2})
                 app.new_game()
 
     def test_gold_requires_a_market_card_and_reservation_toggles_off(self):
@@ -305,8 +308,9 @@ class PersistentUITests(unittest.TestCase):
             app.select_token(RUBY)
             app.deselect_token(RUBY)
         app.select_token(RUBY)
+        app.select_token(RUBY)
         self.action_button.invoke()
-        self.assertEqual(app.state.players[0].tokens[RUBY], 1)
+        self.assertEqual(app.state.players[0].tokens[RUBY], 2)
         self.action_button.invoke()  # Computer passes in manual mode.
         card = app.state.market[1][0]
         for token, count in card.cost.items():
@@ -380,6 +384,7 @@ class PersistentUITests(unittest.TestCase):
         app.state.market = {1: [card], 2: [], 3: []}
         app.state.turn.active_player = 1
         app.strategy = GreedyAI()
+        app.state.players[1].is_ai = True
         app.refresh()
         app.cancel_ai()
         with patch('app.app.AI_DELAY_MS', 50):
@@ -411,6 +416,7 @@ class PersistentUITests(unittest.TestCase):
     def test_restart_and_destroy_cancel_pending_ai_execution(self):
         app = self.app
         app.strategy = GreedyAI()
+        app.state.players[1].is_ai = True
         app.perform_action()
         app.cancel_ai()
         app.perform_ai_selection()
@@ -599,7 +605,7 @@ class PersistentUITests(unittest.TestCase):
         self.assertFalse(self.action_button.instate(['disabled']))
         app.state.current_player.tokens = {GOLD: 5, SAPPHIRE: 4}
         app.refresh()
-        self.assertTrue(self.action_button.instate(['disabled']))
+        self.assertFalse(self.action_button.instate(['disabled']))
         app.state.current_player.tokens.clear()
         app.supply.pick(RUBY)
         self.assertTrue(self.action_button.instate(['disabled']))
@@ -613,6 +619,118 @@ class PersistentUITests(unittest.TestCase):
             self.assertEqual(app.supply.counts[RUBY], 4 - expected)
         self.assertEqual(canvas.itemcget(item, 'state'), 'hidden')
         self.assertEqual(canvas.find_all(), original_items)
+
+    def test_return_from_player_piles_for_both_manual_players(self):
+        app = self.app
+        for active in (0, 1):
+            with self.subTest(active=active):
+                app.new_game()
+                app.state.turn.active_player = active
+                player = app.state.current_player
+                player.tokens = {GOLD: 4, DIAMOND: 3, SAPPHIRE: 3}
+                for token, count in player.tokens.items():
+                    app.state.supply[token] -= count
+                app.refresh()
+                inactive = app.computer if active == 0 else app.player
+                panel = app.player if active == 0 else app.computer
+                # Player token piles have no effect outside the return phase.
+                panel.select_token(GOLD)
+                self.assertEqual(app.selection.tokens, {})
+                app.supply.pick(RUBY)
+                app.supply.pick(RUBY)
+                self.action_button.invoke()
+                self.root.update()
+                self.assertEqual(player.token_count, 12)
+                self.assertEqual(app.state.turn.active_player, active)
+                self.assertEqual(self.action_button.cget('text'), 'Return')
+                self.assertTrue(self.action_button.instate(['disabled']))
+                self.assertFalse(app.supply.enabled)
+                self.assertTrue(all(not slot.enabled for row in app.market.slots.values()
+                                    for slot in row))
+                supply = dict(app.state.supply)
+                inactive.select_token(GOLD)
+                self.assertEqual(app.selection.tokens, {})
+
+                def click_player_pile(token):
+                    column = panel.columns[token]
+                    left, top, right, bottom = column.stack.bbox(column.token_item)
+                    x, y = (left + right) // 2, (top + bottom) // 2
+                    column.stack.event_generate('<Motion>', x=x, y=y)
+                    column.stack.event_generate('<Button-1>', x=x, y=y)
+                    self.root.update()
+
+                click_player_pile(GOLD)
+                self.assertEqual(app.selection.tokens, {GOLD: 1})
+                gold_column = panel.columns[GOLD]
+                self.assertEqual(gold_column.stack.itemcget(gold_column.token_item, 'image'),
+                                 str(load_image(panel, 'gold3')))
+                self.assertTrue(self.action_button.instate(['disabled']))
+                click_player_pile(RUBY)
+                self.assertFalse(self.action_button.instate(['disabled']))
+                self.assertEqual(app.supply.counts, supply)
+                self.assertEqual(app.state.supply, supply)
+                self.assertEqual(player.tokens[GOLD], 4)
+                app.selection_panel.deselect(GOLD)
+                self.root.update()
+                self.assertEqual(gold_column.stack.itemcget(gold_column.token_item, 'image'),
+                                 str(load_image(panel, 'gold4')))
+                self.assertTrue(self.action_button.instate(['disabled']))
+                click_player_pile(GOLD)
+                click_player_pile(GOLD)
+                self.assertTrue(self.action_button.instate(['disabled']))
+                app.selection_panel.deselect(GOLD)
+                self.action_button.invoke()
+                self.root.update()
+                self.assertEqual(player.token_count, 10)
+                self.assertEqual(app.state.turn.active_player, 1 - active)
+                self.assertEqual(app.state.supply[GOLD], supply[GOLD] + 1)
+                self.assertEqual(app.state.supply[RUBY], supply[RUBY] + 1)
+                self.assertEqual(self.action_button.cget('text'), 'Pass')
+
+    def test_reservation_overflow_return_can_be_restarted(self):
+        app = self.app
+        app.state.current_player.tokens = {GOLD: 2, DIAMOND: 4, SAPPHIRE: 4}
+        card = app.state.market[1][0]
+        app.selection.reserve_card(card, app.state)
+        app.refresh()
+        self.assertFalse(self.action_button.instate(['disabled']))
+        self.action_button.invoke()
+        self.root.update()
+        self.assertEqual(self.action_button.cget('text'), 'Return')
+        app.player.select_token(GOLD)
+        self.assertFalse(self.action_button.instate(['disabled']))
+        self.assertEqual(app.selection.tokens, {GOLD: 1})
+        app.selection_panel.restart_button.invoke()
+        self.root.update()
+        self.assertFalse(app.state.return_required)
+        self.assertFalse(app.selection.returning)
+        self.assertEqual(app.selection.tokens, {})
+        self.assertEqual(self.action_button.cget('text'), 'Pass')
+        self.assertIsNone(app.pending_ai)
+
+    def test_manual_players_require_three_distinct_or_two_matching_gems(self):
+        app = self.app
+        for active in (0, 1):
+            with self.subTest(active=active):
+                app.new_game()
+                app.state.turn.active_player = active
+                app.refresh()
+                self.assertFalse(app.state.current_player.is_ai)
+                app.supply.pick(RUBY)
+                self.assertTrue(self.action_button.instate(['disabled']))
+                self.action_button.invoke()
+                self.assertEqual(app.state.turn.active_player, active)
+                app.supply.pick(SAPPHIRE)
+                self.assertTrue(self.action_button.instate(['disabled']))
+                app.supply.pick(DIAMOND)
+                self.assertFalse(self.action_button.instate(['disabled']))
+                app.deselect_token(DIAMOND)
+                app.deselect_token(SAPPHIRE)
+                app.supply.pick(RUBY)
+                self.assertFalse(self.action_button.instate(['disabled']))
+                app.state.supply[RUBY] = 3
+                app.refresh()
+                self.assertTrue(self.action_button.instate(['disabled']))
 
     def test_gold_pile_selection_requires_one_gold_to_reserve(self):
         app = self.app
@@ -654,9 +772,11 @@ class PersistentUITests(unittest.TestCase):
         self.assertEqual(app.selection.tokens, {RUBY: 1})
         self.assertEqual(app.selection_panel.tokens.itemcget(app.selection_panel.items[GOLD], 'state'), 'hidden')
         self.assertEqual(self.action_button.cget('text'), 'Take')
+        self.assertTrue(self.action_button.instate(['disabled']))
+        app.select_token(RUBY)
         self.assertFalse(self.action_button.instate(['disabled']))
         self.action_button.invoke()
-        self.assertEqual(app.state.players[0].tokens, {RUBY: 1})
+        self.assertEqual(app.state.players[0].tokens, {RUBY: 2})
 
     def test_gold_and_selected_card_are_visible_together(self):
         app = self.app
@@ -696,26 +816,20 @@ class PersistentUITests(unittest.TestCase):
         self.assertTrue(app.player.reserved.winfo_ismapped())
         self.assertEqual(app.state.turn.active_player, 1)
 
-    def test_reserve_button_obeys_token_and_reservation_limits(self):
+    def test_reserve_button_obeys_reservation_limit(self):
         app = self.app
         card = app.state.market[1][0]
         app.select_card(card)
         app.select_token(GOLD)
         player = app.state.current_player
-        for limit in ('tokens', 'reservations'):
-            with self.subTest(limit=limit):
-                if limit == 'tokens':
-                    player.tokens = {RUBY: 7, GOLD: 3}
-                else:
-                    player.reserved_cards = app.state.market[2][:3]
-                app.refresh()
-                self.assertEqual(self.action_button.cget('text'), 'Reserve')
-                self.assertTrue(self.action_button.instate(['disabled']))
-                self.action_button.invoke()
-                self.assertIs(app.selection.card, card)
-                self.assertEqual(app.state.turn.active_player, 0)
-                player.tokens.clear()
-                player.reserved_cards.clear()
+        player.reserved_cards = app.state.market[2][:3]
+        app.refresh()
+        self.assertEqual(self.action_button.cget('text'), 'Reserve')
+        self.assertTrue(self.action_button.instate(['disabled']))
+        self.action_button.invoke()
+        self.assertIs(app.selection.card, card)
+        self.assertEqual(app.state.turn.active_player, 0)
+        player.reserved_cards.clear()
         app.refresh()
         self.assertFalse(self.action_button.instate(['disabled']))
 
@@ -765,6 +879,7 @@ class PersistentUITests(unittest.TestCase):
         self.assertEqual(app.state.market, market)
         self.assertEqual(app.state.decks, decks)
         app.strategy = GreedyAI()
+        app.state.players[1].is_ai = True
         app.refresh()
         stack = app.computer.reserved.stack
         stack.event_generate('<Motion>', x=75, y=100)

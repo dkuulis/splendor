@@ -25,14 +25,17 @@ rules without a request.
   interactions and action confirmation, and dispatches the selected action.
   `state.py` owns card affordability, action execution, and market replacement.
   State actions take explicit arguments: `buy_card(card)`, `reserve_card(card)`,
-  and `take_tokens(tokens)`; Selection dispatch supplies its pending choices.
+  `take_tokens(tokens)`, and `return_tokens(tokens)`; Selection dispatch supplies
+  its pending choices.
   Action methods and Selection dispatch execute without validation. Callers must
   choose an allowed action; the UI uses Selection permissions to enable controls.
 - `player.py` owns holdings and derived points, discounts, capacity, and payment.
   Use these calculations through the relevant player.
 - `State.finish_turn(passed)` updates consecutive passes, awards a noble,
   and advances the turn. Actions pass `passed` explicitly. Selection dispatch
-  clears pending choices after execution; State does not own selection.
+  clears pending choices after execution and synchronizes its return mode
+  with `State.return_required`; State does not own selection. Take and Reserve
+  defer `finish_turn` when holdings exceed 10; Return finishes that same turn.
   `noble.py` handles awards; `turn.py` handles final rounds, completion, and ties.
   `initialize.py` defines cards, nobles, and shuffled setup.
 - `ai/` strategies implement `make_selection(state, selection)` and prepare
@@ -46,7 +49,7 @@ rules without a request.
   on Restart and window destruction.
 - `app/selection_panel.py` contains one action button and a separate Restart.
   The action button follows `Selection.action_kind`: Buy, Reserve, Take,
-  or Pass. Pass ends the turn without collecting.
+  Return, or Pass. Pass ends the turn without collecting.
 - `app/divider_panel.py` shows scores and turn/result highlights. A winner
   stays highlighted with laurels; a draw leaves both dividers inactive.
   There is no header, separate score panel, or log panel.
@@ -66,11 +69,22 @@ rules without a request.
   Selection is pending and does not transfer tokens. Dispatching an action
   clears it.
   `Selection.action_kind` derives pass, buy, reserve, or take from pending
-  choices. Empty selection means pass. Market-card selection clears selected
+  choices, with Return taking precedence while `Selection.returning` is true.
+  Empty selection means pass outside return mode. Clearing pending choices
+  preserves return mode. Market-card selection clears selected
   tokens, then adds gold for reservation only if the card is unaffordable.
-  Gold can be selected manually only with an affordable market card and cannot
-  be deselected while that card is unaffordable. Unaffordable reserved cards
-  cannot be selected. Selection owns these decisions; the UI delegates clicks.
+  Outside Return, gold can be selected manually only with an affordable
+  market card and cannot be deselected while that card is unaffordable. Unaffordable reserved cards
+  cannot be selected. During Return, normal actions and supply/card selection
+  are disabled. Select owned tokens through the active player panel, remove
+  them one at a time through selected piles, and confirm only the exact excess
+  above 10. Pending returns reduce displayed player piles, never supply counts.
+  Any owned token, including gold, may be returned. The greedy AI continues
+  using `Player.max_take` to avoid overflow. Human takes require exactly three
+  distinct colors or two matching gems with at least four in supply; only
+  `Player.is_ai` players may take one or two distinct colors. App marks both
+  players as human in manual mode, including after Restart. Selection owns these decisions;
+  the UI delegates clicks.
 - Missing entries in sparse token/cost/selection dictionaries mean zero.
   Gem keys in `Player.cards` and `Player.discounts`, and tiers 1–3 in
   `State.market` and `State.decks`, are always present; index them directly.

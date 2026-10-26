@@ -4,7 +4,7 @@ import unittest
 from game.selection import Selection
 
 from game import Card, State
-from game.constants import GEMS, GOLD, RUBY, MAX_RESERVATIONS, TOKEN_LIMIT
+from game.constants import GEMS, GOLD, RUBY, MAX_RESERVATIONS
 
 
 class ReserveCardTests(unittest.TestCase):
@@ -64,13 +64,11 @@ class ReserveCardTests(unittest.TestCase):
         self.assertTrue(state.turn.finished)
 
     def test_reservation_permissions_do_not_change_state(self):
-        for case in ('full tokens', 'full reservations', 'no gold supply',
+        for case in ('full reservations', 'no gold supply',
                      'missing card', 'no selected gold', 'extra gem', 'finished'):
             with self.subTest(case=case):
                 state, selection, card = self.make_state()
-                if case == 'full tokens':
-                    state.current_player.tokens = {RUBY: TOKEN_LIMIT - 1, GOLD: 1}
-                elif case == 'full reservations':
+                if case == 'full reservations':
                     state.current_player.reserved_cards = [card] * MAX_RESERVATIONS
                 elif case == 'no gold supply':
                     state.supply[GOLD] = 0

@@ -56,7 +56,7 @@ class TakeTokensTests(unittest.TestCase):
 
     def test_validation_matches_action_without_changing_state(self):
         cases = [
-            ([RUBY], 0, 4, False, True),
+            ([RUBY], 0, 4, False, False),
             ([RUBY, ONYX, DIAMOND], 0, 4, False, True),
             ([], 0, 4, False, False),
             ([], 10, 4, False, False),
@@ -64,15 +64,15 @@ class TakeTokensTests(unittest.TestCase):
             ([RUBY, RUBY], 0, 4, False, True),
             ([RUBY, RUBY], 0, 3, False, False),
             ([RUBY, RUBY], 8, 4, False, True),
-            ([RUBY, RUBY], 9, 4, False, False),
-            ([RUBY, RUBY], 10, 4, False, False),
+            ([RUBY, RUBY], 9, 4, False, True),
+            ([RUBY, RUBY], 10, 4, False, True),
             ([RUBY, RUBY, ONYX], 0, 4, False, False),
             ([RUBY, RUBY, RUBY], 0, 4, False, False),
             ([RUBY, ONYX, DIAMOND, EMERALD], 0, 4, False, False),
             ([GOLD], 0, 4, False, False),
             (['unknown'], 0, 4, False, False),
             ([RUBY], 0, 0, False, False),
-            ([RUBY], 9, 4, False, True),
+            ([RUBY], 9, 4, False, False),
             ([RUBY, ONYX], 9, 4, False, False),
             ([RUBY], 10, 4, False, False),
             ([RUBY], 0, 4, True, False),
@@ -123,14 +123,14 @@ class TakeTokensTests(unittest.TestCase):
         state = State()
         selection = Selection()
         state.players[0].tokens = {RUBY: 9}
-        selection.tokens = {ONYX: 1, EMERALD: 1}
-        self.assertFalse(selection.can_take_tokens(state))
+        selection.tokens = {ONYX: 2}
+        self.assertTrue(selection.can_take_tokens(state))
         selection.tokens = {ONYX: 1}
         state.take_tokens(selection.tokens)
         self.assertEqual(sum(state.players[0].tokens.values()), 10)
         state.pass_turn()
-        selection.tokens = {ONYX: 1}
-        self.assertFalse(selection.can_take_tokens(state))
+        selection.tokens = {EMERALD: 2}
+        self.assertTrue(selection.can_take_tokens(state))
         self.assertEqual(state.turn.consecutive_passes, 1)
 
         state = State()
@@ -150,6 +150,34 @@ class TakeTokensTests(unittest.TestCase):
         selection.tokens = {RUBY: 1}
         self.assertFalse(selection.can_take_tokens(state))
         self.assertEqual(state.players[1].tokens, {})
+
+    def test_small_distinct_takes_are_only_allowed_for_ai_even_with_scarce_supply(self):
+        for is_ai in (False, True):
+            for tokens, human_allowed in (({RUBY: 1}, False),
+                                          ({RUBY: 1, ONYX: 1}, False),
+                                          ({RUBY: 1, ONYX: 1, EMERALD: 1}, True)):
+                with self.subTest(is_ai=is_ai, tokens=tokens):
+                    state = State()
+                    state.current_player.is_ai = is_ai
+                    # Only selected colors remain available; scarcity is not a human exception.
+                    state.supply = dict(tokens)
+                    selection = Selection()
+                    for token in tokens:
+                        selection.select_token(token, state)
+                    self.assertEqual(selection.tokens, tokens)
+                    self.assertEqual(selection.can_perform_action(state), is_ai or human_allowed)
+
+    def test_matching_pair_still_requires_four_in_supply_for_both_player_types(self):
+        for is_ai in (False, True):
+            for available in (2, 3, 4):
+                with self.subTest(is_ai=is_ai, available=available):
+                    state = State()
+                    state.current_player.is_ai = is_ai
+                    state.supply[RUBY] = available
+                    selection = Selection()
+                    selection.select_token(RUBY, state)
+                    selection.select_token(RUBY, state)
+                    self.assertEqual(selection.can_perform_action(state), available == 4)
 
 
 if __name__ == '__main__':

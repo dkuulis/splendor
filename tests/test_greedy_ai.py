@@ -13,6 +13,7 @@ class GreedyAITests(unittest.TestCase):
         self.state = State()
         self.selection = Selection()
         self.player = self.state.current_player
+        self.player.is_ai = True
 
     def make_selection(self):
         # Snapshot the whole state, including decks, to catch execution by AI.

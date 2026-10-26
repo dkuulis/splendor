@@ -13,23 +13,30 @@ computer strategy at launch with `--ai` (default: `greedy`):
 
 Pass ends the turn without collecting when nothing is selected; two consecutive passes end
 the game using score and card-count tie-breaks.
-Select one to three different gems, or two of one color when at least four of
-that color are in supply, and use Take to collect them. Both options must keep
-your inventory at or below 10 tokens. The button is
-disabled when the selection is invalid.
+Select exactly three different gems, or two of one color when at least four of
+that color are in supply, and use Take to collect them. The button is disabled
+when the selection is invalid. Human players cannot take one gem or two
+different colors, even if fewer colors are available. AI players may still
+take one or two different colors. Both players in manual mode use human rules.
+If Take or Reserve brings your holdings above
+10 tokens, the action button changes to Return and your turn stays active.
+Click tokens in your player panel to select exactly the excess, then click Return.
+You may return any owned tokens, including gold and newly collected gems.
+Click a selected pile to remove one pending return.
 The selection panel has one action button and a separate Restart button.
-The action button shows Buy, Reserve, Take, or Pass to match the selection.
+The action button shows Buy, Reserve, Take, Return, or Pass to match the selection.
 When the game finishes, it shows a disabled Win, Loose, or Tie from your
 perspective. Restart remains available and restores the normal action button.
 At game end, the winner's divider stays highlighted with gold laurels beside
 the score plaque. A draw leaves both dividers inactive without laurels.
-The 10-gem inventory limit is enforced. Click any market card to move it into
-the selection panel; click it again to deselect it. Buy is enabled only when
+The 10-token inventory limit applies at the end of your turn. Click any market
+card to move it into the selection panel; click it again to deselect it. Buy is enabled only when
 you have enough gems after owned-card discounts, using owned gold as a wildcard
 for missing colors. Buying spends matching gems first and returns the actual
 gem and gold payment to the bank.
 Reservation takes a market card and one gold, subject to the three-reservation
-and 10-token limits. Reserved cards appear in the last player-panel block.
+limit; excess tokens require Return before the turn ends. Reserved cards
+appear in the last player-panel block.
 Purchases update scores, replace market cards, and trigger the final round at
 15 points. Manual lets you control both players. Pass-only AI automatically
 passes on the computer's turn. Restart with a different `--ai` value to change
@@ -44,7 +51,7 @@ different needed gems toward the card requiring the fewest collection turns
 count. It prioritizes colors with the lowest available bank count and fills
 spare picks from the next-ranked cards without repeating colors.
 Cards with no needed gems available
-are skipped. Collection respects the inventory limit; if no purchase or useful
+are skipped. The greedy AI keeps collection within the inventory limit; if no purchase or useful
 collection is possible, it passes.
 
 ## Selection rules
@@ -70,7 +77,7 @@ the action is confirmed. App owns `state` and `selection` separately;
    enabled only with exactly one selected gold.
 5. **Deselect a colored gem:** click its selected pile to remove one gem,
    keeping the rest of that pile and any other selected gems.
-6. **Deselect gold:** only allowed when the selected market card is affordable.
+6. **Deselect gold:** during reservation, only allowed when the selected market card is affordable.
    Remove one gold at a time; removing the last gold keeps the card for Buy.
    An unaffordable market card must
    retain gold and remain a reservation.
@@ -79,25 +86,30 @@ the action is confirmed. App owns `state` and `selection` separately;
 
 The action button derives its action from the pending selection:
 
-- Nothing selected: **Pass**.
+- Return required: **Return**, even with nothing selected. All other actions
+  are disabled. Only the active player’s token piles can add pending returns;
+  the player panel hides those pending counts while the bank stays unchanged.
+- Nothing selected outside Return: **Pass**.
 - Gold selected with a market card: **Reserve**.
 - A market or reserved card selected without gold: **Buy**.
 - Colored gems selected without a card: **Take**.
 
 Unavailable tokens and cards cannot be selected. Deselecting an absent item
 does nothing. Selection changes are disabled after the game ends. Confirming
-an action through Selection dispatch clears the selection. Restart creates a
+an action through Selection dispatch clears pending choices. After Take or
+Reserve, dispatch enters Return mode if required; clearing choices preserves
+this mode until Return completes. Restart creates a
 fresh state and selection while keeping the existing widgets.
 
 Selection changes and action confirmation have separate permissions. For example,
 an unaffordable market card still selects Reserve when the bank has no gold or reservation
 limits are reached; confirmation stays disabled. `Selection.can_select_card`,
-`can_select_token`, and `can_deselect_token` return booleans for interaction
+`can_select_token`, `can_select_return_token`, and `can_deselect_token` return booleans for interaction
 availability. `can_perform_action` checks the current action through
-`can_buy_card`, `can_reserve_card`, `can_take_tokens`, or `can_pass_turn`, using
+`can_buy_card`, `can_reserve_card`, `can_take_tokens`, `can_return_tokens`, or `can_pass_turn`, using
 the supplied game state. `Selection.perform_action(state)` dispatches the
 selected action to `buy_card(card)`, `reserve_card(card)`, `take_tokens(tokens)`,
-or `pass_turn()` in `game/state.py`, passing the pending card or tokens directly.
+`return_tokens(tokens)`, or `pass_turn()` in `game/state.py`, passing the pending card or tokens directly.
 The UI uses these permissions to enable controls. Dispatch and State's action
 methods execute without validation; callers must choose an allowed action before
 executing it.

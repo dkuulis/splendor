@@ -19,26 +19,35 @@ one computer opponent.
 
 Choose one action:
 
-1. **Take gems:** take one, two, or three different colors from the bank,
+1. **Take gems:** take exactly three different colors from the bank,
    one gem per color, or take exactly two gems of one color if at least four
    of that color are available before taking them. Each selected color must
-   be available. Taking fewer
-   than three is allowed even when more colors are available. You cannot
-   take gems that would bring your inventory above 10. You cannot return
-   or exchange gems to make room; gems leave your inventory only when spent
-   on a card.
+   be available. Human players cannot take one gem or two different colors,
+   even when fewer colors are available. The AI may take one or two different
+   colors; both players in manual mode follow human rules. You may temporarily exceed 10 tokens; return the exact
+   excess before ending your turn, as described below.
 2. **Buy a card:** purchase one face-up market card or one of your reserved
    cards you can afford. Reserved cards cannot be reserved again.
 3. **Reserve a card:** select a face-up market card and gold, and confirm
    Reserve. Move the card to your reserved cards and take one gold from the
-   bank. You may hold at most three reserved cards, and taking the gold must
-   not exceed the 10-token inventory limit. Refill the market slot from its
-   deck if possible. Reserved cards grant no points or discounts.
+   bank. You may hold at most three reserved cards. If taking gold brings
+   your holdings above 10, return the excess before ending your turn. Refill
+   the market slot from its deck if possible. Reserved cards grant no points or discounts.
 4. **Pass:** click Pass with nothing selected to give the turn to
    the opponent without collecting anything. This counts toward the
    two-consecutive-pass ending described below.
 
 A player cannot take gems and buy a card on the same turn.
+
+After Take or Reserve, if you hold more than 10 tokens, the action button
+changes to **Return**. The original action has already transferred the gems
+or reserved the card, but the same player stays active. Click tokens in that
+player’s panel to select returns, including any owned gold or newly collected
+gems. Selected tokens appear as color piles; click a selected pile to remove
+one pending return. Confirm Return only when the selected total equals the
+excess, leaving exactly 10. Other actions are unavailable until Return finishes.
+Only then are nobles awarded and game completion checked, before advancing
+the turn. Restart remains available.
 
 ## Cards and payment
 
@@ -83,8 +92,8 @@ gem-taking or reservation action resets the consecutive-pass count.
 
 ## Computer opponent
 
-The computer follows the same rules, with no extra resources or access to
-hidden deck order. Greedy AI is the default: it buys the highest-point
+The computer follows the same rules except that it may take one or two
+different gem colors. It has no extra resources or access to hidden deck order. Greedy AI is the default: it buys the highest-point
 affordable card, otherwise collects gems toward visible cards, and passes
 when no purchase or useful collection is possible. Manual control and
 Pass-only AI are also available. See [README.md](README.md) for exact
@@ -94,16 +103,11 @@ strategy priorities and control options.
 
 - **Nobles:** when several qualify, the first in displayed order is awarded
   automatically rather than letting the player choose.
-- **Reservations and gold:** reservations require taking one available gold
-  without exceeding the token limit. Blind reservations are not implemented.
+- **Reservations and gold:** reservations require taking one available gold. Blind reservations are not implemented.
 - **Player count:** only two players; no three- or four-player setup.
-- **Gem collection:** this version freely permits taking fewer than three
-  different colors; the referenced full rules require three when available.
-- **Gem limit and returns:** the full game allows taking gems above the
-  10-gem limit during a turn, then returning gems of your choice until you
-  hold 10. This can change the mix of gems you hold. Here, taking gems must
-  never exceed 10, and returning or exchanging gems is not allowed. At 10
-  gems, you must buy a card or pass.
+- **Gem collection:** human players must take exactly three different colors
+  or two matching gems, even when fewer colors are available. Only the AI
+  may take one or two different colors.
 - **Passing:** voluntary passes and the two-pass ending are house rules.
 - **First player:** the human always starts instead of choosing by age.
 

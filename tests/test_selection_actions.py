@@ -25,8 +25,10 @@ class SelectionActionTests(unittest.TestCase):
         selection.select_token(GOLD, state)
         self.assertEqual(selection.action_kind, 'take')
         self.assertEqual(selection.tokens, {RUBY: 1, SAPPHIRE: 1})
+        selection.select_token(EMERALD, state)
+        self.assertTrue(selection.can_perform_action(state))
         selection.perform_action(state)
-        self.assertEqual(state.players[0].tokens, {RUBY: 1, SAPPHIRE: 1})
+        self.assertEqual(state.players[0].tokens, {RUBY: 1, SAPPHIRE: 1, EMERALD: 1})
 
     def test_gold_preserves_selected_card_and_blocks_purchase(self):
         state = self.state
@@ -71,7 +73,7 @@ class SelectionActionTests(unittest.TestCase):
         self.assertEqual(state.turn.active_player, 1)
 
     def test_automatic_reservation_still_checks_supply_and_limits(self):
-        for case in ('no gold', 'full inventory', 'full reservations'):
+        for case in ('no gold', 'full reservations'):
             with self.subTest(case=case):
                 state = State()
                 selection = Selection()
@@ -79,8 +81,6 @@ class SelectionActionTests(unittest.TestCase):
                 state.market[1] = [card]
                 if case == 'no gold':
                     state.supply[GOLD] = 0
-                elif case == 'full inventory':
-                    state.current_player.tokens = {RUBY: 10}
                 else:
                     state.current_player.reserved_cards = [
                         Card(str(i), 1, RUBY, 0, {}) for i in range(3)]
@@ -121,17 +121,18 @@ class SelectionActionTests(unittest.TestCase):
     def test_selected_gems_are_taken_in_one_turn(self):
         self.selection.select_token(RUBY, self.state)
         self.selection.select_token(DIAMOND, self.state)
+        self.selection.select_token(EMERALD, self.state)
         self.assertEqual(self.selection.action_kind.capitalize(), 'Take')
         self.assertTrue(self.selection.can_perform_action(self.state))
         self.selection.perform_action(self.state)
-        self.assertEqual(self.state.players[0].tokens, {RUBY: 1, DIAMOND: 1})
+        self.assertEqual(self.state.players[0].tokens, {RUBY: 1, DIAMOND: 1, EMERALD: 1})
         self.assertEqual(self.state.turn.active_player, 1)
         self.assertEqual(self.selection.tokens, {})
         self.assertEqual(self.selection.action_kind.capitalize(), 'Pass')
 
     def test_disallowed_action_checks_preserve_state(self):
         cases = ('missing card', 'unaffordable card', 'unavailable gem',
-                 'too many gems', 'full inventory', 'finished pass',
+                 'too many gems', 'finished pass',
                  'finished take', 'finished buy')
         for case in cases:
             with self.subTest(case=case):
@@ -149,8 +150,6 @@ class SelectionActionTests(unittest.TestCase):
                     selection.select_token(RUBY, state)
                     if case == 'unavailable gem':
                         state.supply[RUBY] = 0
-                    elif case == 'full inventory':
-                        state.current_player.tokens = {DIAMOND: 10}
                     elif case == 'too many gems':
                         for token in (DIAMOND, ONYX, EMERALD):
                             selection.select_token(token, state)
@@ -171,6 +170,7 @@ class SelectionActionTests(unittest.TestCase):
     def test_pass_and_take_clear_selection(self):
         self.selection.perform_action(self.state)
         self.assertEqual(self.selection.action_kind, 'pass')
+        self.selection.select_token(RUBY, self.state)
         self.selection.select_token(RUBY, self.state)
         self.selection.perform_action(self.state)
         self.assertEqual(self.selection.tokens, {})

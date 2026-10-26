@@ -1,4 +1,4 @@
-from .constants import GOLD, TOKENS, INITIAL_GOLD_SUPPLY, INITIAL_GEM_SUPPLY
+from .constants import GOLD, TOKENS, INITIAL_GOLD_SUPPLY, INITIAL_GEM_SUPPLY, TOKEN_LIMIT
 from .player import Player
 from .noble import assign_noble
 from .turn import Turn, advance_turn
@@ -21,6 +21,10 @@ class State:
     def current_player(self):
         return self.players[self.turn.active_player]
 
+    @property
+    def return_required(self):
+        return self.current_player.token_count > TOKEN_LIMIT
+
     def pass_turn(self):
         self.finish_turn(passed=True)
 
@@ -29,10 +33,20 @@ class State:
             self.supply[token] -= amount
             self.current_player.tokens[token] = self.current_player.tokens.get(token, 0) + amount
 
+        if not self.return_required:
+            self.finish_turn(passed=False)
+
+    def return_tokens(self, tokens):
+        for token, amount in tokens.items():
+            self.current_player.tokens[token] -= amount
+            self.supply[token] += amount
+            if not self.current_player.tokens[token]:
+                del self.current_player.tokens[token]
         self.finish_turn(passed=False)
 
     def can_buy(self, card):
-        if card is None or self.turn.finished or not self.card_available(card):
+        if (card is None or self.turn.finished or self.return_required
+                or not self.card_available(card)):
             return False
         return all(self.current_player.tokens.get(token, 0) >= amount
                    for token, amount in self.current_player.card_payment(card).items())
@@ -62,7 +76,8 @@ class State:
         self.supply[GOLD] -= 1
         player.tokens[GOLD] = player.tokens.get(GOLD, 0) + 1
         self.remove_market_card(card)
-        self.finish_turn(passed=False)
+        if not self.return_required:
+            self.finish_turn(passed=False)
 
     def remove_market_card(self, card):
         """Remove a purchased or reserved card and reveal its replacement."""

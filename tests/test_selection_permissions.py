@@ -73,15 +73,13 @@ class SelectionPermissionTests(unittest.TestCase):
         self.assertEqual(state.current_player.tokens, {})
 
     def test_selection_can_be_allowed_while_confirmation_is_disallowed(self):
-        for limit in ('gold supply', 'inventory', 'reservations'):
+        for limit in ('gold supply', 'reservations'):
             with self.subTest(limit=limit):
                 state = State()
                 selection = Selection()
                 state.market[1] = [self.costly]
                 if limit == 'gold supply':
                     state.supply[GOLD] = 0
-                elif limit == 'inventory':
-                    state.current_player.tokens = {SAPPHIRE: 10}
                 else:
                     state.current_player.reserved_cards = [self.reserved] * 3
                 self.assertIs(selection.can_select_card(self.costly, state), True)
@@ -110,15 +108,17 @@ class SelectionPermissionTests(unittest.TestCase):
         self.assertEqual(state.supply, supply)
         self.assertEqual(state.turn.active_player, 0)
 
-    def test_gem_permissions_distinguish_selection_from_inventory_limit(self):
+    def test_gem_selection_and_confirmation_allow_full_inventory(self):
         state = self.state
         selection = self.selection
         state.current_player.tokens = {SAPPHIRE: 10}
         self.assertIs(selection.can_select_token(RUBY, state), True)
         self.assertIs(selection.can_select_token('unknown', state), False)
         selection.select_token(RUBY, state)
+        selection.select_token(RUBY, state)
         self.assertIs(selection.can_deselect_token(RUBY, state), True)
-        self.assertIs(selection.can_take_tokens(state), False)
+        self.assertIs(selection.can_take_tokens(state), True)
+        selection.deselect_token(RUBY, state)
         selection.deselect_token(RUBY, state)
         self.assertIs(selection.can_perform_action(state), True)
         state.supply[RUBY] = 0
