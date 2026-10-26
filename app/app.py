@@ -52,7 +52,7 @@ class App:
         field = self.field
         for child in field.winfo_children():
             child.destroy()
-        self.computer = PlayerPanel(field, state.players[1], self.player_subtitle(state.players[1]),
+        self.computer = PlayerPanel(field, state.players[1],
                                     active=state.player_status(state.players[1]) == "active")
         self.computer.pack(fill="x")
         table = ttk.Frame(field)
@@ -66,7 +66,7 @@ class App:
             max_take=state.max_take,
         )
         self.bank.grid(row=0, column=0, sticky="ns", padx=(0, 12))
-        self.player = PlayerPanel(field, state.players[0], self.player_subtitle(state.players[0]),
+        self.player = PlayerPanel(field, state.players[0],
                                   active=state.player_status(state.players[0]) == "active")
         self.player.pack(fill="x")
 
@@ -136,15 +136,6 @@ class App:
             messagebox.showinfo("Cannot buy card", str(error), parent=self.shell)
             return
         self.refresh()
-
-    def player_subtitle(self, player):
-        status = self.state.player_status(player)
-        mode = self.control.get() if self.strategy else "manual"
-        if status == "active":
-            return f"Computer's turn ({mode})" if player.is_ai else "Your turn"
-        if status == "waiting":
-            return f"Waiting ({mode})" if player.is_ai else "Waiting"
-        return {"draw": "Draw", "winner": "Winner", "lost": "Game over"}[status]
 
     def size_window(self, root):
         # Measure the complete layout using the current platform's fonts and

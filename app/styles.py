@@ -6,11 +6,11 @@ CARD_BACKGROUND = "#ffffff"
 DECK_PALETTE = {1: "#166534", 2: "#80601f", 3: "#1e40af"}
 MUTED_TEXT_COLOR = "#64748b"
 LOG_BACKGROUND = "#f8fafc"
-PLAYER_PANEL_BACKGROUND = "#f8fafc"
-ACTIVE_PLAYER_BORDER = "#2563eb"
+PLAYER_PANEL_BACKGROUND = "#ffffff"
+ACTIVE_PLAYER_BORDER = "#c5b58d"
 
 LOG_FONT = ("Helvetica", 11)
-POINTS_FONT = ("Helvetica", 28, "bold")
+POINTS_FONT = ("Forum", -48, "bold")
 
 GEM_SIZE = 60
 GEM_GAP = 5
@@ -33,5 +33,5 @@ def gem_centers(count, width, spacing):
 
 def configure_styles(root):
     style = ttk.Style(root)
-    for name in ("Player.TLabelframe", "Player.TLabelframe.Label", "Player.TFrame", "Player.TLabel"):
+    for name in ("Player.TFrame", "Player.TLabel"):
         style.configure(name, background=PLAYER_PANEL_BACKGROUND)
