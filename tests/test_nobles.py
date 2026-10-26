@@ -1,6 +1,6 @@
 import unittest
 
-from game.constants import DIAMOND, RUBY, ONYX, GOLD
+from game.constants import GEMS, DIAMOND, RUBY, ONYX, GOLD
 from game import Card, Noble, State
 from game.initialize import create_initial_state
 
@@ -24,7 +24,7 @@ class NobleTests(unittest.TestCase):
         noble = Noble('noble', 3, {RUBY: 4})
         player.nobles.append(noble)
         self.assertEqual(player.points, 4)
-        self.assertEqual(player.discounts, {RUBY: 1})
+        self.assertEqual(player.discounts, {**dict.fromkeys(GEMS, 0), RUBY: 1})
         self.assertEqual(state.players[1].nobles, [])
         self.assertEqual(State().nobles, [])
 
@@ -41,7 +41,7 @@ class NobleTests(unittest.TestCase):
         state.buy_card()
         self.assertEqual(player.nobles, [noble])
         self.assertEqual(state.nobles, [])
-        self.assertEqual(player.discounts, {RUBY: 2})
+        self.assertEqual(player.discounts, {**dict.fromkeys(GEMS, 0), RUBY: 2})
         self.assertEqual(player.points, 3)
         self.assertEqual(state.players[1].nobles, [])
         self.assertIn('YOU received noble for 3 points.', state.log)

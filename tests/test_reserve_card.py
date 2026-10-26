@@ -2,7 +2,7 @@ import copy
 import unittest
 
 from game import Card, State
-from game.constants import GOLD, RUBY, MAX_RESERVATIONS, TOKEN_LIMIT
+from game.constants import GEMS, GOLD, RUBY, MAX_RESERVATIONS, TOKEN_LIMIT
 
 
 class ReserveCardTests(unittest.TestCase):
@@ -32,7 +32,7 @@ class ReserveCardTests(unittest.TestCase):
         self.assertEqual(player.tokens, {RUBY: 7, GOLD: 3})
         self.assertEqual(state.supply[GOLD], gold - 1)
         self.assertEqual(player.points, 0)
-        self.assertEqual(player.discounts, {})
+        self.assertEqual(player.discounts, dict.fromkeys(GEMS, 0))
         self.assertEqual(state.market[2], [replacement])
         self.assertEqual(state.decks[2], [])
         self.assertEqual(state.players[1].reserved_cards, [])

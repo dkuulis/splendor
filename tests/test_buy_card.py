@@ -1,7 +1,7 @@
 import copy
 import unittest
 
-from game.constants import DIAMOND, SAPPHIRE, EMERALD, RUBY, ONYX, GOLD
+from game.constants import GEMS, DIAMOND, SAPPHIRE, EMERALD, RUBY, ONYX, GOLD
 from game import Card, State
 
 
@@ -15,7 +15,7 @@ class BuyCardTests(unittest.TestCase):
         state.market[2] = [card]
         supply = dict(state.supply)
         self.assertTrue(state.can_buy(card))
-        self.assertEqual(state.card_payment(card), {RUBY: 1, GOLD: 3})
+        self.assertEqual(state.current_player.card_payment(card), {RUBY: 1, GOLD: 3})
         self.assertEqual(player.tokens, {RUBY: 1, GOLD: 3, ONYX: 1})
         state.select_card(card)
         self.assertIsNone(state.action_error)
@@ -68,7 +68,7 @@ class BuyCardTests(unittest.TestCase):
         self.assertEqual(player.cards[RUBY], [owned, card])
         self.assertEqual(player.cards[ONYX], [other])
         self.assertEqual(player.points, 6)
-        self.assertEqual(player.discounts, {RUBY: 2, ONYX: 1})
+        self.assertEqual(player.discounts, {**dict.fromkeys(GEMS, 0), RUBY: 2, ONYX: 1})
         for cards in state.players[1].cards.values():
             self.assertEqual(cards, [])
 
@@ -89,7 +89,7 @@ class BuyCardTests(unittest.TestCase):
         self.assertEqual(state.supply[SAPPHIRE], 5)
         self.assertEqual(player.cards[EMERALD], [card])
         self.assertEqual(player.points, 2)
-        self.assertEqual(player.discounts, {RUBY: 1, EMERALD: 1})
+        self.assertEqual(player.discounts, {**dict.fromkeys(GEMS, 0), RUBY: 1, EMERALD: 1})
         self.assertEqual(state.market[2], [replacement])
         self.assertEqual(state.decks[2], [])
         self.assertEqual(state.turn.active_player, 1)

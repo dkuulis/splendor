@@ -1,7 +1,7 @@
 import unittest
 
 from game import Card, State
-from game.constants import GOLD, RUBY, SAPPHIRE
+from game.constants import GEMS, GOLD, RUBY, SAPPHIRE
 
 
 class BuyReservedCardTests(unittest.TestCase):
@@ -39,7 +39,7 @@ class BuyReservedCardTests(unittest.TestCase):
         self.assertEqual(player.cards[SAPPHIRE], [self.card])
         self.assertEqual(player.tokens, {})
         self.assertEqual(player.points, 3)
-        self.assertEqual(player.discounts, {RUBY: 1, SAPPHIRE: 1})
+        self.assertEqual(player.discounts, {**dict.fromkeys(GEMS, 0), RUBY: 1, SAPPHIRE: 1})
         self.assertEqual(state.market[2], [market])
         self.assertEqual(state.decks[2], [deck])
         self.assertEqual(len(state.log), 1)

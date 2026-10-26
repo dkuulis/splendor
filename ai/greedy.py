@@ -18,7 +18,7 @@ class GreedyAI:
         """Buy the best affordable card and report whether an action was taken."""
         affordable = [card for card in cards if state.can_buy(card)]
         if affordable:
-            card = min(affordable, key=lambda card: (-card.points, sum(state.card_cost(card).values())))
+            card = min(affordable, key=lambda card: (-card.points, sum(state.current_player.card_cost(card).values())))
             state.select_card(card)
             state.perform_action()
             return True
@@ -49,7 +49,7 @@ class GreedyAI:
         """Rank collectible targets by turns needed, then missing gem count."""
         targets = []
         for card in cards:
-            cost = state.card_cost(card)
+            cost = state.current_player.card_cost(card)
             missing = {token: max(0, cost.get(token, 0) - state.current_player.tokens.get(token, 0))
                        for token in TOKENS}
             available = [token for token in TOKENS if missing[token] and state.supply.get(token, 0)]

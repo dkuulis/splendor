@@ -1,7 +1,7 @@
-from .constants import (GOLD, TOKENS, TARGET_POINTS, TOKEN_LIMIT, MAX_TAKE,
+from .constants import (GOLD, TOKENS, TOKEN_LIMIT, MAX_TAKE,
                         INITIAL_GOLD_SUPPLY, INITIAL_GEM_SUPPLY, MAX_RESERVATIONS)
 from .player import Player
-from .turn import Turn
+from .turn import Turn, assign_noble, advance_turn
 
 
 def format_cost(cost):
@@ -123,34 +123,15 @@ class State:
         self.turn.consecutive_passes = 0
         self.finish_turn()
 
-    def card_cost(self, card):
-        discounts = self.current_player.discounts
-        return {token: max(0, amount - discounts.get(token, 0)) for token, amount in card.cost.items()}
-
     def can_buy(self, card):
         if self.turn.finished or not self.card_available(card):
             return False
         return all(self.current_player.tokens.get(token, 0) >= amount
-                   for token, amount in self.card_payment(card).items())
+                   for token, amount in self.current_player.card_payment(card).items())
 
     def card_available(self, card):
-        return (card in self.market.get(card.tier, [])
+        return (card in self.market[card.tier]
                 or card in self.current_player.reserved_cards)
-
-    def card_payment(self, card):
-        """Use matching gems first, then gold for discounted cost shortfalls."""
-        cost = self.card_cost(card)
-        payment = {}
-        gold = 0
-        for token in TOKENS:
-            amount = cost.get(token, 0)
-            matching = min(amount, self.current_player.tokens.get(token, 0))
-            if matching:
-                payment[token] = matching
-            gold += amount - matching
-        if gold:
-            payment[GOLD] = payment.get(GOLD, 0) + gold
-        return payment
 
     def buy_card_error(self):
         """Return why a purchase is illegal, or None when it is legal."""
@@ -170,13 +151,12 @@ class State:
             raise ValueError(error)
         player = self.current_player
         card = self.selected_card
-        cost = self.card_payment(card)
+        cost = player.card_payment(card)
         for token, amount in cost.items():
-            if amount:
-                player.tokens[token] -= amount
-                self.supply[token] = self.supply.get(token, 0) + amount
-                if player.tokens[token] == 0:
-                    del player.tokens[token]
+            player.tokens[token] -= amount
+            self.supply[token] = self.supply.get(token, 0) + amount
+            if player.tokens[token] == 0:
+                del player.tokens[token]
         player.add_card(card)
         payment = format_cost(cost)
         self.log.append(f"{card.points}-point {card.token} card (level {card.tier}) bought by {player.name} for {payment}.")
@@ -194,7 +174,7 @@ class State:
         if self.selected_card in self.current_player.reserved_cards:
             return "That card is already reserved."
         if (self.selected_card is None
-                or self.selected_card not in self.market.get(self.selected_card.tier, [])):
+                or self.selected_card not in self.market[self.selected_card.tier]):
             return "That card is no longer in the market."
         if self.selected_tokens != {GOLD: 1}:
             return "Select one gold token to reserve a card."
@@ -234,40 +214,10 @@ class State:
             revealed_cost = format_cost(revealed.cost)
             self.log.append(f"Revealed: {revealed.points}-point {revealed.token} card (level {revealed.tier}), costing {revealed_cost}.")
 
-    def assign_noble(self):
-        """Award the first qualifying available noble, at most one per turn."""
-        player = self.current_player
-        discounts = player.discounts
-        for noble in self.nobles:
-            if all(discounts.get(token, 0) >= count
-                   for token, count in noble.requirements.items()):
-                self.nobles.remove(noble)
-                player.nobles.append(noble)
-                self.log.append(f"{player.name} received noble for {noble.points} points.")
-                break
-
     def finish_turn(self):
-        self.assign_noble()
+        assign_noble(self)
         self.clear_selection()
-        if not self.turn.final_round and self.current_player.points >= TARGET_POINTS:
-            self.turn.final_round = True
-            self.log.append(f"{self.current_player.name} reached {self.current_player.points} points "
-                            "and triggered the final round.")
-        round_complete = self.turn.active_player == len(self.players) - 1
-        if self.turn.consecutive_passes >= 2 or (self.turn.final_round and round_complete):
-            self.turn.finished = True
-            scores = [(player.points, -sum(len(cards) for cards in player.cards.values()))
-                      for player in self.players]
-            best = max(scores)
-            winners = [index for index, score in enumerate(scores) if score == best]
-            self.turn.winner = winners[0] if len(winners) == 1 else None
-            result = "Draw." if self.turn.winner is None else f"{self.players[self.turn.winner].name} wins."
-            reason = "Two consecutive passes." if self.turn.consecutive_passes >= 2 else "Final round complete."
-            self.log.append(f"Game over: {reason} {result}")
-        else:
-            self.turn.active_player = (self.turn.active_player + 1) % len(self.players)
-            if round_complete:
-                self.turn.round_number += 1
+        advance_turn(self)
 
     def is_active_player(self, player):
         return not self.turn.finished and player is self.current_player
