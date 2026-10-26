@@ -107,6 +107,10 @@ output directory for smoke checks, and regenerate only requested assets.
 - Keep changes focused and preserve unrelated user edits.
 - Prefer straightforward functions and loops over extra wrapper classes or
   defensive guards around established model invariants.
+- Keep arguments required when callers already supply them. Add defaults only
+  for meaningful optional behavior, not to avoid updating call sites. Pass
+  interaction state such as `enabled` explicitly; initialize empty UI
+  placeholders as disabled.
 - Run relevant unit tests for logic changes. For UI changes, also check Tk
   construction, callbacks, and the affected layout where possible.
 - Prefer behavioral tests; avoid tests that merely duplicate static

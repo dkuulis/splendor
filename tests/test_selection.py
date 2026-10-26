@@ -45,11 +45,25 @@ class SelectionTests(unittest.TestCase):
         self.state.select_token('unknown')
         self.state.supply[RUBY] = 0
         self.state.select_token(RUBY)
-        costly = Card('costly', 1, RUBY, 0, {RUBY: 2})
-        self.state.market[1].append(costly)
-        self.state.select_card(costly)
         self.state.select_card(Card('missing', 1, RUBY, 0, {}))
         self.assertIs(self.state.selected_card, self.card)
+
+    def test_unaffordable_card_can_be_selected_and_deselected_but_not_bought(self):
+        self.card.cost = {RUBY: 2}
+        self.state.select_token(RUBY)
+        self.state.select_card(self.card)
+        self.assertIs(self.state.selected_card, self.card)
+        self.assertEqual(self.state.selected_tokens, {})
+        self.assertEqual(self.state.action_label, 'Buy')
+        self.assertIsNotNone(self.state.action_error)
+        with self.assertRaises(ValueError):
+            self.state.perform_action()
+        self.assertIs(self.state.selected_card, self.card)
+        self.assertEqual(self.state.market[1], [self.card])
+        self.assertEqual(self.state.turn.active_player, 0)
+        self.assertEqual(self.state.log, [])
+        self.state.select_card(self.card)
+        self.assertIsNone(self.state.selected_card)
 
     def test_confirm_purchase_clears_selection_and_refills_slot(self):
         replacement = Card('replacement', 1, ONYX, 0, {})

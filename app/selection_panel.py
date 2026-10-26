@@ -42,7 +42,7 @@ class SelectionPanel(tk.Frame):
 
     def refresh(self):
         state = self.state
-        self.card.refresh(state.selected_card, affordable=self.enabled)
+        self.card.refresh(state.selected_card, affordable=self.can_go, enabled=self.enabled)
         if state.selected_card is not None:
             self.tokens.grid_remove()
             self.card.grid()

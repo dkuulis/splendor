@@ -8,8 +8,9 @@ Go! passes when no gems are selected; two consecutive passes end
 the game using score and card-count tie-breaks. The log records actual actions.
 Select one to three different gems and use Go! to collect them. The button is
 disabled when the selection is invalid.
-The 10-gem inventory limit is enforced. Click anywhere on an affordable market
-card to buy it, applying owned-card discounts and returning payment to the bank.
+The 10-gem inventory limit is enforced. Click any market card to move it into
+the selection panel; click it again to deselect it. Buy is enabled only when
+you have enough gems after owned-card discounts. Buying returns payment to the bank.
 Purchases update scores, replace market cards, and trigger the final round at
 15 points. Manual lets you control both players. Pass-only AI automatically
 passes on the computer's turn. You can switch modes at any time; switching to

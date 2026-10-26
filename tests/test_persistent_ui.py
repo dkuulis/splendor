@@ -85,6 +85,8 @@ class PersistentUITests(unittest.TestCase):
         app.supply.pick(RUBY)
         self.assertEqual(app.state.selected_tokens, {})
         self.assertFalse(app.selection.can_go)
+        app.market.slots[1][0].select(None)
+        self.assertIsNone(app.state.selected_card)
         app.control.set('Manual')
         app.change_control()
         self.assertIsNone(app.pending_ai)
@@ -98,6 +100,35 @@ class PersistentUITests(unittest.TestCase):
         app.cancel_ai()
         app.run_ai()
         self.assertEqual(app.state.turn.active_player, 0)
+
+    def test_unaffordable_card_selection_blocks_buy_until_affordable(self):
+        app = self.app
+        panel = app.market.slots[1][0]
+        card = panel.card
+        card.cost = {RUBY: 2}
+        app.refresh()
+        panel.event_generate('<Button-1>')
+        self.root.update()
+        self.assertIs(app.state.selected_card, card)
+        self.assertFalse(panel.winfo_ismapped())
+        self.assertTrue(app.selection.card.winfo_ismapped())
+        self.assertTrue(app.selection.go_button.instate(['disabled']))
+        app.selection.go_button.invoke()
+        self.assertEqual(app.state.turn.active_player, 0)
+        self.assertIn(card, app.state.market[1])
+        app.selection.card.event_generate('<Button-1>')
+        self.root.update()
+        self.assertIsNone(app.state.selected_card)
+        self.assertTrue(panel.winfo_ismapped())
+        panel.event_generate('<Button-1>')
+        app.state.current_player.tokens[RUBY] = 2
+        app.state.supply[RUBY] -= 2
+        app.refresh()
+        self.assertFalse(app.selection.go_button.instate(['disabled']))
+        app.selection.go_button.invoke()
+        self.assertIn(card, app.state.players[0].cards[card.token])
+        self.assertEqual(app.state.players[0].tokens, {})
+        self.assertEqual(app.state.turn.active_player, 1)
 
     def test_nobles_follow_state_and_are_centered_left_of_supply(self):
         app = self.app

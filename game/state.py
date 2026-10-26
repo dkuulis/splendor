@@ -34,7 +34,7 @@ class State:
         return min(3, max(0, self.token_limit - sum(self.current_player.tokens.values())))
 
     def select_card(self, card):
-        if not self.can_buy(card):
+        if self.turn.finished or card not in self.market.get(card.tier, []):
             return
         self.selected_tokens.clear()
         self.selected_card = None if self.selected_card is card else card
