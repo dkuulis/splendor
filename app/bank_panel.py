@@ -7,7 +7,7 @@ from .gem_column import GemColumn
 
 
 class BankPanel(ttk.Frame):
-    def __init__(self, parent, bank):
+    def __init__(self, parent, bank, on_pass=None):
         super().__init__(parent, padding=10)
         self.bank = bank
         self.columns = {}
@@ -24,7 +24,18 @@ class BankPanel(ttk.Frame):
         actions.pack(fill="x", pady=(12, 0))
         ttk.Label(actions, textvariable=self.selection_text).pack(side="left")
         ttk.Button(actions, text="Take selected gems", state="disabled").pack(side="right")
-        ttk.Button(actions, text="Pass", state="disabled").pack(side="right", padx=8)
+        self.pass_button = ttk.Button(actions, text="Pass", command=on_pass, state="normal" if on_pass else "disabled")
+        self.pass_button.pack(side="right", padx=8)
+
+    def reset_selection(self, finished=False):
+        for column in self.columns.values():
+            column.selected = 0
+            column.enabled = not finished
+            column.update_selection()
+        self.update_selection()
+        if finished:
+            self.pass_button.configure(state="disabled")
+            self.selection_text.set("Game over")
 
     def update_selection(self):
         selected = [f"{column.selected} {color}" for color, column in self.columns.items() if column.selected]

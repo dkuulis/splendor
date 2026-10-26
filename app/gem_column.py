@@ -16,6 +16,7 @@ class GemColumn(ttk.Frame):
         self.color = color
         self.available = available
         self.selected = 0
+        self.enabled = True
         self.on_selection_changed = on_selection_changed
         self.gem_items = []
 
@@ -49,7 +50,7 @@ class GemColumn(ttk.Frame):
         ttk.Label(self, text=color).pack()
 
     def toggle_selection(self):
-        if not self.available:
+        if not self.enabled or not self.available:
             return
         self.selected = 1 - self.selected
         self.update_selection()

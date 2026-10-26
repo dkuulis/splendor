@@ -2,9 +2,10 @@
 
 A two-player Splendour desktop UI using Tkinter and themed `ttk` widgets.
 
-Currently a layout prototype with sample player balances, a three-level card
-market, and a gem bank. Gem selection updates the selection summary; gameplay
-buttons are disabled until rules and the computer opponent are implemented.
+The app starts with shuffled decks and empty player inventories. You control
+both players manually for now. Pass switches turns; two consecutive passes end
+the game using score and card-count tie-breaks. The log records actual actions.
+Gem selection is available, while purchasing and taking gems remain disabled.
 
 ## Setup
 

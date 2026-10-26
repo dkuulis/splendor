@@ -14,6 +14,7 @@ def create_initial_state(seed=None):
         rng.shuffle(deck)
         state.market[tier] = deck[:4]
         state.decks[tier] = deck[4:]
+    state.log.append("New game. Decks shuffled and four cards dealt per level.")
     return state
 
 
