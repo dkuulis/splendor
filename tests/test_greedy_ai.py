@@ -27,7 +27,7 @@ class GreedyAITests(unittest.TestCase):
         self.selection.select_token(DIAMOND, self.state)
         self.make_selection()
         self.assertEqual(self.player.tokens, {})
-        self.assertEqual(self.selection.tokens, {RUBY: 1})
+        self.assertEqual(self.selection.tokens, {RUBY: 1, DIAMOND: 1, SAPPHIRE: 1})
         self.assertIsNone(self.selection.card)
 
     def test_selects_an_already_selected_card_without_toggling_it_off(self):
@@ -85,7 +85,7 @@ class GreedyAITests(unittest.TestCase):
             Card("near", 1, EMERALD, 0, {RUBY: 4}),
         ]
         self.make_selection()
-        self.assertEqual(self.selection.tokens, {RUBY: 1, DIAMOND: 1})
+        self.assertEqual(self.selection.tokens, {RUBY: 1, DIAMOND: 1, SAPPHIRE: 1})
 
     def test_prefers_fewer_collection_turns_over_fewer_tokens(self):
         self.state.market[1] = [
@@ -114,7 +114,7 @@ class GreedyAITests(unittest.TestCase):
         self.make_selection()
         self.assertEqual(self.selection.tokens, {RUBY: 1, SAPPHIRE: 1, ONYX: 1})
 
-    def test_spare_picks_respect_inventory_capacity(self):
+    def test_passes_when_required_distinct_take_exceeds_capacity(self):
         self.player.tokens = {ONYX: 8}
         self.state.market[1] = [
             Card("first", 1, ONYX, 0, {RUBY: 1}),
@@ -122,7 +122,7 @@ class GreedyAITests(unittest.TestCase):
         ]
         self.state.supply[SAPPHIRE] = 1
         self.make_selection()
-        self.assertEqual(self.selection.tokens, {RUBY: 1, SAPPHIRE: 1})
+        self.assertEqual(self.selection.action_kind, "pass")
 
     def test_selects_three_scarcest_needed_token_types(self):
         self.state.market[1] = [Card("target", 1, ONYX, 1,
@@ -131,12 +131,12 @@ class GreedyAITests(unittest.TestCase):
         self.make_selection()
         self.assertEqual(self.selection.tokens, {EMERALD: 1, RUBY: 1, SAPPHIRE: 1})
 
-    def test_capacity_limits_collection_to_scarcest_token_type(self):
+    def test_one_spare_slot_does_not_allow_short_take_with_full_supply(self):
         self.player.tokens = {ONYX: 9}
         self.state.market[1] = [Card("target", 1, EMERALD, 0, {DIAMOND: 1, RUBY: 1})]
         self.state.supply[RUBY] = 1
         self.make_selection()
-        self.assertEqual(self.selection.tokens, {RUBY: 1})
+        self.assertEqual(self.selection.action_kind, "pass")
 
     def test_skips_blocked_target_and_takes_only_one_of_each_token_type(self):
         self.state.supply[DIAMOND] = 0
@@ -145,7 +145,17 @@ class GreedyAITests(unittest.TestCase):
             Card("available", 1, EMERALD, 0, {RUBY: 2}),
         ]
         self.make_selection()
-        self.assertEqual(self.selection.tokens, {RUBY: 1})
+        self.assertEqual(self.selection.tokens, {RUBY: 1, SAPPHIRE: 1, EMERALD: 1})
+
+    def test_scarce_supply_allows_short_take_within_capacity(self):
+        for colors, held in (((RUBY,), 9), ((RUBY, SAPPHIRE), 8)):
+            with self.subTest(colors=colors):
+                self.setUp()
+                self.player.tokens = {ONYX: held}
+                self.state.supply = {token: 1 for token in colors}
+                self.state.market[1] = [Card("target", 1, EMERALD, 0, {RUBY: 1})]
+                self.make_selection()
+                self.assertEqual(self.selection.tokens, {token: 1 for token in colors})
 
     def test_selects_pass_when_no_useful_collection_is_possible(self):
         for situation in ("empty market", "empty bank", "full inventory"):

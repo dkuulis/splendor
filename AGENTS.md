@@ -80,9 +80,10 @@ rules without a request.
   them one at a time through selected piles, and confirm only the exact excess
   above 10. Pending returns reduce displayed player piles, never supply counts.
   Any owned token, including gold, may be returned. The greedy AI continues
-  using `Player.max_take` to avoid overflow. Human takes require exactly three
-  distinct colors or two matching gems with at least four in supply; only
-  `Player.is_ai` players may take one or two distinct colors. App marks both
+  using `Player.max_take` to avoid overflow. Both players take exactly three
+  distinct colors, or one of every available gem color when fewer than three
+  remain. Gold does not count toward available gem colors. Matching pairs
+  require at least four of that gem in supply. App marks both
   players as human in manual mode, including after Restart. Selection owns these decisions;
   the UI delegates clicks.
 - Missing entries in sparse token/cost/selection dictionaries mean zero.

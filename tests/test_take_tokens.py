@@ -1,10 +1,11 @@
 from collections import Counter
 import copy
+from itertools import combinations
 import unittest
 
 from game.selection import Selection
 
-from game.constants import DIAMOND, SAPPHIRE, EMERALD, RUBY, ONYX, GOLD
+from game.constants import GEMS, TOKENS, DIAMOND, SAPPHIRE, EMERALD, RUBY, ONYX, GOLD
 from game import State
 
 
@@ -151,21 +152,37 @@ class TakeTokensTests(unittest.TestCase):
         self.assertFalse(selection.can_take_tokens(state))
         self.assertEqual(state.players[1].tokens, {})
 
-    def test_small_distinct_takes_are_only_allowed_for_ai_even_with_scarce_supply(self):
+    def test_distinct_take_uses_all_available_colors_up_to_three_for_both_players(self):
         for is_ai in (False, True):
-            for tokens, human_allowed in (({RUBY: 1}, False),
-                                          ({RUBY: 1, ONYX: 1}, False),
-                                          ({RUBY: 1, ONYX: 1, EMERALD: 1}, True)):
-                with self.subTest(is_ai=is_ai, tokens=tokens):
-                    state = State()
-                    state.current_player.is_ai = is_ai
-                    # Only selected colors remain available; scarcity is not a human exception.
-                    state.supply = dict(tokens)
-                    selection = Selection()
-                    for token in tokens:
-                        selection.select_token(token, state)
-                    self.assertEqual(selection.tokens, tokens)
-                    self.assertEqual(selection.can_perform_action(state), is_ai or human_allowed)
+            for available_count in range(6):
+                for size in range(1, 4):
+                    for colors in combinations(GEMS, size):
+                        state = State()
+                        state.current_player.is_ai = is_ai
+                        available = GEMS[:available_count]
+                        state.supply = {token: int(token in available) for token in TOKENS}
+                        state.supply[GOLD] = 5  # Gold is not an available gem color.
+                        selection = Selection()
+                        selection.tokens = {token: 1 for token in colors}
+                        expected = size == min(3, available_count) and all(token in available for token in colors)
+                        with self.subTest(is_ai=is_ai, available=available, colors=colors):
+                            self.assertEqual(selection.can_take_tokens(state), expected)
+
+    def test_scarce_take_can_overflow_and_return_before_advancing(self):
+        state = State()
+        state.current_player.tokens = {GOLD: 5, DIAMOND: 4, RUBY: 1}
+        state.supply = {token: int(token in (SAPPHIRE, EMERALD)) for token in TOKENS}
+        selection = Selection()
+        selection.tokens = {SAPPHIRE: 1, EMERALD: 1}
+        self.assertTrue(selection.can_perform_action(state))
+        selection.perform_action(state)
+        self.assertTrue(selection.returning)
+        self.assertEqual(state.turn.active_player, 0)
+        selection.tokens = {GOLD: 2}
+        self.assertTrue(selection.can_perform_action(state))
+        selection.perform_action(state)
+        self.assertEqual(state.players[0].token_count, 10)
+        self.assertEqual(state.turn.active_player, 1)
 
     def test_matching_pair_still_requires_four_in_supply_for_both_player_types(self):
         for is_ai in (False, True):

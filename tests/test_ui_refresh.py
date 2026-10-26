@@ -3,7 +3,7 @@ from unittest.mock import Mock
 
 from ai import GreedyAI, PassOnlyAI
 from app.app import App
-from game.constants import RUBY, GOLD
+from game.constants import DIAMOND, SAPPHIRE, RUBY, GOLD
 from game import Card, State
 from game.selection import Selection
 
@@ -43,7 +43,7 @@ class SelectionRefreshTests(unittest.TestCase):
 
                 self.assertEqual(app.state.turn.consecutive_passes, 1 if kind == 'pass' else 0)
                 self.assertEqual(app.state.turn.active_player, 0)
-                self.assertEqual(player.tokens, {RUBY: 1} if kind == 'take' else {})
+                self.assertEqual(player.tokens, {RUBY: 1, DIAMOND: 1, SAPPHIRE: 1} if kind == 'take' else {})
                 self.assertEqual(player.cards[RUBY], [card] if kind == 'buy' else [])
                 self.assertEqual(app.selection.action_kind, 'pass')
                 self.assertIsNone(app.pending_ai)

@@ -1,4 +1,4 @@
-from .constants import GOLD, TOKENS, MAX_TAKE, MAX_RESERVATIONS, TOKEN_LIMIT
+from .constants import GEMS, GOLD, TOKENS, MAX_TAKE, MAX_RESERVATIONS, TOKEN_LIMIT
 
 
 class Selection:
@@ -75,7 +75,8 @@ class Selection:
                            and state.supply.get(token, 0) >= amount
                            for token, amount in self.tokens.items())):
             return False
-        return ((count == MAX_TAKE or state.current_player.is_ai and count < MAX_TAKE)
+        distinct_count = min(MAX_TAKE, sum(state.supply.get(token, 0) > 0 for token in GEMS))
+        return (count == distinct_count
                 and all(amount == 1 for amount in self.tokens.values())
                 or len(self.tokens) == 1 and count == 2
                 and state.supply[next(iter(self.tokens))] >= 4)

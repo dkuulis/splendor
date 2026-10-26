@@ -16,9 +16,10 @@ Pass ends the turn without collecting when nothing is selected; two consecutive 
 the game using score and card-count tie-breaks.
 Select exactly three different gems, or two of one color when at least four of
 that color are in supply, and use Take to collect them. The button is disabled
-when the selection is invalid. Human players cannot take one gem or two
-different colors, even if fewer colors are available. AI players may still
-take one or two different colors. Both players in manual mode use human rules.
+when the selection is invalid. If fewer than three gem colors remain in supply,
+take one of every available color instead: two distinct gems when two colors
+remain, or one gem when only one color remains. This applies to both players,
+including in manual mode. Gold does not count as an available gem color.
 If Take or Reserve brings your holdings above
 10 tokens, the action button changes to Return and your turn stays active.
 Click tokens in your player panel to select exactly the excess, then click Return.
@@ -50,10 +51,12 @@ the fewest gems spent after discounts. Otherwise, it collects up to three
 different needed gems toward the card requiring the fewest collection turns
 (at most three gems per turn and one per color), breaking ties by missing gem
 count. It prioritizes colors with the lowest available bank count and fills
-spare picks from the next-ranked cards without repeating colors.
-Cards with no needed gems available
-are skipped. The greedy AI keeps collection within the inventory limit; if no purchase or useful
-collection is possible, it passes.
+spare picks from the next-ranked cards without repeating colors. Any remaining
+required picks use available colors in scarcity order. With fewer than three
+colors in supply, it takes one of each available color.
+Cards with no needed gems available are skipped. The greedy AI keeps collection
+within the inventory limit; if it cannot fit a legal distinct take or no purchase
+or useful collection is possible, it passes.
 
 Greedy2 subclasses Greedy and also considers available nobles. It buys the
 affordable card granting the most combined card and immediate noble points,

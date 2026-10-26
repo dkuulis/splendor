@@ -1,4 +1,4 @@
-from game.constants import TOKENS, MAX_TAKE
+from game.constants import GEMS, TOKENS, MAX_TAKE
 
 
 class GreedyAI:
@@ -24,17 +24,23 @@ class GreedyAI:
     def select_tokens(self, state, selection, cards):
         """Select useful gems toward visible cards."""
         capacity = state.current_player.max_take
-        if capacity == 0:
+        available_colors = [token for token in GEMS if state.supply.get(token, 0) > 0]
+        required = min(MAX_TAKE, len(available_colors))
+        if required == 0 or capacity < required:
             return
 
         tokens = []
         for _, _, available in self.rank_targets(state, cards):
             available.sort(key=lambda token: state.supply[token])
             for token in available:
-                if token not in tokens and len(tokens) < capacity:
+                if token not in tokens and len(tokens) < required:
                     tokens.append(token)
-            if len(tokens) == capacity:
+            if len(tokens) == required:
                 break
+        if tokens:
+            for token in sorted(available_colors, key=lambda token: state.supply[token]):
+                if token not in tokens and len(tokens) < required:
+                    tokens.append(token)
         for token in tokens:
             selection.select_token(token, state)
 

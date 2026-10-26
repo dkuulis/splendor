@@ -22,9 +22,10 @@ Choose one action:
 1. **Take gems:** take exactly three different colors from the bank,
    one gem per color, or take exactly two gems of one color if at least four
    of that color are available before taking them. Each selected color must
-   be available. Human players cannot take one gem or two different colors,
-   even when fewer colors are available. The AI may take one or two different
-   colors; both players in manual mode follow human rules. You may temporarily exceed 10 tokens; return the exact
+   be available. If only two gem colors remain in supply, take one of each;
+   if only one remains, take one gem. Gold does not count as a gem color.
+   These rules apply to both human and computer players, including manual mode.
+   You may temporarily exceed 10 tokens; return the exact
    excess before ending your turn, as described below.
 2. **Buy a card:** purchase one face-up market card or one of your reserved
    cards you can afford. Reserved cards cannot be reserved again.
@@ -92,8 +93,8 @@ gem-taking or reservation action resets the consecutive-pass count.
 
 ## Computer opponent
 
-The computer follows the same rules except that it may take one or two
-different gem colors. It has no extra resources or access to hidden deck order. Greedy AI is the default: it buys the highest-point
+The computer follows the same collection rules as the human. It has no extra
+resources or access to hidden deck order. Greedy AI is the default: it buys the highest-point
 affordable card, otherwise collects gems toward visible cards, and passes
 when no purchase or useful collection is possible. Manual control and
 Pass-only AI are also available. See [README.md](README.md) for exact
@@ -105,9 +106,6 @@ strategy priorities and control options.
   automatically rather than letting the player choose.
 - **Reservations and gold:** reservations require taking one available gold. Blind reservations are not implemented.
 - **Player count:** only two players; no three- or four-player setup.
-- **Gem collection:** human players must take exactly three different colors
-  or two matching gems, even when fewer colors are available. Only the AI
-  may take one or two different colors.
 - **Passing:** voluntary passes and the two-pass ending are house rules.
 - **First player:** the human always starts instead of choosing by age.
 
