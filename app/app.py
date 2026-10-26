@@ -57,7 +57,7 @@ class App:
             table.rowconfigure(row, minsize=MARKET_CARD_HEIGHT + 2 * MARKET_ROW_PADDING)
         self.nobles = NoblesPanel(table, state.nobles)
         self.nobles.grid(row=0, column=0, rowspan=3, padx=(0, 12))
-        self.market = MarketPanel(table, state.market, self.select_card,
+        self.market = MarketPanel(table, state.market, state.decks, self.select_card,
                                   lambda card: self.manual_turn and self.state.can_buy(card),
                                   state.selected_card)
         self.market.grid(row=0, column=2, rowspan=3, sticky="n")
@@ -80,7 +80,7 @@ class App:
         state = self.state
         self.computer.refresh(state.players[1], state.is_active_player(state.players[1]))
         self.player.refresh(state.players[0], state.is_active_player(state.players[0]))
-        self.market.refresh(state.market, state.selected_card)
+        self.market.refresh(state.market, state.decks, state.selected_card)
         self.nobles.refresh(state.nobles)
         self.supply.available_tokens = state.supply
         self.supply.selected_tokens = state.selected_tokens

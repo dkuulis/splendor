@@ -7,11 +7,13 @@ from .styles import DECK_PALETTE, MARKET_ROW_PADDING, MARKET_CARD_WIDTH, MARKET_
 
 
 class MarketPanel(ttk.Frame):
-    def __init__(self, parent, market, on_select=None, can_buy=None, selected_card=None):
+    def __init__(self, parent, market, decks, on_select=None, can_buy=None, selected_card=None):
         super().__init__(parent)
         self.cards = []
         self.slots = {}
+        self.decks = {}
         self.can_buy = can_buy
+        self.columnconfigure(0, minsize=MARKET_CARD_WIDTH + 8)
 
         for row, tier in enumerate((3, 2, 1)):
             deck = tk.Canvas(self, background=DECK_PALETTE[tier],
@@ -19,6 +21,7 @@ class MarketPanel(ttk.Frame):
                              highlightthickness=0, borderwidth=0)
             deck.create_image(0, 0, image=load_image(deck, f"deck_level_{tier}"), anchor="nw")
             deck.grid(row=row, column=0, padx=4, pady=MARKET_ROW_PADDING)
+            self.decks[tier] = deck
 
             self.slots[tier] = []
             for slot in range(4):
@@ -28,10 +31,15 @@ class MarketPanel(ttk.Frame):
                 panel = CardPanel(space, on_select=on_select)
                 panel.grid(row=0, column=0)
                 self.slots[tier].append(panel)
-        self.refresh(market, selected_card)
+        self.refresh(market, decks, selected_card)
 
-    def refresh(self, market, selected_card=None):
+    def refresh(self, market, decks, selected_card=None):
         self.cards = []
+        for tier, deck in self.decks.items():
+            if decks[tier]:
+                deck.grid()
+            else:
+                deck.grid_remove()
         for tier, panels in self.slots.items():
             for slot, panel in enumerate(panels):
                 card = market[tier][slot] if slot < len(market[tier]) else None

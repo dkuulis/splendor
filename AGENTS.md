@@ -35,6 +35,9 @@ The human starts; the computer can use manual control or AI.
   strategies quick and preserve cancellation when changing mode/new game.
 - Other `app/` modules implement market, card, deck, player, score, header, supply, selection
   and log controls. Keep shared visual constants in `app/styles.py`.
+- `MarketPanel` receives both market cards and decks. Hide a tier's deck when
+  `State.decks[tier]` is empty, preserving market alignment; show it again when
+  replenished, including on a new game.
 - `app/nobles_panel.py` displays available nobles left of supply and selection.
   The player panel's leftmost column stacks owned nobles with gold coins
   overlaid, using the same display code as cards and gems.
