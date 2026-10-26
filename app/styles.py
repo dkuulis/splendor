@@ -7,6 +7,7 @@ TEXT_PALETTE = {"Diamond": "#111827", "Sapphire": "white", "Emerald": "white", "
 OUTLINE_PALETTE = {**PALETTE, "Diamond": "#94a3b8"}
 DISABLED_PALETTE = {"Diamond": "#c4c7cc", "Sapphire": "#899bbd", "Emerald": "#819e8b", "Ruby": "#b48590", "Onyx": "#858d99"}
 DISABLED_CARD_BORDER = "#a3a3a3"
+CARD_BACKGROUND = "#ffffff"
 DECK_PALETTE = {1: "#166534", 2: "#a16207", 3: "#1e40af"}
 MUTED_TEXT_COLOR = "#64748b"
 LOG_BACKGROUND = "#f8fafc"
@@ -30,6 +31,8 @@ GEM_SPACING = GEM_RADIUS * 2 + GEM_GAP
 
 MARKET_CARD_WIDTH = 150
 MARKET_CARD_HEIGHT = MARKET_CARD_WIDTH * 7 // 5
+CARD_BORDER_WIDTH = 2
+PLAYER_CARD_OFFSET = 10
 COST_GEM_RADIUS = 14
 COST_GEM_SPACING = COST_GEM_RADIUS * 2 + 4
 

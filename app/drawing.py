@@ -1,4 +1,4 @@
-"""Shared geometry for canvas gems and card markers."""
+"""Shared geometry for canvas gems."""
 
 from .styles import OUTLINE_PALETTE, PALETTE
 
@@ -13,12 +13,4 @@ def draw_gem(canvas, color, x, y, radius, **options):
     return canvas.create_oval(
         x - radius, y - radius, x + radius, y + radius,
         **options,
-    )
-
-
-def draw_card_marker(canvas, color, x, y, size):
-    half = size / 2
-    return canvas.create_rectangle(
-        x - half, y - half, x + half, y + half,
-        fill=PALETTE[color], outline=OUTLINE_PALETTE[color],
     )

@@ -14,7 +14,6 @@ from .styles import (
 
 class PlayerPanel(tk.Frame):
     def __init__(self, parent, player, subtitle, active=False):
-        discounts = player.discounts
         border = ACTIVE_PLAYER_BORDER if active else PLAYER_PANEL_BACKGROUND
         super().__init__(parent, background=PLAYER_PANEL_BACKGROUND, highlightthickness=2,
                          highlightbackground=border, highlightcolor=border, borderwidth=0)
@@ -24,7 +23,8 @@ class PlayerPanel(tk.Frame):
 
         self.columns = {}
         for color in COLORS:
-            column = PlayerColumn(self.panel, color, discounts.get(color, 0), player.gems.get(color, 0))
+            cards = [card for card in player.cards.values() if card.color == color]
+            column = PlayerColumn(self.panel, color, cards, player.gems.get(color, 0))
             column.pack(side="left", expand=True, fill="x")
             self.columns[color] = column
 

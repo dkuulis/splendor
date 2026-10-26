@@ -1,10 +1,11 @@
 import tkinter as tk
-from tkinter import ttk
 
 from game.constants import COLORS
 
 from .drawing import draw_gem
 from .styles import (
+    CARD_BACKGROUND,
+    CARD_BORDER_WIDTH,
     CARD_DETAIL_FONT,
     COST_GEM_RADIUS,
     COST_GEM_SPACING,
@@ -19,60 +20,42 @@ from .styles import (
 )
 
 
-class CardPanel(tk.Frame):
-    def __init__(self, parent, card, on_buy=None, affordable=False):
-        enabled = bool(on_buy and affordable)
-        palette = PALETTE if enabled else DISABLED_PALETTE
-        border = OUTLINE_PALETTE[card.color] if enabled else DISABLED_CARD_BORDER
+class CardPanel(tk.Canvas):
+    def __init__(self, parent, card, on_buy=None, affordable=False, owned=False):
+        enabled = bool(on_buy and affordable and not owned)
         super().__init__(parent, width=MARKET_CARD_WIDTH, height=MARKET_CARD_HEIGHT,
-                         padx=6, pady=6, highlightthickness=1,
-                         highlightbackground=border, highlightcolor=border)
-        self.pack_propagate(False)
+                         highlightthickness=0, borderwidth=0, background=CARD_BACKGROUND)
+        self.draw(self, card, active=enabled or owned)
+        if enabled:
+            self.configure(cursor="hand2")
+            self.bind("<Button-1>", lambda event: on_buy(card))
 
-        title = tk.Frame(self, bg=palette[card.color])
-        title.pack(fill="x")
-        tk.Label(
-            title,
-            text=str(card.points) if card.points else "",
-            bg=palette[card.color],
-            fg=TEXT_PALETTE[card.color],
-            font=POINTS_FONT,
-            anchor="nw",
-            padx=4,
-            pady=4,
-        ).pack(side="left")
-        tk.Label(
-            title,
-            text=card.color,
-            bg=palette[card.color],
-            fg=TEXT_PALETTE[card.color],
-            font=CARD_DETAIL_FONT,
-            padx=4,
-        ).pack(side="right")
+    @staticmethod
+    def draw(canvas, card, x=0, y=0, active=True):
+        """Draw a complete card, also reusable beneath gems in player stacks."""
+        palette = PALETTE if active else DISABLED_PALETTE
+        border = OUTLINE_PALETTE[card.color] if active else DISABLED_CARD_BORDER
+        right = x + MARKET_CARD_WIDTH
+        bottom = y + MARKET_CARD_HEIGHT
+        canvas.create_rectangle(x, y, right, bottom,
+                                fill=CARD_BACKGROUND, outline="")
+        canvas.create_rectangle(x, y, right, y + 62,
+                                fill=palette[card.color], outline="")
+        if card.points:
+            canvas.create_text(x + 11, y + 34, text=str(card.points), anchor="w",
+                               fill=TEXT_PALETTE[card.color], font=POINTS_FONT)
+        canvas.create_text(right - 11, y + 34, text=card.color, anchor="e",
+                           fill=TEXT_PALETTE[card.color], font=CARD_DETAIL_FONT)
 
         costs = [(color, card.cost[color]) for color in COLORS if card.cost.get(color, 0)]
-        body = ttk.Frame(self)
-        body.pack(fill="both", expand=True, pady=(4, 0))
-        cost_column = tk.Canvas(
-            body, height=len(costs) * COST_GEM_SPACING,
-            width=COST_GEM_SPACING, highlightthickness=0,
-            background=parent.winfo_toplevel().cget("background"),
-        )
-        cost_column.pack(side="left", anchor="s")
-        x = COST_GEM_SPACING / 2
+        cost_x = x + 7 + COST_GEM_SPACING / 2
+        cost_top = bottom - 7 - len(costs) * COST_GEM_SPACING
         for index, (color, amount) in enumerate(costs):
-            y = (index + 0.5) * COST_GEM_SPACING
-            draw_gem(cost_column, color, x, y, COST_GEM_RADIUS)
-            cost_column.create_text(
-                x, y, text=str(amount),
-                fill=TEXT_PALETTE[color],
-                font=CARD_DETAIL_FONT,
-            )
+            cost_y = cost_top + (index + 0.5) * COST_GEM_SPACING
+            draw_gem(canvas, color, cost_x, cost_y, COST_GEM_RADIUS)
+            canvas.create_text(cost_x, cost_y, text=str(amount),
+                               fill=TEXT_PALETTE[color], font=CARD_DETAIL_FONT)
 
-        if enabled:
-            widgets = [self]
-            while widgets:
-                widget = widgets.pop()
-                widget.configure(cursor="hand2")
-                widget.bind("<Button-1>", lambda event: on_buy(card))
-                widgets.extend(widget.winfo_children())
+        inset = CARD_BORDER_WIDTH / 2
+        canvas.create_rectangle(x + inset, y + inset, right - inset, bottom - inset,
+                                outline=border, width=CARD_BORDER_WIDTH)

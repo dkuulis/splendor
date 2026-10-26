@@ -1,31 +1,36 @@
 import tkinter as tk
 from tkinter import ttk
 
-from .drawing import draw_card_marker, draw_gem, row_centers
-from .styles import GEM_RADIUS, GEM_SPACING, MUTED_TEXT_COLOR, PLAYER_PANEL_BACKGROUND
-
-MARKER_SIZE = GEM_RADIUS * 2
-INVENTORY_MIN_WIDTH = 100
-ROW_GAP = 10
-CARD_ROW_Y = 6 + GEM_RADIUS
-GEM_ROW_Y = CARD_ROW_Y + MARKER_SIZE + ROW_GAP
-INVENTORY_HEIGHT = GEM_ROW_Y + GEM_RADIUS + 8
+from .card_panel import CardPanel
+from .drawing import draw_gem, row_centers
+from .styles import (
+    GEM_RADIUS,
+    GEM_SPACING,
+    MARKET_CARD_HEIGHT,
+    MARKET_CARD_WIDTH,
+    MUTED_TEXT_COLOR,
+    PLAYER_CARD_OFFSET,
+    PLAYER_PANEL_BACKGROUND,
+)
 
 
 class PlayerColumn(ttk.Frame):
-    def __init__(self, parent, color, card_count, gem_count):
+    def __init__(self, parent, color, cards, gem_count):
         super().__init__(parent, style="Player.TFrame")
-        content_width = max(card_count, gem_count) * GEM_SPACING
-        canvas_width = max(INVENTORY_MIN_WIDTH, content_width)
+        stack_width = MARKET_CARD_WIDTH + max(0, len(cards) - 1) * PLAYER_CARD_OFFSET
+        width = max(stack_width, gem_count * GEM_SPACING)
 
-        resources = tk.Canvas(
-            self, width=canvas_width, height=INVENTORY_HEIGHT, highlightthickness=0,
-            background=PLAYER_PANEL_BACKGROUND,
-        )
-        resources.pack()
+        stack = tk.Canvas(self, width=width, height=MARKET_CARD_HEIGHT,
+                          highlightthickness=0, borderwidth=0,
+                          background=PLAYER_PANEL_BACKGROUND)
+        stack.pack()
+        start = (width - stack_width) / 2
+        for index, card in enumerate(cards):
+            CardPanel.draw(stack, card, x=start + index * PLAYER_CARD_OFFSET)
+        if not cards:
+            stack.create_text(width / 2, MARKET_CARD_HEIGHT / 2,
+                              text=color, fill=MUTED_TEXT_COLOR)
 
-        for x in row_centers(card_count, canvas_width, GEM_SPACING):
-            draw_card_marker(resources, color, x, CARD_ROW_Y, MARKER_SIZE)
-        for x in row_centers(gem_count, canvas_width, GEM_SPACING):
-            draw_gem(resources, color, x, GEM_ROW_Y, GEM_RADIUS, width=2)
-        ttk.Label(self, text=color, foreground=MUTED_TEXT_COLOR, style="Player.TLabel").pack()
+        for x in row_centers(gem_count, width, GEM_SPACING):
+            draw_gem(stack, color, x, MARKET_CARD_HEIGHT - GEM_RADIUS - 5,
+                     GEM_RADIUS, width=2)
