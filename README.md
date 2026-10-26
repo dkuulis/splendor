@@ -7,6 +7,7 @@ computer strategy at launch with `--ai` (default: `greedy`):
 
 ```sh
 .venv/bin/python main.py --ai greedy
+.venv/bin/python main.py --ai greedy2
 .venv/bin/python main.py --ai pass-only
 .venv/bin/python main.py --ai manual
 ```
@@ -53,6 +54,16 @@ spare picks from the next-ranked cards without repeating colors.
 Cards with no needed gems available
 are skipped. The greedy AI keeps collection within the inventory limit; if no purchase or useful
 collection is possible, it passes.
+
+Greedy2 subclasses Greedy and also considers available nobles. It buys the
+affordable card granting the most combined card and immediate noble points,
+counting only the first qualifying noble in displayed order. Ties favor cards
+advancing a noble that needs the fewest additional permanent card bonuses,
+then the lowest gem cost after discounts. When collecting, it ranks targets by
+collection turns, then noble progress, then missing gem count. A bonus advances
+a noble only while that color's requirement is unmet; tokens do not count.
+Remaining ties keep market order followed by reserved-card order. Collection
+limits, scarce-color preference, spare picks, and passing follow Greedy.
 
 ## Selection rules
 
