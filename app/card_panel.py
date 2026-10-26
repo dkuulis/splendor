@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 
+from game.constants import COLORS
+
 from .styles import (
     CARD_DETAIL_FONT,
     OUTLINE_PALETTE,
@@ -36,7 +38,7 @@ class CardPanel(ttk.Frame):
             padx=6,
         ).pack(side="right")
 
-        costs = [(color, amount) for color, amount in card.cost.items() if amount]
+        costs = [(color, card.cost[color]) for color in COLORS if card.cost.get(color, 0)]
         cost_row = tk.Canvas(
             self, height=38, width=max(160, len(costs) * 40), highlightthickness=0,
             background=parent.winfo_toplevel().cget("background"),
