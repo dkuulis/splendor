@@ -116,7 +116,7 @@ def main():
     parser.add_argument("--high-res", type=Path, help="Also save 1200×1680 cards in this folder")
     args = parser.parse_args()
     # Deck definitions preserve the original numbered card order across tiers.
-    cards = [card for deck in create_decks() for card in deck]
+    cards = [card for deck in create_decks().values() for card in deck]
     if args.card:
         cards = [cards[args.card - 1]]
     try:

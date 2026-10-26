@@ -12,7 +12,7 @@ def create_initial_state(seed=None):
     """Shuffle and deal a new game; an optional seed makes the deal repeatable."""
     state = State()
     rng = random.Random(seed)
-    for tier, deck in enumerate(create_decks(), 1):
+    for tier, deck in create_decks().items():
         rng.shuffle(deck)
         state.market[tier] = deck[:4]
         state.decks[tier] = deck[4:]
@@ -40,9 +40,9 @@ def create_nobles():
 
 
 def create_decks():
-    """Return fresh level 1, 2, and 3 decks at indices 0, 1, and 2."""
-    return [
-        [  # Level 1
+    """Return fresh decks keyed by tiers 1, 2, and 3."""
+    return {
+        1: [
             Card("card_001_l1_onyx_d1s1e1r1", 1, ONYX, 0, {SAPPHIRE: 1, EMERALD: 1, RUBY: 1, DIAMOND: 1}),
             Card("card_002_l1_onyx_d1s2e1r1", 1, ONYX, 0, {SAPPHIRE: 2, EMERALD: 1, RUBY: 1, DIAMOND: 1}),
             Card("card_003_l1_onyx_d2s2r1", 1, ONYX, 0, {SAPPHIRE: 2, RUBY: 1, DIAMOND: 2}),
@@ -84,7 +84,7 @@ def create_decks():
             Card("card_039_l1_ruby_d3", 1, RUBY, 0, {DIAMOND: 3}),
             Card("card_040_l1_ruby_d4", 1, RUBY, 1, {DIAMOND: 4}),
         ],
-        [  # Level 2
+        2: [
             Card("card_041_l2_onyx_d3s2e2", 2, ONYX, 1, {SAPPHIRE: 2, EMERALD: 2, DIAMOND: 3}),
             Card("card_042_l2_onyx_d3e3o2", 2, ONYX, 1, {ONYX: 2, EMERALD: 3, DIAMOND: 3}),
             Card("card_043_l2_onyx_s1e4r2", 2, ONYX, 2, {SAPPHIRE: 1, EMERALD: 4, RUBY: 2}),
@@ -116,7 +116,7 @@ def create_decks():
             Card("card_069_l2_ruby_o5", 2, RUBY, 2, {ONYX: 5}),
             Card("card_070_l2_ruby_r6", 2, RUBY, 3, {RUBY: 6}),
         ],
-        [  # Level 3
+        3: [
             Card("card_071_l3_onyx_d3s3e5r3", 3, ONYX, 3, {SAPPHIRE: 3, EMERALD: 5, RUBY: 3, DIAMOND: 3}),
             Card("card_072_l3_onyx_r7", 3, ONYX, 4, {RUBY: 7}),
             Card("card_073_l3_onyx_e3r6o3", 3, ONYX, 4, {ONYX: 3, EMERALD: 3, RUBY: 6}),
@@ -138,4 +138,4 @@ def create_decks():
             Card("card_089_l3_ruby_s3e6r3", 3, RUBY, 4, {SAPPHIRE: 3, EMERALD: 6, RUBY: 3}),
             Card("card_090_l3_ruby_e7r3", 3, RUBY, 5, {EMERALD: 7, RUBY: 3}),
         ],
-    ]
+    }
