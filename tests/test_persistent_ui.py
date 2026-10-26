@@ -226,6 +226,88 @@ class PersistentUITests(unittest.TestCase):
         self.assertFalse(app.player.columns[GOLD].winfo_ismapped())
         self.assertFalse(app.computer.columns[GOLD].winfo_ismapped())
 
+    def test_gold_can_be_selected_but_blocks_collection(self):
+        app = self.app
+        cell = app.supply.cells[GOLD]
+        x, y = cell.coords('gem')
+        cell.event_generate('<Motion>', x=int(x), y=int(y))
+        cell.event_generate('<Button-1>', x=int(x), y=int(y))
+        self.root.update()
+        self.assertEqual(app.state.selected_tokens, {GOLD: 1})
+        self.assertEqual(app.selection.tokens.itemcget(app.selection.items[GOLD], 'state'), 'normal')
+        self.assertTrue(app.selection.go_button.instate(['disabled']))
+        app.select_token(RUBY)
+        self.assertEqual(app.state.selected_tokens, {RUBY: 1})
+        self.assertEqual(app.selection.tokens.itemcget(app.selection.items[GOLD], 'state'), 'hidden')
+        self.assertFalse(app.selection.go_button.instate(['disabled']))
+        app.select_token(GOLD)
+        self.assertEqual(app.state.selected_tokens, {GOLD: 1})
+        self.assertEqual(app.selection.tokens.itemcget(app.selection.items[RUBY], 'state'), 'hidden')
+        self.assertTrue(app.selection.go_button.instate(['disabled']))
+        app.selection.go_button.invoke()
+        self.assertEqual(app.state.players[0].tokens, {})
+        self.assertEqual(app.state.turn.active_player, 0)
+        x, y = app.selection.tokens.coords(app.selection.items[GOLD])
+        app.selection.tokens.event_generate('<Motion>', x=int(x), y=int(y))
+        app.selection.tokens.event_generate('<Button-1>', x=int(x), y=int(y))
+        self.root.update()
+        self.assertEqual(app.state.selected_tokens, {})
+        self.assertFalse(app.selection.go_button.instate(['disabled']))
+        app.select_token(RUBY)
+        app.selection.go_button.invoke()
+        self.assertEqual(app.state.players[0].tokens, {RUBY: 1})
+
+    def test_gold_and_selected_card_are_visible_together(self):
+        app = self.app
+        card = app.state.market[1][0]
+        card.cost = {}
+        app.select_card(card)
+        app.supply.pick(GOLD)
+        self.root.update()
+        self.assertIs(app.state.selected_card, card)
+        self.assertFalse(app.market.slots[1][0].winfo_ismapped())
+        self.assertTrue(app.selection.card.winfo_ismapped())
+        self.assertTrue(app.selection.tokens.winfo_ismapped())
+        self.assertLess(app.selection.card.winfo_rootx() + app.selection.card.winfo_width(),
+                        app.selection.tokens.winfo_rootx())
+        self.assertEqual(app.selection.go_button.cget('text'), 'Reserve')
+        self.assertFalse(app.selection.go_button.instate(['disabled']))
+        app.selection.deselect(GOLD)
+        self.root.update()
+        self.assertIs(app.state.selected_card, card)
+        self.assertFalse(app.selection.tokens.winfo_ismapped())
+        self.assertFalse(app.selection.go_button.instate(['disabled']))
+        app.select_token(GOLD)
+        app.selection.go_button.invoke()
+        self.root.update()
+        self.assertIn(card, app.state.players[0].reserved_cards)
+        self.assertEqual(app.state.players[0].tokens[GOLD], 1)
+        self.assertTrue(app.player.reserved.winfo_ismapped())
+        self.assertEqual(app.state.turn.active_player, 1)
+
+    def test_reserve_button_obeys_token_and_reservation_limits(self):
+        app = self.app
+        card = app.state.market[1][0]
+        app.select_card(card)
+        app.select_token(GOLD)
+        player = app.state.current_player
+        for limit in ('tokens', 'reservations'):
+            with self.subTest(limit=limit):
+                if limit == 'tokens':
+                    player.tokens = {RUBY: 7, GOLD: 3}
+                else:
+                    player.reserved_cards = app.state.market[2][:3]
+                app.refresh()
+                self.assertEqual(app.selection.go_button.cget('text'), 'Reserve')
+                self.assertTrue(app.selection.go_button.instate(['disabled']))
+                app.selection.go_button.invoke()
+                self.assertIs(app.state.selected_card, card)
+                self.assertEqual(app.state.turn.active_player, 0)
+                player.tokens.clear()
+                player.reserved_cards.clear()
+        app.refresh()
+        self.assertFalse(app.selection.go_button.instate(['disabled']))
+
     def test_log_scroll_and_label_reuse(self):
         app = self.app
         app.state.log.extend(f'Message {index}' for index in range(100))

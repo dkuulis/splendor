@@ -38,22 +38,29 @@ class SelectionPanel(tk.Frame):
             self.tokens.tag_bind(item, "<Button-1>",
                                  lambda event, token=token: self.deselect(token))
         self.go_button = ttk.Button(self, command=self.go)
-        self.go_button.grid(row=0, column=1, sticky="e", padx=5)
+        self.go_button.grid(row=0, column=2, sticky="e", padx=5)
         self.refresh()
         self.configure(width=TOKEN_SIZE + 4 * TOKEN_SPACING + self.go_button.winfo_reqwidth() + 24)
 
     def refresh(self):
         state = self.state
-        self.card.refresh(state.selected_card, affordable=self.can_go, enabled=self.enabled)
+        affordable = (self.enabled and state.selected_card is not None
+                      and state.can_buy(state.selected_card))
+        self.card.refresh(state.selected_card, affordable=affordable, enabled=self.enabled)
         self.card.itemconfigure(self.disabled_overlay,
-                                state="normal" if state.selected_card is not None and not self.can_go
+                                state="normal" if state.selected_card is not None and not affordable
                                 else "hidden")
         if state.selected_card is not None:
-            self.tokens.grid_remove()
             self.card.grid()
+            self.tokens.configure(width=TOKEN_SIZE)
+            if state.selected_tokens:
+                self.tokens.grid(row=0, column=1)
+            else:
+                self.tokens.grid_remove()
         else:
             self.card.grid_remove()
-            self.tokens.grid()
+            self.tokens.configure(width=TOKEN_SIZE + 4 * TOKEN_SPACING)
+            self.tokens.grid(row=0, column=0)
         index = 0
         for token, item in self.items.items():
             selected = bool(state.selected_tokens.get(token, 0))

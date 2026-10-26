@@ -41,12 +41,63 @@ class SelectionTests(unittest.TestCase):
 
     def test_invalid_selection_preserves_pending_action(self):
         self.state.select_card(self.card)
-        self.state.select_token(GOLD)
         self.state.select_token('unknown')
         self.state.supply[RUBY] = 0
         self.state.select_token(RUBY)
         self.state.select_card(Card('missing', 1, RUBY, 0, {}))
         self.assertIs(self.state.selected_card, self.card)
+
+    def test_gold_selection_blocks_action_until_deselected(self):
+        state = self.state
+        supply = dict(state.supply)
+        state.select_token(GOLD)
+        self.assertIsNone(state.selected_card)
+        self.assertEqual(state.selected_tokens, {GOLD: 1})
+        for replace_gems in (False, True):
+            with self.subTest(replace_gems=replace_gems):
+                if replace_gems:
+                    state.select_token(RUBY)
+                    state.select_token(SAPPHIRE)
+                    state.select_token(GOLD)
+                self.assertEqual(state.selected_tokens, {GOLD: 1})
+                self.assertIsNotNone(state.action_error)
+                with self.assertRaises(ValueError):
+                    state.perform_action()
+                self.assertEqual(state.supply, supply)
+                self.assertEqual(state.current_player.tokens, {})
+                self.assertEqual(state.turn.active_player, 0)
+        state.deselect_token(GOLD)
+        self.assertEqual(state.selected_tokens, {})
+        self.assertIsNone(state.action_error)
+
+    def test_non_gold_selection_clears_card_and_gold_but_keeps_other_gems(self):
+        state = self.state
+        state.select_card(self.card)
+        state.select_token(GOLD)
+        state.select_token(RUBY)
+        self.assertIsNone(state.selected_card)
+        self.assertEqual(state.selected_tokens, {RUBY: 1})
+        state.select_token(SAPPHIRE)
+        self.assertEqual(state.selected_tokens, {RUBY: 1, SAPPHIRE: 1})
+        self.assertIsNone(state.action_error)
+
+    def test_gold_preserves_selected_card_and_blocks_purchase(self):
+        state = self.state
+        state.select_card(self.card)
+        state.select_token(GOLD)
+        self.assertIs(state.selected_card, self.card)
+        self.assertEqual(state.selected_tokens, {GOLD: 1})
+        self.assertEqual(state.action_label, 'Reserve')
+        self.assertIsNone(state.action_error)
+        with self.assertRaises(ValueError):
+            state.buy_card()
+        self.assertEqual(state.market[1], [self.card])
+        self.assertEqual(state.turn.active_player, 0)
+        state.deselect_token(GOLD)
+        self.assertIs(state.selected_card, self.card)
+        self.assertIsNone(state.action_error)
+        state.perform_action()
+        self.assertIn(self.card, state.players[0].cards[self.card.token])
 
     def test_unaffordable_card_can_be_selected_and_deselected_but_not_bought(self):
         self.card.cost = {RUBY: 2}

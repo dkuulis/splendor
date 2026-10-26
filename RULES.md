@@ -8,7 +8,8 @@ one computer opponent.
 - The human plays first. Players alternate turns.
 - Each player starts with no gems, no cards, and zero points.
 - The bank starts with four gems of each color: Diamond, Sapphire, Emerald,
-  Ruby, and Onyx. It also holds five Gold tokens, which cannot be selected.
+  Ruby, and Onyx. It also holds five Gold tokens. Gold can be selected, but
+  gold alone cannot be taken. Select a market card and then gold to reserve it.
 - Shuffle each of the three development decks separately and reveal four
   cards per level. Remaining cards stay face down.
 - Shuffle the ten nobles and reveal three, displayed left of the supply.
@@ -24,7 +25,12 @@ Choose one action:
    or exchange gems to make room; gems leave your inventory only when spent
    on a card.
 2. **Buy a card:** purchase one face-up market card you can afford.
-3. **Pass:** take no action and give the turn to the opponent.
+3. **Reserve a card:** select a face-up market card, then gold, and confirm
+   Reserve. Move the card to your reserved cards and take one gold from the
+   bank. You may hold at most three reserved cards, and taking the gold must
+   not exceed the 10-token inventory limit. Refill the market slot from its
+   deck if possible. Reserved cards grant no points or discounts.
+4. **Pass:** take no action and give the turn to the opponent.
 
 A player cannot take gems and buy a card on the same turn.
 
@@ -61,7 +67,7 @@ If still tied, the game is a draw.
 
 As a simplified stalemate rule, two consecutive passes end the game using
 the same scoring and tie-break rules, even below 15 points. Any purchase or
-gem-taking action resets the consecutive-pass count.
+gem-taking or reservation action resets the consecutive-pass count.
 
 ## Computer opponent
 
@@ -76,8 +82,9 @@ strategy priorities and control options.
 
 - **Nobles:** when several qualify, the first in displayed order is awarded
   automatically rather than letting the player choose.
-- **Reservations and gold:** no reserved cards, blind reservations, or gold
-  wildcard payments. Gold remains in the bank.
+- **Reservations and gold:** reservations require taking one available gold
+  without exceeding the token limit. Blind reservations, purchasing reserved
+  cards, and gold wildcard payments are not implemented yet.
 - **Two matching gems:** omitted for now; the full game permits this only
   when at least four gems of that color are available before taking them.
 - **Player count:** only two players; no three- or four-player setup.

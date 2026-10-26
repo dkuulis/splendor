@@ -11,6 +11,9 @@ disabled when the selection is invalid.
 The 10-gem inventory limit is enforced. Click any market card to move it into
 the selection panel; click it again to deselect it. Buy is enabled only when
 you have enough gems after owned-card discounts. Buying returns payment to the bank.
+Select a card and then gold to enable Reserve. This takes the card and one gold,
+subject to the three-reservation and 10-token limits. Reserved cards appear in
+the last player-panel block; purchasing them is not implemented yet.
 Purchases update scores, replace market cards, and trigger the final round at
 15 points. Manual lets you control both players. Pass-only AI automatically
 passes on the computer's turn. You can switch modes at any time; switching to

@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-from game.constants import GOLD, TOKENS
+from game.constants import TOKENS
 
 from .assets import load_image
 from .styles import TOKEN_PILE_HEIGHT, TOKEN_PILE_WIDTH
@@ -30,10 +30,9 @@ class SupplyPanel(ttk.Frame):
             cell.grid(row=index // 2, column=index % 2, padx=5, pady=2)
             cell.create_image(TOKEN_PILE_WIDTH / 2, TOKEN_PILE_HEIGHT / 2, tags=("gem",))
             self.cells[token] = cell
-            if token != GOLD:
-                cell.tag_bind("gem", "<Button-1>", lambda event, token=token: self.pick(token))
-                cell.tag_bind("gem", "<Enter>", lambda event, cell=cell: cell.configure(cursor="hand2" if self.enabled else ""))
-                cell.tag_bind("gem", "<Leave>", lambda event, cell=cell: cell.configure(cursor=""))
+            cell.tag_bind("gem", "<Button-1>", lambda event, token=token: self.pick(token))
+            cell.tag_bind("gem", "<Enter>", lambda event, cell=cell: cell.configure(cursor="hand2" if self.enabled else ""))
+            cell.tag_bind("gem", "<Leave>", lambda event, cell=cell: cell.configure(cursor=""))
         self.refresh()
 
     def pick(self, token):

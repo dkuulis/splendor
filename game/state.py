@@ -1,5 +1,5 @@
 from .constants import (GOLD, TOKENS, TARGET_POINTS, TOKEN_LIMIT, MAX_TAKE,
-                        INITIAL_GOLD_SUPPLY, INITIAL_GEM_SUPPLY)
+                        INITIAL_GOLD_SUPPLY, INITIAL_GEM_SUPPLY, MAX_RESERVATIONS)
 from .player import Player
 from .turn import Turn
 
@@ -40,10 +40,14 @@ class State:
         self.selected_card = None if self.selected_card is card else card
 
     def select_token(self, token):
-        if (self.turn.finished or token not in TOKENS or token == GOLD
+        if (self.turn.finished or token not in TOKENS
                 or not self.supply.get(token, 0)):
             return
-        self.selected_card = None
+        if token == GOLD:
+            self.selected_tokens.clear()
+        else:
+            self.selected_card = None
+            self.selected_tokens.pop(GOLD, None)
         self.selected_tokens[token] = 1
 
     def deselect_token(self, token):
@@ -57,13 +61,15 @@ class State:
     @property
     def action_label(self):
         if self.selected_card is not None:
-            return "Buy"
+            return "Reserve" if self.selected_tokens.get(GOLD, 0) else "Buy"
         return "Take" if self.selected_tokens else "Pass"
 
     @property
     def action_error(self):
         """Return why the selected action is illegal, or None when it is legal."""
         if self.selected_card is not None:
+            if self.selected_tokens.get(GOLD, 0):
+                return self.reserve_card_error()
             return self.buy_card_error()
         if self.selected_tokens:
             return self.take_tokens_error()
@@ -72,7 +78,10 @@ class State:
     def perform_action(self):
         """Validate and execute the selection, passing when nothing is selected."""
         if self.selected_card is not None:
-            self.buy_card()
+            if self.selected_tokens.get(GOLD, 0):
+                self.reserve_card()
+            else:
+                self.buy_card()
         elif self.selected_tokens:
             self.take_tokens()
         else:
@@ -126,6 +135,8 @@ class State:
         """Return why a purchase is illegal, or None when it is legal."""
         if self.turn.finished:
             return "The game has already ended."
+        if self.selected_tokens.get(GOLD, 0):
+            return "Deselect gold before buying a card."
         if (self.selected_card is None
                 or self.selected_card not in self.market.get(self.selected_card.tier, [])):
             return "That card is no longer in the market."
@@ -147,6 +158,45 @@ class State:
                 if player.tokens[token] == 0:
                     del player.tokens[token]
         player.add_card(card)
+        payment = format_cost(cost)
+        self.log.append(f"{card.points}-point {card.token} card (level {card.tier}) bought by {player.name} for {payment}.")
+        self.remove_market_card(card)
+        self.turn.consecutive_passes = 0
+        self.finish_turn()
+
+    def reserve_card_error(self):
+        """Return why a reservation is illegal, or None when it is legal."""
+        if self.turn.finished:
+            return "The game has already ended."
+        if (self.selected_card is None
+                or self.selected_card not in self.market.get(self.selected_card.tier, [])):
+            return "That card is no longer in the market."
+        if self.selected_tokens != {GOLD: 1}:
+            return "Select one gold token to reserve a card."
+        if self.supply.get(GOLD, 0) < 1:
+            return "Gold is not available."
+        if len(self.current_player.reserved_cards) >= MAX_RESERVATIONS:
+            return f"You cannot reserve more than {MAX_RESERVATIONS} cards."
+        if sum(self.current_player.tokens.values()) >= TOKEN_LIMIT:
+            return f"You cannot hold more than {TOKEN_LIMIT} gems."
+        return None
+
+    def reserve_card(self):
+        error = self.reserve_card_error()
+        if error is not None:
+            raise ValueError(error)
+        player = self.current_player
+        card = self.selected_card
+        player.reserved_cards.append(card)
+        self.supply[GOLD] -= 1
+        player.tokens[GOLD] = player.tokens.get(GOLD, 0) + 1
+        self.log.append(f"{card.points}-point {card.token} card (level {card.tier}) reserved by {player.name}, taking 1 Gold.")
+        self.remove_market_card(card)
+        self.turn.consecutive_passes = 0
+        self.finish_turn()
+
+    def remove_market_card(self, card):
+        """Remove a purchased or reserved card and reveal its replacement."""
         row = self.market[card.tier]
         slot = row.index(card)
         revealed = None
@@ -155,13 +205,9 @@ class State:
             row[slot] = revealed
         else:
             row.pop(slot)
-        payment = format_cost(cost)
-        self.log.append(f"{card.points}-point {card.token} card (level {card.tier}) bought by {player.name} for {payment}.")
         if revealed is not None:
             revealed_cost = format_cost(revealed.cost)
             self.log.append(f"Revealed: {revealed.points}-point {revealed.token} card (level {revealed.tier}), costing {revealed_cost}.")
-        self.turn.consecutive_passes = 0
-        self.finish_turn()
 
     def assign_noble(self):
         """Award the first qualifying available noble, at most one per turn."""
