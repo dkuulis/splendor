@@ -16,11 +16,10 @@ class PlayerPanel(ttk.LabelFrame):
         self.player = player
         discounts = player.discounts
         super().__init__(parent, text=f"{player.name}  •  {subtitle}", padding=10)
-        panel = self
-        ttk.Label(panel, text=str(player.points), font=POINTS_FONT).pack(side="left", padx=(0, 20))
+        ttk.Label(self, text=str(player.points), font=POINTS_FONT).pack(side="left", padx=(0, 20))
 
         for color in COLORS:
-            column = ttk.Frame(panel)
+            column = ttk.Frame(self)
             column.pack(side="left", expand=True, fill="x")
 
             card_count, gem_count = discounts.get(color, 0), player.gems.get(color, 0)
@@ -45,4 +44,4 @@ class PlayerPanel(ttk.LabelFrame):
                 resources.create_oval(x + 2, 10, x + 26, 34, fill=PALETTE[color], outline=outline)
             ttk.Label(column, text=color, foreground=MUTED_TEXT_COLOR).pack()
 
-        ttk.Label(panel, text=f"{sum(player.gems.values())} gems", justify="right").pack(side="right")
+        ttk.Label(self, text=f"{sum(player.gems.values())} gems", justify="right").pack(side="right")

@@ -19,19 +19,18 @@ class MarketPanel(ttk.Frame):
         super().__init__(parent)
         self.market = market
         self.decks = decks
-        market = self
 
         for row, tier in enumerate((3, 2, 1)):
-            market.rowconfigure(row, weight=1, uniform="rows")
-            deck = tk.Frame(market, bg=DECK_PALETTE[tier], padx=12, pady=12)
+            self.rowconfigure(row, weight=1, uniform="rows")
+            deck = tk.Frame(self, bg=DECK_PALETTE[tier], padx=12, pady=12)
             deck.grid(row=row, column=0, sticky="nsew", padx=(0, 8), pady=4)
             tk.Label(deck, text=f"LEVEL {tier}", bg=DECK_PALETTE[tier], fg=DECK_TEXT_COLOR, font=DECK_LABEL_FONT).pack()
             tk.Label(deck, text="◆" * tier, bg=DECK_PALETTE[tier], fg=DECK_TEXT_COLOR, font=DECK_SYMBOL_FONT).pack(expand=True)
             tk.Label(deck, text=f"{len(self.decks[tier])} cards", bg=DECK_PALETTE[tier], fg=DECK_TEXT_COLOR).pack(pady=5)
 
             for slot, card in enumerate(self.market[tier]):
-                market.columnconfigure(slot + 1, weight=1, uniform="cards")
-                box = ttk.Frame(market, padding=8, relief="ridge")
+                self.columnconfigure(slot + 1, weight=1, uniform="cards")
+                box = ttk.Frame(self, padding=8, relief="ridge")
                 box.grid(row=row, column=slot + 1, sticky="nsew", padx=4, pady=4)
 
                 title = tk.Frame(box, bg=PALETTE[card.color])

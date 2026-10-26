@@ -16,7 +16,6 @@ class BankPanel(ttk.Frame):
     def __init__(self, parent, bank):
         super().__init__(parent, padding=10)
         self.bank = bank
-        bank = self
 
         self.selected = {}
         self.gem_stacks = {}
@@ -24,7 +23,7 @@ class BankPanel(ttk.Frame):
 
         for color in COLORS:
             available = self.bank.get(color, 0)
-            column = ttk.Frame(bank)
+            column = ttk.Frame(self)
             column.pack(side="left", expand=True, fill="x", padx=8)
             variable = tk.IntVar(master=self, value=0)
             self.selected[color] = variable
