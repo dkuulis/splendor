@@ -1,9 +1,9 @@
-# Splendour
+# Splendor
 
-A two-player Splendour desktop UI using Tkinter and themed `ttk` widgets.
+A two-player Splendor desktop UI using Tkinter and themed `ttk` widgets.
 
 The app starts with shuffled decks and empty player inventories. The Computer
-dropdown switches between Manual (the default), Pass-only AI, and Greedy AI.
+dropdown switches between Manual, Pass-only AI, and Greedy AI (the default).
 Go! passes when no gems are selected; two consecutive passes end
 the game using score and card-count tie-breaks. The log records actual actions.
 Select one to three different gems and use Go! to collect them. The button is

@@ -31,12 +31,6 @@ PLAYER_TOKENS_PER_COLUMN = 2
 PLAYER_PANEL_PADDING = 5
 
 
-def token_centers(count, width, spacing):
-    start = (width - (count - 1) * spacing) / 2
-    return [start + index * spacing for index in range(count)]
-
-
 def configure_styles(root):
     style = ttk.Style(root)
-    for name in ("Player.TFrame", "Player.TLabel"):
-        style.configure(name, background=PLAYER_PANEL_BACKGROUND)
+    style.configure("Player.TFrame", background=PLAYER_PANEL_BACKGROUND)

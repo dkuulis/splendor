@@ -5,14 +5,16 @@ from pathlib import Path
 
 from PIL import Image, ImageOps
 
+# Support both direct script execution and package imports.
+if __package__:
+    from .image_utils import load_cropped_rgba
+else:
+    from image_utils import load_cropped_rgba
+
 
 def resize_token(source, destination):
-    with Image.open(source) as original:
-        image = original.convert("RGBA")
-    bounds = image.getchannel("A").point(lambda alpha: 255 if alpha > 8 else 0).getbbox()
-    if bounds is None:
-        raise ValueError("Input image is fully transparent.")
-    sprite = ImageOps.contain(image.crop(bounds), (60, 60), Image.Resampling.LANCZOS)
+    cropped = load_cropped_rgba(source)
+    sprite = ImageOps.contain(cropped, (60, 60), Image.Resampling.LANCZOS)
     output = Image.new("RGBA", (60, 60))
     output.alpha_composite(sprite, ((60 - sprite.width) // 2, (60 - sprite.height) // 2))
     output.save(destination, format="PNG")

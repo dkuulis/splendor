@@ -1,4 +1,4 @@
-"""Entry point for the Splendour application."""
+"""Entry point for the Splendor application."""
 
 import tkinter as tk
 

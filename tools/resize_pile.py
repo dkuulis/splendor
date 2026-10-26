@@ -5,6 +5,12 @@ from pathlib import Path
 
 from PIL import Image
 
+# Support both direct script execution and package imports.
+if __package__:
+    from .image_utils import load_cropped_rgba
+else:
+    from image_utils import load_cropped_rgba
+
 
 TOKEN_SIZE = 60
 PADDING = 2
@@ -13,15 +19,7 @@ PADDING = 2
 def resize_pile(source, destination, token_diameter):
     if token_diameter <= 0:
         raise ValueError("Token diameter must be positive.")
-    with Image.open(source) as original:
-        image = original.convert("RGBA")
-
-    # Ignore faint edge pixels when measuring the crop, but preserve the alpha
-    # inside it. The source must already have a transparent background.
-    bounds = image.getchannel("A").point(lambda alpha: 255 if alpha > 8 else 0).getbbox()
-    if bounds is None:
-        raise ValueError("Input image is fully transparent.")
-    cropped = image.crop(bounds)
+    cropped = load_cropped_rgba(source)
 
     # Scale by a complete coin's source diameter, not the whole pile's width
     # or the exposed part of an overlapping coin. Larger piles stay larger.

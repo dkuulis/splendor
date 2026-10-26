@@ -1,6 +1,6 @@
 # Project overview
 
-Splendour is a two-player desktop game built with Python, Tkinter, and ttk.
+Splendor is a two-player desktop game built with Python, Tkinter, and ttk.
 The human starts; the computer can use manual control or AI.
 
 `RULES.md` describes the simplified rules; do not introduce full Splendor rules without a request.

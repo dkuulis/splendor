@@ -24,7 +24,7 @@ class App:
         self.pending_ai = None
         root.bind("<Destroy>", self.on_destroy, add="+")
         configure_styles(root)
-        root.title("Splendour")
+        root.title("Splendor")
         self.shell = ttk.Frame(root, padding=20)
         self.shell.pack(fill="both", expand=True)
         self.create_ui()

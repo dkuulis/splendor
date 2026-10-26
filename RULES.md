@@ -1,4 +1,4 @@
-# Simplified Splendour rules
+# Simplified Splendor rules
 
 This document defines the intended first playable version: one human against
 one computer opponent.
@@ -57,14 +57,16 @@ gem-taking action resets the consecutive-pass count.
 ## Computer opponent
 
 The computer follows the same rules, with no extra resources or access to
-hidden deck order. Its planned strategy is to buy useful affordable cards,
-otherwise collect gems toward a visible target, and pass when necessary.
-Exact priorities will be defined when the AI is implemented.
+hidden deck order. Greedy AI is the default: it buys the highest-point
+affordable card, otherwise collects gems toward visible cards, and passes
+when no purchase or useful collection is possible. Manual control and
+Pass-only AI are also available. See [README.md](README.md) for exact
+strategy priorities and control options.
 
 ## Rules omitted or changed from full Splendor
 
 - **Nobles:** no noble tiles, qualification checks, or noble points.
-- **Reservations and gold:** no reserved cards, blind reservations, or wild gems.
+- **Reservations and gold:** no reserved cards, blind reservations, or gold(wild gems).
 - **Two matching gems:** omitted for now; the full game permits this only
   when at least four gems of that color are available before taking them.
 - **Player count:** only two players; no three- or four-player setup.
