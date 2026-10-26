@@ -15,8 +15,16 @@ class Player:
         return card
 
     @property
+    def token_count(self):
+        return sum(self.tokens.values())
+
+    @property
+    def card_count(self):
+        return sum(len(cards) for cards in self.cards.values())
+
+    @property
     def max_take(self):
-        return min(MAX_TAKE, max(0, TOKEN_LIMIT - sum(self.tokens.values())))
+        return min(MAX_TAKE, max(0, TOKEN_LIMIT - self.token_count))
 
     @property
     def points(self):

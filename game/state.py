@@ -178,7 +178,7 @@ class State:
             return "Gold is not available."
         if len(self.current_player.reserved_cards) >= MAX_RESERVATIONS:
             return f"You cannot reserve more than {MAX_RESERVATIONS} cards."
-        if sum(self.current_player.tokens.values()) >= TOKEN_LIMIT:
+        if self.current_player.token_count >= TOKEN_LIMIT:
             return f"You cannot hold more than {TOKEN_LIMIT} gems."
         return None
 

@@ -20,7 +20,7 @@ def advance_turn(state):
     round_complete = state.turn.active_player == len(state.players) - 1
     if state.turn.consecutive_passes >= 2 or (state.turn.final_round and round_complete):
         state.turn.finished = True
-        scores = [(player.points, -sum(len(cards) for cards in player.cards.values()))
+        scores = [(player.points, -player.card_count)
                   for player in state.players]
         best = max(scores)
         winners = [index for index, score in enumerate(scores) if score == best]
