@@ -24,6 +24,8 @@ class SelectionPanel(tk.Frame):
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
         self.card = CardPanel(self, on_select=on_card)
+        self.disabled_overlay = self.card.create_image(
+            0, 0, anchor="nw", image=load_image(self, "disabled"), state="hidden")
         self.card.grid(row=0, column=0)
         self.tokens = tk.Canvas(self, width=TOKEN_SIZE + 4 * TOKEN_SPACING, height=TOKEN_SIZE,
                                 background=CARD_BACKGROUND, highlightthickness=0)
@@ -43,6 +45,9 @@ class SelectionPanel(tk.Frame):
     def refresh(self):
         state = self.state
         self.card.refresh(state.selected_card, affordable=self.can_go, enabled=self.enabled)
+        self.card.itemconfigure(self.disabled_overlay,
+                                state="normal" if state.selected_card is not None and not self.can_go
+                                else "hidden")
         if state.selected_card is not None:
             self.tokens.grid_remove()
             self.card.grid()

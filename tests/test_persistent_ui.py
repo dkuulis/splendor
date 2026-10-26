@@ -113,6 +113,10 @@ class PersistentUITests(unittest.TestCase):
         self.assertFalse(panel.winfo_ismapped())
         self.assertTrue(app.selection.card.winfo_ismapped())
         self.assertTrue(app.selection.go_button.instate(['disabled']))
+        overlay = app.selection.disabled_overlay
+        self.assertEqual(app.selection.card.itemcget(overlay, 'image'),
+                         str(load_image(app.selection, 'disabled')))
+        self.assertEqual(app.selection.card.itemcget(overlay, 'state'), 'normal')
         app.selection.go_button.invoke()
         self.assertEqual(app.state.turn.active_player, 0)
         self.assertIn(card, app.state.market[1])
@@ -125,6 +129,7 @@ class PersistentUITests(unittest.TestCase):
         app.state.supply[RUBY] -= 2
         app.refresh()
         self.assertFalse(app.selection.go_button.instate(['disabled']))
+        self.assertEqual(app.selection.card.itemcget(overlay, 'state'), 'hidden')
         app.selection.go_button.invoke()
         self.assertIn(card, app.state.players[0].cards[card.token])
         self.assertEqual(app.state.players[0].tokens, {})
@@ -244,3 +249,46 @@ class PersistentUITests(unittest.TestCase):
         self.root.update()
         self.assertTrue(app.log.labels[1].winfo_ismapped())
         self.assertEqual(app.log.labels[1].cget('text'), app.state.log[1])
+
+    def test_reserved_cards_are_last_disabled_block_and_refresh_in_place(self):
+        app = self.app
+        cards = app.state.market[1][:3]
+        for player, panel in zip(app.state.players, (app.player, app.computer)):
+            reserved = panel.reserved
+            self.assertFalse(reserved.winfo_ismapped())
+            player.add_card(cards[0])
+            player.reserved_cards.extend(cards)
+            app.refresh()
+            self.root.update()
+            self.assertTrue(reserved.winfo_ismapped())
+            owned = panel.columns[cards[0].token]
+            self.assertLess(owned.winfo_rootx() + owned.winfo_width(), reserved.winfo_rootx())
+            items = list(reserved.stack.find_all())
+            for card, item, overlay in zip(cards, reserved.card_items, reserved.overlay_items):
+                self.assertEqual(reserved.stack.itemcget(item, 'image'), str(load_image(reserved, card.id)))
+                self.assertEqual(reserved.stack.itemcget(overlay, 'image'),
+                                 str(load_image(reserved, 'disabled')))
+                self.assertEqual(reserved.stack.coords(item), reserved.stack.coords(overlay))
+                self.assertEqual(items.index(overlay), items.index(item) + 1)
+                self.assertEqual(reserved.stack.itemcget(overlay, 'state'), 'normal')
+            reserved.stack.event_generate('<Button-1>', x=75, y=100)
+            self.assertIsNone(app.state.selected_card)
+            player.reserved_cards.pop(0)
+            app.refresh()
+            self.assertEqual(reserved.stack.itemcget(reserved.card_items[0], 'image'),
+                             str(load_image(reserved, cards[1].id)))
+            self.assertEqual(reserved.stack.itemcget(reserved.card_items[-1], 'state'), 'hidden')
+            self.assertEqual(reserved.stack.itemcget(reserved.overlay_items[-1], 'state'), 'hidden')
+            player.reserved_cards.clear()
+            app.refresh()
+            self.root.update()
+            self.assertFalse(reserved.winfo_ismapped())
+            player.reserved_cards.extend(cards)
+            app.refresh()
+            self.root.update()
+            self.assertTrue(reserved.winfo_ismapped())
+            self.assertEqual(set(reserved.stack.find_all()), set(items))
+        app.new_game()
+        self.root.update()
+        self.assertFalse(app.player.reserved.winfo_ismapped())
+        self.assertFalse(app.computer.reserved.winfo_ismapped())

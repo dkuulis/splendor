@@ -32,9 +32,12 @@ class PlayerPanel(tk.Frame):
         # Nobles share the leftmost column with gold; gem columns follow canonical order.
         for index, token in enumerate(TOKENS):
             height = NOBLE_SIZE if token == GOLD else MARKET_CARD_HEIGHT
-            column = PlayerColumn(self.panel, token, [], 0, height=height)
+            column = PlayerColumn(self.panel, token, [], 0, height=height, disabled=False)
             column.grid(row=0, column=index, sticky="ew", padx=(0, PLAYER_COLUMN_GAP))
             self.columns[token] = column
+        self.reserved = PlayerColumn(self.panel, None, [], 0,
+                                     height=MARKET_CARD_HEIGHT, disabled=True)
+        self.reserved.grid(row=0, column=len(TOKENS), sticky="ew")
         self.refresh(player, active)
 
     def refresh(self, player, active):
@@ -51,3 +54,9 @@ class PlayerPanel(tk.Frame):
                 column.grid()
             else:
                 column.grid_remove()
+        self.reserved.refresh(player.reserved_cards, 0)
+        self.panel.columnconfigure(len(TOKENS), weight=1 if player.reserved_cards else 0)
+        if player.reserved_cards:
+            self.reserved.grid()
+        else:
+            self.reserved.grid_remove()
