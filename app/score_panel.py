@@ -1,19 +1,32 @@
-from tkinter import ttk
+import tkinter as tk
+from tkinter import font
 
-from .styles import POINTS_FONT
+from .styles import POINTS_FONT, TABLE_BACKGROUND, TEXT_COLOR
 
 
-class ScorePanel(ttk.Frame):
+class ScorePanel(tk.Canvas):
     def __init__(self, parent, players):
-        super().__init__(parent)
+        self.points_font = font.Font(root=parent, font=POINTS_FONT)
+        self.row_height = self.points_font.metrics("linespace") + 4
+        self.name_width = max(self.points_font.measure(player.name) for player in players)
+        super().__init__(parent, height=self.row_height * len(players),
+                         background=TABLE_BACKGROUND, borderwidth=0, highlightthickness=0)
         self.scores = []
-        self.columnconfigure(0, weight=1)
         for row, player in enumerate(players):
-            ttk.Label(self, text=player.name, font=POINTS_FONT).grid(row=row, column=0, sticky="w", padx=(0, 12))
-            score = ttk.Label(self, font=POINTS_FONT)
-            score.grid(row=row, column=1, sticky="e")
-            self.scores.append(score)
+            y = row * self.row_height + 2
+            self.create_text(0, y, text=player.name, font=self.points_font,
+                             fill=TEXT_COLOR, anchor="nw")
+            self.scores.append(self.create_text(0, y, font=self.points_font,
+                                                fill=TEXT_COLOR, anchor="ne"))
+        self.bind("<Configure>", self.position_scores)
+        self.refresh(players)
+
+    def position_scores(self, event):
+        for row, score in enumerate(self.scores):
+            self.coords(score, event.width - 2, row * self.row_height + 2)
 
     def refresh(self, players):
+        score_width = max(self.points_font.measure(str(player.points)) for player in players)
+        self.configure(width=self.name_width + 12 + score_width + 4)
         for player, score in zip(players, self.scores):
-            score.configure(text=str(player.points))
+            self.itemconfigure(score, text=str(player.points))

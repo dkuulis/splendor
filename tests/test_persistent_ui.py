@@ -28,6 +28,42 @@ class PersistentUITests(unittest.TestCase):
     def widgets(self, widget):
         return [widget] + [child for item in widget.winfo_children() for child in self.widgets(item)]
 
+    def test_background_stays_aligned_after_resize_and_new_game(self):
+        background = self.app.background
+        for width, height in ((1900, 1300), (2560, 1600), (2100, 1450)):
+            self.root.geometry(f"{width}x{height}")
+            self.root.update()
+            self.assertEqual(background.size,
+                             (self.root.winfo_width(), self.root.winfo_height()))
+            for frame in (self.app.shell, self.app.player.panel, self.app.supply):
+                surface, _, _ = background.surfaces[frame]
+                self.assertEqual((surface.winfo_x(), surface.winfo_y()), (0, 0))
+                self.assertEqual((surface.winfo_width(), surface.winfo_height()),
+                                 (frame.winfo_width(), frame.winfo_height()))
+            for widget in (self.app.shell, self.app.player.panel,
+                           self.app.supply.cells[RUBY], self.app.selection.tokens,
+                           self.app.scores):
+                surface, item, image = background.surfaces[widget]
+                x = surface.winfo_rootx() - self.root.winfo_rootx()
+                y = surface.winfo_rooty() - self.root.winfo_rooty()
+                self.assertEqual(image.get(10, 10), background.image.get(x + 10, y + 10))
+                if item is not None:
+                    self.assertEqual(surface.find_all()[0], item)
+            # Every corner retains its original pixels and proportions even
+            # when the middle of the window is stretched in either direction.
+            w, h = background.size
+            sw, sh = background.source.width(), background.source.height()
+            for dx, dy in ((10, 10), (80, 150), (230, 30), (30, 230), (259, 259)):
+                for x, sx in ((dx, dx), (w - 1 - dx, sw - 1 - dx)):
+                    for y, sy in ((dy, dy), (h - 1 - dy, sh - 1 - dy)):
+                        self.assertEqual(background.image.get(x, y), background.source.get(sx, sy))
+            self.assertEqual(background.image.get(w // 2, h // 2),
+                             background.source.get(sw // 2, sh // 2))
+        surfaces = dict(background.surfaces)
+        self.app.new_game()
+        self.root.update()
+        self.assertEqual(background.surfaces, surfaces)
+
     def test_widgets_and_canvas_items_survive_selection_turns_and_reset(self):
         app = self.app
         widgets = self.widgets(app.field)
@@ -73,7 +109,8 @@ class PersistentUITests(unittest.TestCase):
         self.assertEqual(market_items, [panel.find_all() for panels in app.market.slots.values() for panel in panels])
         self.assertIs(app.selection.state, app.state)
         self.assertEqual(app.supply.counts, app.state.supply)
-        self.assertEqual([score.cget('text') for score in app.scores.scores], ['0', '0'])
+        self.assertEqual([app.scores.itemcget(score, 'text') for score in app.scores.scores],
+                         ['0', '0'])
         self.assertTrue(all(slot.winfo_ismapped() for slot in app.market.slots[1]))
 
     def test_control_changes_disable_callbacks_and_cancel_ai(self):
@@ -213,7 +250,8 @@ class PersistentUITests(unittest.TestCase):
             self.assertEqual(column.stack.coords(column.card_items[1])[0]
                              - column.stack.coords(column.card_items[0])[0], 30)
             self.assertEqual(column.stack.itemcget(column.token_item, 'state'), 'normal')
-            self.assertEqual(list(column.stack.find_all()), column.card_items + [column.token_item])
+            self.assertEqual(list(column.stack.find_withtag("!background")),
+                             column.card_items + [column.token_item])
             self.assertEqual(column.stack.bbox(column.token_item)[2:],
                              (column.stack.winfo_width(), column.height))
             self.assertEqual(column.stack.bbox(column.token_item)[2]

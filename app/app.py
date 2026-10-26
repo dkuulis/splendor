@@ -6,6 +6,7 @@ from game.initialize import create_initial_state
 from ai import STRATEGIES, GreedyAI
 
 from .supply_panel import SupplyPanel
+from .background import Background
 from .log import Log
 from .header import Header
 from .market_panel import MarketPanel
@@ -29,6 +30,7 @@ class App:
         self.shell = ttk.Frame(root, padding=20)
         self.shell.pack(fill="both", expand=True)
         self.create_ui()
+        self.background = Background(root, excluded=(self.log,))
 
     def create_ui(self):
         body = ttk.Frame(self.shell)

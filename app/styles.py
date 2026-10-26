@@ -4,11 +4,13 @@ from tkinter import ttk
 
 CARD_BACKGROUND = "#ffffff"
 DECK_PALETTE = {1: "#166534", 2: "#80601f", 3: "#1e40af"}
-MUTED_TEXT_COLOR = "#64748b"
-LOG_BACKGROUND = "#f8fafc"
-PLAYER_PANEL_BACKGROUND = "#ffffff"
+MUTED_TEXT_COLOR = "#51463b"
+LOG_BACKGROUND = "#ded3c2"
+TABLE_BACKGROUND = "#a99b88"
+TEXT_COLOR = "#30271f"
+PLAYER_PANEL_BACKGROUND = TABLE_BACKGROUND
 ACTIVE_PLAYER_BORDER = "#c5b58d"
-INACTIVE_PLAYER_BORDER = "#e5e7eb"
+INACTIVE_PLAYER_BORDER = "#958570"
 
 LOG_FONT = ("Helvetica", 11)
 POINTS_FONT = ("Forum", -48, "bold")
@@ -20,6 +22,7 @@ TOKEN_PILE_WIDTH = 3 * TOKEN_SIZE + 4
 TOKEN_PILE_HEIGHT = 2 * TOKEN_SIZE + 4
 
 WINDOW_MIN_WIDTH = 1700
+BACKGROUND_CORNER_SIZE = 260
 
 MARKET_CARD_WIDTH = 150
 MARKET_CARD_HEIGHT = MARKET_CARD_WIDTH * 7 // 5
@@ -33,4 +36,7 @@ PLAYER_PANEL_PADDING = 5
 
 def configure_styles(root):
     style = ttk.Style(root)
+    root.configure(background=TABLE_BACKGROUND)
+    style.configure("TFrame", background=TABLE_BACKGROUND)
+    style.configure("TLabel", background=TABLE_BACKGROUND, foreground=TEXT_COLOR)
     style.configure("Player.TFrame", background=PLAYER_PANEL_BACKGROUND)
