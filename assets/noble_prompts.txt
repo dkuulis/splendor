@@ -1,0 +1,67 @@
+Shared prompt
+Create a full-bleed square noble portrait for a Renaissance trade game, readable at 150×150px. Depict {high lord or high lady} in the {gem} environment, following the individual brief below. Use realistic painterly artwork, rich natural materials, atmospheric depth, and broad, clearly defined forms. Match the development-card illustrations in assets/card_prompts.txt, the antique-gold arabesque ornament, and the polished gemstones in assets/gem_prompts.txt. Use restrained decorative detail and a thin muted border. Show exactly one dignified adult noble in a waist-up or chest-up portrait, with a distinctive face, silhouette, and elegant ceremonial clothing. Keep the face in the upper center-right and leave quiet areas at the top-left and lower-left for later game overlays. Make the noble the main subject, with one recognizable environmental landmark behind them. Flat front view of the tile; no surrounding tabletop, cast shadow outside the tile, title, lettering, numbers, cost badges, point symbols, game icons, logos, or watermark. Avoid tiny details and visual clutter.
+
+Set composition
+Create exactly ten fictional nobles: one High Lord and one High Lady from each of the five gem environments. Replace the historical people entirely; do not copy their likenesses or render their names. Vary age, facial features, hairstyle, posture, and clothing between portraits while keeping the shared painting style and layout. Lords and ladies have equal visual authority. Use gem-colored jewelry as part of their clothing, not as a game bonus icon. Each portrait's gem identifies its scenery only; it does not grant a permanent gem bonus or determine its requirements.
+
+Gem environments
+Diamond — High mountains. Sharp snow-covered peaks, glaciers, alpine palaces, and crisp daylight. Ivory, silver, and pale-blue tones; clear white, octagonal diamond jewelry.
+Sapphire — Sea. Deep blue water, merchant ships, sea cliffs, and distant harbors under bright skies. Blue silks and maritime court dress; vivid blue, heptagonal sapphire jewelry.
+Emerald — Forest. Colossal ancient trees, emerald foliage, moss-covered ruins, and sunbeams through the canopy. Architecture integrated into woodland; bright green, rounded-square cushion-cut emerald jewelry.
+Ruby — Fire. Volcanic citadels, lava rivers, glowing furnaces, and dark stone. Red court robes and warm metal accents, with readable skin tones against orange-red light; luminous red, round ruby jewelry.
+Onyx — Dark cave. Obsidian halls, glowing crystal veins, underground lakes, and warm torchlight against blue-black shadows. Dark velvets and restrained gold; near-black cushion-cut onyx jewelry with bright reflective facets. Keep faces and clothing silhouettes readable.
+
+Individual artwork briefs
+Use global, unpadded numbers 1–10, not separate numbering within each gem. Combine the shared prompt, the matching gem environment, and the individual brief when generating each image. Requirement values below are metadata for asset composition only: never include them in generated artwork.
+
+1. noble_diamond_1 — High Lord of the Glacial Crown. A mature lord with a short silver beard, ivory mantle, and octagonal diamond clasp stands on an alpine palace balcony. Three-quarter pose facing slightly left, snowy peaks behind his right shoulder, crisp morning light. Keep his face and clasp clear of the left overlay column.
+Requirements: Diamond 4, Onyx 4. Points: 3.
+
+2. noble_diamond_2 — High Lady of the Alpine Court. A poised lady with dark braided hair, pale-blue brocade, and a restrained diamond circlet sits beside a tall palace window. Frontal chest-up portrait, bright glacier visible to the right, soft reflected snowlight on her face. Distinct from the lord's outdoor balcony composition.
+Requirements: Diamond 4, Ruby 4. Points: 3.
+
+3. noble_sapphire_3 — High Lord of the Sea Gate. A weathered lord in deep-blue court dress with a sapphire brooch stands beneath a coastal stone arch. Upright three-quarter portrait, one merchant flagship in the sunlit harbor behind his right shoulder, sea breeze moving his mantle.
+Requirements: Diamond 4, Sapphire 4. Points: 3.
+
+4. noble_sapphire_4 — High Lady of the Tidal Court. An older lady with silver hair, a blue silk mantle, and sapphire earrings stands on a sheltered seaside terrace. Slightly turned pose looking toward the viewer, a distant lighthouse and blue waves to the right, warm afternoon light.
+Requirements: Sapphire 4, Ruby 4. Points: 3.
+
+5. noble_emerald_5 — High Lord of the Ancient Canopy. A clean-shaven lord with dark curls, a moss-green ceremonial coat, and an emerald clasp sits in an open woodland pavilion. Chest-up portrait framed by one massive tree trunk on the right, soft canopy light and a restrained carved-wood chair.
+Requirements: Emerald 4, Ruby 4. Points: 3.
+
+6. noble_emerald_6 — High Lady of the Living Court. A mature lady with auburn hair, layered green robes, and a cushion-cut emerald pendant stands beside a mossy palace arch woven into living roots. Three-quarter pose, a sunbeam outlining her shoulder, a quiet forest pool behind her to the right.
+Requirements: Sapphire 3, Emerald 3, Onyx 3. Points: 3.
+
+7. noble_ruby_7 — High Lord of the Ember Citadel. A broad-shouldered lord with a neatly trimmed beard, burgundy robes, and a round ruby clasp stands in a basalt council hall. Calm frontal portrait, one distant furnace arch to the right, warm firelight balanced by soft daylight on his face.
+Requirements: Diamond 3, Sapphire 3, Onyx 3. Points: 3.
+
+8. noble_ruby_8 — High Lady of the Molten Court. A commanding lady with swept-back dark hair, a crimson mantle, and a ruby-set gold collar stands on a volcanic citadel gallery. Slightly turned chest-up portrait, a single lava river visible through an opening to the right, cool twilight separating her silhouette from the warm glow.
+Requirements: Diamond 3, Emerald 3, Ruby 3. Points: 3.
+
+9. noble_onyx_9 — High Lord of the Obsidian Hall. An older lord with long silver hair, black velvet robes, and a reflective onyx signet rests one hand near his chest. Three-quarter portrait beside an obsidian pillar, a blue crystal vein behind his right shoulder, warm torchlight defining his face and hand.
+Requirements: Emerald 3, Ruby 3, Onyx 3. Points: 3.
+
+10. noble_onyx_10 — High Lady of the Hidden Lake. A lady with closely coiled hair, a charcoal silk mantle, and an onyx diadem sits in a subterranean royal loggia. Frontal portrait with a slight head turn, a still underground lake and one illuminated cavern arch to the right, soft gold light on her face and cool reflections behind her.
+Requirements: Diamond 3, Sapphire 3, Emerald 3. Points: 3.
+
+Files and production stages
+images/noble_<gem>_<number>.png — High-resolution square original, preferably at least 1200×1200px; artwork only, with no points or requirements. The images/ directory is ignored by Git.
+artwork/noble_<gem>_<number>.webp — Tracked quality-80 WebP source converted from the matching original; retain its square aspect ratio and high resolution. Opaque RGB is appropriate for these full-bleed portraits. No points or requirements.
+assets/noble_<gem>_<number>.png — Final 150×150px runtime tile, composed from the matching artwork with the exact points and requirements below. Preserve the same filename stem through all three stages.
+Optional high-resolution composed previews belong in images/noble_previews/, using the same filename stem; never replace clean originals with previews.
+
+Asset layout and finishing
+All coordinates and sizes below refer to the final 150×150px tile. Compose at 8× resolution (1200×1200px), scaling every position, font, stroke, border, square, and gap by the same factor; downsample once using LANCZOS. Preserve aspect ratio and do not stretch the portraits.
+
+Top-left: Always display the victory-point numeral 3. Match tools/generate_cards.py: bundled assets/Forum-Regular.ttf at 48px with synthetic bold, visible top-left anchor at (6, 12), white fill, dark #25394e outline. At 8× resolution draw the numeral first with a 9px dark stroke, then with a 4px white stroke. These stroke widths are high-resolution pixels, matching the card generator. No point label, badge, or extra symbol.
+
+Top-right: Artwork only; nobles have no bonus-gem icon.
+
+Lower-left: Show the required counts of owned development-card bonuses in a bottom-aligned vertical column of COLORED SQUARES, not circles or gemstone tokens. These are bonus-card requirements, not a token payment. Use each noble's exact requirement metadata above. Order nonzero requirements from top to bottom as Diamond, Sapphire, Emerald, Ruby, Onyx, matching game/constants.py TOKENS; omit zero requirements and gem names. Each square is 26×26px with a 1px muted-gold #c5b58d outline, left edge x=6, and a 4px vertical gap. The lowest square starts at y=120 and ends at y=146; preceding squares start at y=90 and y=60 as needed. Two-requirement nobles use y=90 and y=120; three-requirement nobles use y=60, y=90, and y=120.
+
+Square fills: Diamond #e5e7eb; Sapphire #2563eb; Emerald #15803d; Ruby #be123c; Onyx #334155. Center each requirement numeral at (19, square_y + 13), using Forum at 16px with the same synthetic-bold treatment as card costs (2px text stroke at 8× resolution). Use #111827 text on Diamond and white on every other color. No separate gem icon or outer requirement panel.
+
+Keep the portrait's face, jewelry focal point, and recognizable scenery clear of both overlay areas. Produce bright enabled assets; disabled treatment belongs to the UI.
+
+Verification
+Check that there are exactly ten unique stems, numbers 1–10, and one High Lord plus one High Lady per gem. Check that images/ originals and artwork/ sources have no game overlays. Check that each final asset is 150×150px, has exactly one 3 at the top-left, no bonus-gem icon, and the correct two or three colored requirement squares in canonical order. Preserve all ten supplied requirement combinations, including the last Diamond/Sapphire/Emerald combination. Inspect readability at actual runtime size and ensure overlays do not cover faces. This file defines artwork and asset production only; it does not change game rules or implement noble behavior.
