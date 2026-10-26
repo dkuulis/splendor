@@ -1,5 +1,8 @@
 Shared prompt
-Create a full-bleed 5:7 portrait development-card illustration for a Renaissance trade game, readable at 150×210px. Depict {scene} in the {gem} environment at tier {level}. Use realistic painterly artwork, rich natural materials, atmospheric depth, and broad, clearly defined forms. Match the antique-gold arabesque deck ornament and polished gemstone assets with restrained decorative detail and a thin muted border. Keep one strong focal point in the center-right, leaving quiet areas at the top corners and bottom-left for game symbols. Flat front view of the card; no surrounding scene, cast shadow, title, lettering, numbers, logos, or watermark. Avoid tiny details and visual clutter.
+Create a full-bleed 5:7 portrait development-card illustration for a Renaissance trade game, readable at 150×210px. Depict {scene} in the {gem} environment at tier {level}. Use realistic painterly artwork, rich natural materials, atmospheric depth, and broad, clearly defined forms. Match the antique-gold arabesque deck ornament and polished gemstone assets with restrained decorative detail and a thin muted border. Keep one strong focal point outside the reserved overlay areas, leaving quiet areas at the top corners and bottom-left for game symbols. Flat front view of the card; no surrounding scene, cast shadow, title, lettering, numbers, logos, or watermark. Avoid tiny details and visual clutter.
+
+Scene diversity
+Treat gem features and scene examples as a menu, not a checklist. Choose one primary subject and at most two supporting features. Give each card a distinct silhouette and composition, recognizable at 150×210px. Vary the subject, viewpoint, spatial arrangement, and lighting between cards of the same gem and tier. Preserve the shared painting style, border, and overlay clearance. Card-specific details take precedence over generic scene examples and lighting suggestions.
 
 Gem variants
 Onyx — Dark cave. Obsidian walls, glowing crystal veins, an underground lake, deep blue-black shadows, and warm torchlight. Hidden wealth, rarity, and secrecy; keep important forms readable within the darkness.
@@ -11,7 +14,7 @@ Diamond — High mountains. Sharp snow-covered peaks, glaciers, mountain passes,
 Tier variants
 Level 1 — Modest resource-gathering locations, simple structures, intimate scale, and one clear activity.
 Level 2 — Established settlements and trade centers, substantial architecture, and a wider view of organized commerce.
-Level 3 — Monumental landmarks, grand civic or royal architecture, epic scale, and a strong sense of prosperity. Convey importance through composition and scale rather than extra fine detail.
+Level 3 — Exceptional engineering, craftsmanship, natural grandeur, or commercial importance, with epic scale and a strong sense of prosperity. Palaces and panoramic cities are optional. Convey importance through composition and scale rather than extra fine detail.
 
 Scene examples by gem and tier
 Onyx: Cave entrance → Crystal mine and underground trading settlement → Vast underground capital beside a subterranean lake.
@@ -19,6 +22,189 @@ Sapphire: Small fishing harbor → Prosperous port city → Ocean metropolis com
 Emerald: Woodland gathering path → Forest sanctuary and trading settlement → Emerald royal court among colossal ancient trees.
 Ruby: Small mine forge → Foundry district → Great volcanic forge city above lava rivers.
 Diamond: Mountain trail and outpost → Alpine fortress → Imperial mountain palace above the glaciers.
+
+Card-specific details
+Use the matching brief when generating individual artwork; save it under the filename shown. These images contain artwork only, with game overlays added by the card-generation tool. Preserve each brief’s main subject and viewpoint while keeping overlay areas quiet.
+
+card_001_l1_onyx.png — A narrow obsidian cave entrance with a lone ore cart; ground-level view into warm torchlight and cool shadow. Focus on the threshold, not a cavern panorama.
+
+card_002_l1_onyx.png — A crystal prospector washing dark stones in a shallow underground stream; close view across the water, lit by one lantern.
+
+card_003_l1_onyx.png — A timber winch above a small mine shaft; steep downward view with a rope disappearing into blue-black darkness.
+
+card_004_l1_onyx.png — A rough stone workbench where freshly mined onyx is sorted into wooden trays; intimate side view with strong lamplight.
+
+card_005_l1_onyx.png — A small raft moored beneath a low cavern arch; water-level view, reflected crystal light outlining the passage.
+
+card_006_l1_onyx.png — A modest shelter built into the mouth of a rocky fissure; view from outside at dusk, warm light spilling onto dark stone.
+
+card_007_l1_onyx.png — A narrow ledge following one luminous crystal seam; oblique close view with a handcart establishing scale, no grand buildings.
+
+card_008_l1_onyx.png — A shallow obsidian quarry with simple ramps and stacked stone blocks; elevated view at blue dawn, one bright brazier.
+
+card_009_l1_sapphire.png — A small fishing jetty with a single moored boat; low shore-level view in crisp morning light, open blue water beyond.
+
+card_010_l1_sapphire.png — A sailmaker stretching canvas beside a seaside shed; intimate courtyard view, blue sea glimpsed through an archway.
+
+card_011_l1_sapphire.png — A coastal landing where porters carry crates from a rowboat; diagonal shoreline composition in warm afternoon light.
+
+card_012_l1_sapphire.png — A modest beacon basket on a rocky headland; low upward viewpoint at dusk, a small boat far below.
+
+card_013_l1_sapphire.png — A boat repair slip with one hull resting on timber supports; side view at low tide with cool reflected sky light.
+
+card_014_l1_sapphire.png — A sheltered tidal inlet with drying nets strung between posts; view through the nets toward calm blue water.
+
+card_015_l1_sapphire.png — A tiny ferry crossing between two rugged shores; elevated view with a simple diagonal wake, no substantial town.
+
+card_016_l1_sapphire.png — A merchant skiff rounding a sea arch; water-level viewpoint, bright sun beyond the shadowed rock opening.
+
+card_017_l1_diamond.png — A narrow snowy mountain trail leading to a small stone outpost; low viewpoint with bright alpine light.
+
+card_018_l1_diamond.png — A mule caravan crossing a shallow snowfield; broad side view, long blue morning shadows and distant sharp peaks.
+
+card_019_l1_diamond.png — A modest ice-cutting shelter beside a glacier edge; close three-quarter view, translucent ice catching sunlight.
+
+card_020_l1_diamond.png — A rope footbridge over a snowy ravine; view along the bridge, cloud-filtered silver light, no fortress.
+
+card_021_l1_diamond.png — A mountain guide marking a pass with a stone cairn; intimate foreground against distant pale-blue ridges.
+
+card_022_l1_diamond.png — A small alpine spring beside a trader shelter; water-level view of snowmelt and sunlit ice, simple architecture.
+
+card_023_l1_diamond.png — A timber supply sled on a steep switchback; downward oblique view, warm late light against cold snow.
+
+card_024_l1_diamond.png — A crystal collector beneath a shallow ice overhang; close sheltered viewpoint looking toward a brilliant snowy valley.
+
+card_025_l1_emerald.png — A woodland gathering path beside a modest shelter; ground-level view, soft morning rays through emerald foliage.
+
+card_026_l1_emerald.png — A herbalist sorting leaves beneath an enormous root arch; close side view with a quiet green forest backdrop.
+
+card_027_l1_emerald.png — A small timber footbridge over a mossy stream; water-level view, dappled sunlight and simple baskets on the bank.
+
+card_028_l1_emerald.png — A forest beekeeper beside rustic hives in a clearing; oblique view, warm afternoon light and deep green shade.
+
+card_029_l1_emerald.png — A ruined stone well reclaimed by ferns; close view through leaves, one sunbeam on the mossy rim.
+
+card_030_l1_emerald.png — A woodworker shaping a fallen branch at a simple bench; intimate forest workshop, green canopy light.
+
+card_031_l1_emerald.png — A narrow stepping-stone path across a fern-filled hollow; elevated view, bright foliage surrounding dark water.
+
+card_032_l1_emerald.png — A fruit-gathering camp beside a giant tree; low viewpoint emphasizing the trunk, baskets and dawn mist.
+
+card_033_l1_ruby.png — A humble blacksmith workshop beside a mine entrance; three-quarter view, furnace light against dark volcanic stone.
+
+card_034_l1_ruby.png — A small ore-roasting kiln on a rocky terrace; low viewpoint at dusk, a restrained orange glow.
+
+card_035_l1_ruby.png — A smith hammering a heated bar on an anvil; close side view, broad silhouettes against one furnace opening.
+
+card_036_l1_ruby.png — A simple wooden chute carrying ore into a stone shed; elevated view, warm embers under a smoky sky.
+
+card_037_l1_ruby.png — A cooling trough beside a small forge; close view across water and steam, molten-orange reflections.
+
+card_038_l1_ruby.png — A worker transporting a single crucible between two workbenches; intimate interior with bright metal and dark walls.
+
+card_039_l1_ruby.png — A modest charcoal store and brick furnace beneath a lava cliff; view along a narrow path at blue twilight.
+
+card_040_l1_ruby.png — A hand-powered bellows beside a glowing hearth; close diagonal composition, simple tools and deep red light.
+
+card_041_l2_onyx.png — A crystal mine exchange built around a broad underground stair; upward view, orderly trading stalls lit by torches.
+
+card_042_l2_onyx.png — A stone bridge joining two cavern workshops above an underground river; side view with blue crystal reflections.
+
+card_043_l2_onyx.png — A subterranean freight station with timber cranes and loaded carts; elevated diagonal view, pools of amber light.
+
+card_044_l2_onyx.png — A gem-cutting guild hall carved into obsidian; interior view along worktables beneath tall luminous seams.
+
+card_045_l2_onyx.png — A busy underground lake landing with warehouses cut into rock; water-level view, lantern reflections and dark arches.
+
+card_046_l2_onyx.png — A terraced mining settlement surrounding a deep extraction shaft; downward view, warm windows against cool stone.
+
+card_047_l2_sapphire.png — A fortified customs harbor with a chain barrier and trading warehouses; elevated view at clear morning light.
+
+card_048_l2_sapphire.png — A bustling shipwright district beside a dry dock; oblique view along a half-built hull, bright blue daylight.
+
+card_049_l2_sapphire.png — A coastal market reached by broad stone steps from the water; boat-level view, striped awnings and afternoon sun.
+
+card_050_l2_sapphire.png — A maritime guild courtyard opening onto a canal; shaded interior-to-exterior view, blue reflections under arcades.
+
+card_051_l2_sapphire.png — A pair of stone watchtowers guarding a merchant anchorage; lateral view from a cliff, mist lifting at sunrise.
+
+card_052_l2_sapphire.png — A port granary with cranes loading barges beneath high arches; close diagonal composition, late golden light.
+
+card_053_l2_diamond.png — An alpine trading fortress beside a glacier pass; upward view, crisp sunlight on pale stone and snow.
+
+card_054_l2_diamond.png — A terraced mountain caravanserai built into a snowy slope; elevated view, sheltered courtyards and blue shadows.
+
+card_055_l2_diamond.png — A monumental covered bridge spanning an icy gorge between settlements; oblique side view in diffuse alpine light.
+
+card_056_l2_diamond.png — A mountain observatory and chartmakers workshop on a ridge; view along a snowy stair at early dawn.
+
+card_057_l2_diamond.png — A high-altitude storehouse with a cable hoist above a valley; close view of the loading platform, sunlit glaciers beyond.
+
+card_058_l2_diamond.png — A monastery trade court around an icy fountain; interior courtyard view, pale walls and bright reflected snowlight.
+
+card_059_l2_emerald.png — A forest sanctuary with trading terraces woven around living trees; view across a green pool in morning light.
+
+card_060_l2_emerald.png — A timber guild settlement connected by raised walkways; upward viewpoint through broad leaves, warm window light.
+
+card_061_l2_emerald.png — A restored ruin serving as an herb exchange; courtyard view, mossy arches and shafts of sunlight.
+
+card_062_l2_emerald.png — A riverside mill district beneath an ancient canopy; side view across waterwheels, cool emerald reflections.
+
+card_063_l2_emerald.png — A forest nursery with stone irrigation channels and shaded pavilions; elevated view emphasizing ordered greenery.
+
+card_064_l2_emerald.png — A merchant hall built around a massive tree trunk; interior-to-clearing view, dappled afternoon light.
+
+card_065_l2_ruby.png — A foundry courtyard with multiple casting pits and overhead hoists; elevated view, organized industrial activity.
+
+card_066_l2_ruby.png — A metalworkers guild hall with tall furnace chimneys; low street-level view at dusk, red-lit windows.
+
+card_067_l2_ruby.png — A volcanic aqueduct carrying molten material between workshops; diagonal side view, black stone and orange light.
+
+card_068_l2_ruby.png — An established foundry district with a large suspended pouring crucible; view from a rocky terrace, molten channels leading into the center-right. No royal palace.
+
+card_069_l2_ruby.png — A forge market displaying newly made tools beneath stone arcades; shaded close view with furnace glow beyond.
+
+card_070_l2_ruby.png — A water-powered hammer mill beside a volcanic stream; broad side view, steam and warm reflected firelight.
+
+card_071_l3_onyx.png — A monumental subterranean exchange spanning a crystal-lit chasm; low upward view, grand arches and deep shadows.
+
+card_072_l3_onyx.png — An immense underground reservoir with a ceremonial merchant quay; view from water level, a luminous ceiling reflected below.
+
+card_073_l3_onyx.png — A towering spiral lift carrying treasures through an obsidian shaft; steep upward view, bronze machinery and torchlight.
+
+card_074_l3_onyx.png — A royal gem treasury carved into a single cavern wall; interior view through immense stone doors, bright crystal seams and restrained gold fittings.
+
+card_075_l3_sapphire.png — A monumental lighthouse on an isolated sea stack, viewed from a low position near the water. A clearing storm lights the dominant vertical tower above deep blue waves. No waterfront palace or sprawling city.
+
+card_076_l3_sapphire.png — A vast covered shipyard with a flagship under construction; interior view along the hull framed by enormous timber beams, cool blue daylight through the sea-facing opening. No domed palace or coastal panorama.
+
+card_077_l3_sapphire.png — A busy canal exchange beneath a monumental stone bridge; elevated oblique view, cargo barges and trading arcades along a deep blue canal. Warm afternoon light; no open-ocean panorama or dominant dome.
+
+card_078_l3_sapphire.png — A merchant convoy passing through a narrow sea gate, viewed from a ship deck at dawn. Foreground rigging frames the fleet between towering fortified gates. Cool blue water and warm dawn light; no domed palace, sweeping coastal city, or large ship viewed from shore.
+
+card_079_l3_diamond.png — An imperial mountain palace above immense glaciers; low view across a snowfield, bright ivory architecture against deep blue sky.
+
+card_080_l3_diamond.png — A colossal high-pass viaduct linking snowy peaks; elevated diagonal view, a small caravan revealing its scale.
+
+card_081_l3_diamond.png — A grand alpine council hall carved into a cliff; interior view through tall open arches onto brilliant distant glaciers.
+
+card_082_l3_diamond.png — A monumental ice observatory crowning a solitary summit; upward view from a steep snowy stair, luminous dawn and silver clouds.
+
+card_083_l3_emerald.png — An emerald royal court beneath colossal living tree vaults; interior view along a green ceremonial water channel.
+
+card_084_l3_emerald.png — A monumental botanical conservatory integrated into ancient ruins; elevated view over layered gardens, strong sunbeams.
+
+card_085_l3_emerald.png — A great treetop exchange connected by sweeping bridges; low upward view, immense trunks and luminous foliage.
+
+card_086_l3_emerald.png — A sacred forest amphitheater surrounding a giant spring; high oblique view, concentric mossy terraces and emerald water.
+
+card_087_l3_ruby.png — A great volcanic forge complex spanning a lava gorge; low view beneath monumental stone arches, blazing molten reflections.
+
+card_088_l3_ruby.png — A colossal ceremonial casting hall with a suspended crucible; interior perspective, glowing metal illuminating dark vaulted stone.
+
+card_089_l3_ruby.png — A monumental foundry dam controlling channels of molten material; elevated view, strong geometric terraces and orange rivers.
+
+card_090_l3_ruby.png — A master smiths citadel built around an enormous furnace tower; close upward view at twilight, radiant openings against dark red clouds.
 
 Card layout and finishing
 All overlay dimensions are specified for the final 150×210px card. For high-resolution images, scale every overlay element proportionally by the same factor: gem images, cost circles, numbers and fonts, outlines and borders, padding, gaps, and positions. Preserve the layout and relative sizes when downscaled.
