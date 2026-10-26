@@ -5,6 +5,8 @@ from tkinter import ttk
 PALETTE = {"Diamond": "#e5e7eb", "Sapphire": "#2563eb", "Emerald": "#15803d", "Ruby": "#be123c", "Onyx": "#334155"}
 TEXT_PALETTE = {"Diamond": "#111827", "Sapphire": "white", "Emerald": "white", "Ruby": "white", "Onyx": "white"}
 OUTLINE_PALETTE = {**PALETTE, "Diamond": "#94a3b8"}
+DISABLED_PALETTE = {"Diamond": "#c4c7cc", "Sapphire": "#899bbd", "Emerald": "#819e8b", "Ruby": "#b48590", "Onyx": "#858d99"}
+DISABLED_CARD_BORDER = "#a3a3a3"
 DECK_PALETTE = {1: "#166534", 2: "#a16207", 3: "#1e40af"}
 MUTED_TEXT_COLOR = "#64748b"
 PLAYER_PANEL_BACKGROUND = "#f8fafc"

@@ -8,26 +8,33 @@ from .styles import (
     CARD_DETAIL_FONT,
     COST_GEM_RADIUS,
     COST_GEM_SPACING,
+    DISABLED_CARD_BORDER,
+    DISABLED_PALETTE,
     MARKET_CARD_WIDTH,
     MARKET_CARD_HEIGHT,
+    OUTLINE_PALETTE,
     PALETTE,
     POINTS_FONT,
     TEXT_PALETTE,
 )
 
 
-class CardPanel(ttk.Frame):
+class CardPanel(tk.Frame):
     def __init__(self, parent, card, on_buy=None, affordable=False):
+        enabled = bool(on_buy and affordable)
+        palette = PALETTE if enabled else DISABLED_PALETTE
+        border = OUTLINE_PALETTE[card.color] if enabled else DISABLED_CARD_BORDER
         super().__init__(parent, width=MARKET_CARD_WIDTH, height=MARKET_CARD_HEIGHT,
-                         padding=6, relief="ridge")
+                         padx=6, pady=6, highlightthickness=1,
+                         highlightbackground=border, highlightcolor=border)
         self.pack_propagate(False)
 
-        title = tk.Frame(self, bg=PALETTE[card.color])
+        title = tk.Frame(self, bg=palette[card.color])
         title.pack(fill="x")
         tk.Label(
             title,
             text=str(card.points) if card.points else "",
-            bg=PALETTE[card.color],
+            bg=palette[card.color],
             fg=TEXT_PALETTE[card.color],
             font=POINTS_FONT,
             anchor="nw",
@@ -37,7 +44,7 @@ class CardPanel(ttk.Frame):
         tk.Label(
             title,
             text=card.color,
-            bg=PALETTE[card.color],
+            bg=palette[card.color],
             fg=TEXT_PALETTE[card.color],
             font=CARD_DETAIL_FONT,
             padx=4,
@@ -62,8 +69,10 @@ class CardPanel(ttk.Frame):
                 font=CARD_DETAIL_FONT,
             )
 
-        self.buy_button = ttk.Button(
-            body, text="Buy card", width=7, command=lambda: on_buy(card),
-            state="normal" if on_buy and affordable else "disabled",
-        )
-        self.buy_button.pack(side="right", anchor="s")
+        if enabled:
+            widgets = [self]
+            while widgets:
+                widget = widgets.pop()
+                widget.configure(cursor="hand2")
+                widget.bind("<Button-1>", lambda event: on_buy(card))
+                widgets.extend(widget.winfo_children())

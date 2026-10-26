@@ -9,9 +9,10 @@ def row_centers(count, width, spacing):
 
 
 def draw_gem(canvas, color, x, y, radius, **options):
+    options = {"fill": PALETTE[color], "outline": OUTLINE_PALETTE[color], **options}
     return canvas.create_oval(
         x - radius, y - radius, x + radius, y + radius,
-        fill=PALETTE[color], outline=OUTLINE_PALETTE[color], **options,
+        **options,
     )
 
 
