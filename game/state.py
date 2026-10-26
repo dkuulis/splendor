@@ -163,7 +163,20 @@ class State:
         self.turn.consecutive_passes = 0
         self.finish_turn()
 
+    def assign_noble(self):
+        """Award the first qualifying available noble, at most one per turn."""
+        player = self.current_player
+        discounts = player.discounts
+        for noble in self.nobles:
+            if all(discounts.get(token, 0) >= count
+                   for token, count in noble.requirements.items()):
+                self.nobles.remove(noble)
+                player.nobles.append(noble)
+                self.log.append(f"{player.name} received noble for {noble.points} points.")
+                break
+
     def finish_turn(self):
+        self.assign_noble()
         self.clear_selection()
         if not self.turn.final_round and self.current_player.points >= self.target_points:
             self.turn.final_round = True

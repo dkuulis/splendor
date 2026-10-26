@@ -11,6 +11,7 @@ one computer opponent.
   Ruby, and Onyx. It also holds five Gold tokens, which cannot be selected.
 - Shuffle each of the three development decks separately and reveal four
   cards per level. Remaining cards stay face down.
+- Shuffle the ten nobles and reveal three, displayed left of the supply.
 
 ## Taking a turn
 
@@ -41,6 +42,14 @@ count immediately; its discount applies to later purchases. A free card
 still uses your turn. Refill the market from the matching deck; an exhausted
 deck leaves fewer cards available.
 
+## Nobles
+
+At the end of each turn, compare the active player's permanent card bonuses
+with each available noble's requirements. Tokens do not count and nothing
+is spent. Award the first qualifying noble in the displayed order, at most
+one per turn, and remove it from the available nobles without replacement.
+Owned nobles grant points but no gem discounts.
+
 ## Ending the game
 
 Reaching at least 15 points triggers the final round. Finish that round so
@@ -65,9 +74,8 @@ strategy priorities and control options.
 
 ## Rules omitted or changed from full Splendor
 
-- **Nobles:** the game state deals three nobles, displayed left of the supply,
-  and supports owned nobles contributing points. Qualification checks and awarding nobles
-  are not implemented yet, so nobles do not affect normal play.
+- **Nobles:** when several qualify, the first in displayed order is awarded
+  automatically rather than letting the player choose.
 - **Reservations and gold:** no reserved cards, blind reservations, or gold
   wildcard payments. Gold remains in the bank.
 - **Two matching gems:** omitted for now; the full game permits this only

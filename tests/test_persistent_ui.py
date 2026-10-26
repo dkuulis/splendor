@@ -147,7 +147,7 @@ class PersistentUITests(unittest.TestCase):
             self.root.update()
             self.assertTrue(column.winfo_ismapped())
             self.assertEqual(len(column.token_items), 5)
-            player.nobles = {noble.id: noble for noble in nobles}
+            player.nobles = list(nobles)
             player.cards[card.id] = card
             app.refresh()
             self.root.update()
