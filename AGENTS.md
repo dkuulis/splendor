@@ -71,6 +71,8 @@ rules without a request.
   `prompts/`: saved generation prompts.
 - Cards are 150×210; card IDs match runtime filenames without extensions.
   Card generation prefers per-card artwork, falling back to tier/color artwork.
+- Nobles are 150×150. Follow `prompts/noble_prompts.txt`; keep source portraits
+  free of overlays. `tools/generate_nobles.py` adds points and requirement squares.
 - Single tokens are 60×60. Piles retain approximately 60 px per token,
   not per image. Source-token diameters are in `artwork/gems.txt` and
   `artwork/golds.txt`.
