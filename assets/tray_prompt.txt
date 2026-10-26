@@ -1,0 +1,16 @@
+A shallow Renaissance jeweller's sorting tray, viewed directly from above.
+Wide rectangular shape with gently rounded corners, low antique-brass rim,
+warm ivory suede lining. Restrained craftsmanship, subtle worn metal
+highlights, soft inner shadow suggesting shallow depth. Broad empty interior
+for a horizontal row of colorful gemstones. Quiet texture, clearly readable
+at small UI size. No gems, objects, text, handles, feet, or elaborate ornament.
+Transparent background outside the tray.
+
+Integrate a broad brass button plaque into the right-hand end of the tray,
+separated from the suede-lined gem area by a subtle raised rim. Softly rounded
+corners, restrained bevel, dark antique-brass edging, and a smooth light brass
+face suitable for a readable UI label. Leave the plaque blank in the image.
+
+UI label: Take. Render separately in the app using dark Forum lettering to
+keep it crisp. Use a muted finish when the selection is invalid. Keep the
+tray visible when empty. Fit within the existing one-card-high pick panel.

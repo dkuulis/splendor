@@ -1,0 +1,11 @@
+Top-down flat background for a Renaissance merchant's jewel-trading board game.
+Muted warm taupe suede tabletop, medium-light gray-brown tone, extremely subtle
+fine texture, soft even illumination. Broad empty playing surface with minimal
+tonal variation. Delicate worn antique-gold corner flourishes confined to the
+outer edges. Quiet, refined, understated, complementary to richly illustrated
+cards and brightly colored gemstones. No objects, gems, cards, lettering,
+symbols, compartments, strong shadows, or perspective. Texture must remain
+unobtrusive at screen size.
+
+Landscape composition, approximately 6:5 aspect ratio. Background asset only,
+without game controls or panels. Opaque, edge-to-edge surface.

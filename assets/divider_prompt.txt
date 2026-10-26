@@ -1,0 +1,11 @@
+Thin horizontal divider for a Renaissance jewel-trading game, viewed directly
+from above. Two fine parallel antique-brass lines with a small diamond-shaped
+ornament at the center. Slightly worn, muted gold, restrained and elegant,
+matching ornate card borders and a warm taupe suede tabletop. Subtle metal
+highlights, minimal depth, clearly readable at UI size. Wide, shallow asset
+with transparent background. No text, gemstones, heavy shadows, or enclosing
+frame.
+
+Placement: beneath the computer's area and above the player's area, leaving
+the other panel edges open. Use a warmer gold tint for the active player's
+divider.
