@@ -1,0 +1,31 @@
+Shared prompt
+Create a full-bleed 5:7 portrait development-card illustration for a Renaissance trade game, readable at 150×210px. Depict {scene} in the {gem} environment at tier {level}. Use realistic painterly artwork, rich natural materials, atmospheric depth, and broad, clearly defined forms. Match the antique-gold arabesque deck ornament and polished gemstone assets with restrained decorative detail and a thin muted border. Keep one strong focal point in the center-right, leaving quiet areas at the top corners and bottom-left for game symbols. Flat front view of the card; no surrounding scene, cast shadow, title, lettering, numbers, logos, or watermark. Avoid tiny details and visual clutter.
+
+Gem variants
+Onyx — Dark cave. Obsidian walls, glowing crystal veins, an underground lake, deep blue-black shadows, and warm torchlight. Hidden wealth, rarity, and secrecy; keep important forms readable within the darkness.
+Sapphire — Sea. Deep blue water, merchant ships, coastal trade routes, sea cliffs, and sunlight on waves. Maritime commerce and exploration, with bright skies and distant harbors.
+Emerald — Forest. Massive ancient trees, emerald foliage, moss-covered ruins, forest paths, and sunbeams through the canopy. Natural resources, growth, and abundance, with architecture integrated into the woodland.
+Ruby — Fire. Volcanic settlements, lava rivers, blacksmith workshops, molten metal, and glowing furnaces. Craftsmanship, industry, and power, with orange-red light against dark stone.
+Diamond — High mountains. Sharp snow-covered peaks, glaciers, mountain passes, alpine fortresses, and bright crisp light. Prestige, purity, and nobility, with ivory, silver, and pale-blue tones.
+
+Tier variants
+Level 1 — Modest resource-gathering locations, simple structures, intimate scale, and one clear activity.
+Level 2 — Established settlements and trade centers, substantial architecture, and a wider view of organized commerce.
+Level 3 — Monumental landmarks, grand civic or royal architecture, epic scale, and a strong sense of prosperity. Convey importance through composition and scale rather than extra fine detail.
+
+Scene examples by gem and tier
+Onyx: Cave entrance → Crystal mine and underground trading settlement → Vast underground capital beside a subterranean lake.
+Sapphire: Small fishing harbor → Prosperous port city → Ocean metropolis commanding a merchant fleet.
+Emerald: Woodland gathering path → Forest sanctuary and trading settlement → Emerald royal court among colossal ancient trees.
+Ruby: Small mine forge → Foundry district → Great volcanic forge city above lava rivers.
+Diamond: Mountain trail and outpost → Alpine fortress → Imperial mountain palace above the glaciers.
+
+Card layout and finishing
+All overlay dimensions are specified for the final 150×210px card. For high-resolution images, scale every overlay element proportionally by the same factor: gem images, cost circles, numbers and fonts, outlines and borders, padding, gaps, and positions. Preserve the layout and relative sizes when downscaled.
+Generate the illustration without game symbols, then compose the exact values and existing gem assets over it for consistency across all 90 cards.
+Reuse the high-resolution gem images from images/diamond.png, images/sapphire.png, images/emerald.png, images/ruby.png, and images/onyx.png. Preserve their shape, color, and transparency; do not redraw or generate replacement gem icons. Resize each gem to fit a 42×42px box on the final 150×210px card, preserving its aspect ratio. Scale these dimensions proportionally when composing a high-resolution card.
+Top-left: Victory-point number in Forum Bold at 48px on the final 150×210px card (approximately 30px visible numeral height, vertically centered beside the 42px bonus gem), with 6px left padding; omit zero. Scale the font proportionally for high-resolution composition. Use high-contrast text and keep it readable in the exposed strip of an owned-card stack.
+Top-right: The card's bonus gem, using the corresponding image from images/ at 42×42px, with a contrasting outline.
+Center: Biome artwork, with its main landmark clear of the game symbols.
+Bottom-left: Purchase costs in a vertical column of colored circles with numbers, ordered Diamond, Sapphire, Emerald, Ruby, Onyx. Use Forum Bold at 16px on the final 150×210px card, with each number centered horizontally and vertically in its circle. Use dark text on Diamond and white text on the other colors. Scale the font proportionally for high-resolution composition. Omit zero costs and gem names.
+Use a consistent layout and legible contrast across all themes and tiers. Vary viewpoints and landmarks between cards while preserving each gem's environment and each tier's scale. Produce bright enabled cards; the UI supplies the disabled overlay separately.
