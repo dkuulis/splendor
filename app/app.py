@@ -1,8 +1,9 @@
 """Assemble the game UI components."""
 
-from tkinter import messagebox, ttk
+from tkinter import ttk
 
 from game.initialize import create_initial_state
+from game.selection import Selection
 
 from .supply_panel import SupplyPanel
 from .background import Background
@@ -14,10 +15,14 @@ from .selection_panel import SelectionPanel
 from .styles import MARKET_CARD_HEIGHT, MARKET_ROW_PADDING, WINDOW_MIN_WIDTH, configure_styles
 
 
+AI_DELAY_MS = 500
+
+
 class App:
     def __init__(self, root, state, strategy):
         self.root = root
         self.state = state
+        self.selection = Selection()
         self.strategy = strategy
 
         self.pending_ai = None
@@ -39,7 +44,7 @@ class App:
         self.field = ttk.Frame(self.root)
         self.table = ttk.Frame(self.field)
 
-        can_select_card = lambda card: self.state.selection.can_select_card(card, self.state)
+        can_select_card = lambda card: self.selection.can_select_card(card, self.state)
         self.computer = PlayerPanel(self.field, on_select=self.select_card,
                                     can_select=can_select_card)
         self.computer_divider = DividerPanel(self.field)
@@ -48,9 +53,9 @@ class App:
         self.market = MarketPanel(self.table, self.select_card, lambda card: self.state.can_buy(card))
         self.supply = SupplyPanel(
             self.table, self.select_token,
-            lambda token: self.state.selection.can_select_token(token, self.state))
+            lambda token: self.selection.can_select_token(token, self.state))
 
-        self.selection = SelectionPanel(
+        self.selection_panel = SelectionPanel(
             self.table, self.perform_action, self.select_card, self.deselect_token, self.new_game,
         )
 
@@ -71,7 +76,7 @@ class App:
 
         self.nobles.grid(row=0, column=0, rowspan=3, padx=(0, 12))
         self.supply.grid(row=0, column=1, rowspan=2, sticky="nsew", padx=(0, 12))
-        self.selection.grid(row=2, column=1, sticky="ew", padx=(0, 12), pady=MARKET_ROW_PADDING)
+        self.selection_panel.grid(row=2, column=1, sticky="ew", padx=(0, 12), pady=MARKET_ROW_PADDING)
         self.market.grid(row=0, column=2, rowspan=3, sticky="n")
 
         self.player_divider.pack(fill="x")
@@ -86,22 +91,22 @@ class App:
             winner = state.turn.finished and state.turn.winner == index
             active = winner if state.turn.finished else state.is_active_player(state.players[index])
             divider.refresh(active, state.players[index].points, winner)
-        self.computer.refresh_selection(state.selection.card)
-        self.player.refresh_selection(state.selection.card)
-        self.market.refresh(state.market, state.decks, state.selection.card, enabled=self.manual_turn)
+        self.computer.refresh_selection(self.selection.card)
+        self.player.refresh_selection(self.selection.card)
+        self.market.refresh(state.market, state.decks, self.selection.card, enabled=self.manual_turn)
         self.nobles.refresh(state.nobles)
-        self.supply.refresh(state.supply, state.selection.tokens, enabled=self.manual_turn)
-        self.selection.refresh(state, enabled=self.manual_turn)
+        self.supply.refresh(state.supply, self.selection.tokens, enabled=self.manual_turn)
+        self.selection_panel.refresh(state, self.selection, enabled=self.manual_turn)
         self.size_window(self.root)
         if self.ai_turn:
-            self.pending_ai = self.root.after(500, self.run_ai)
+            self.pending_ai = self.root.after(AI_DELAY_MS, self.perform_ai_selection)
 
     def refresh_selection(self):
-        self.supply.refresh(self.state.supply, self.state.selection.tokens, enabled=self.manual_turn)
-        self.market.refresh_selection(self.state.selection.card)
-        self.computer.refresh_selection(self.state.selection.card)
-        self.player.refresh_selection(self.state.selection.card)
-        self.selection.refresh(self.state, enabled=self.manual_turn)
+        self.supply.refresh(self.state.supply, self.selection.tokens, enabled=self.manual_turn)
+        self.market.refresh_selection(self.selection.card)
+        self.computer.refresh_selection(self.selection.card)
+        self.player.refresh_selection(self.selection.card)
+        self.selection_panel.refresh(self.state, self.selection, enabled=self.manual_turn)
 
     @property
     def ai_turn(self):
@@ -116,11 +121,19 @@ class App:
             self.root.after_cancel(self.pending_ai)
             self.pending_ai = None
 
-    def run_ai(self):
+    def perform_ai_selection(self):
         self.pending_ai = None
         if not self.ai_turn:
             return
-        self.strategy.play_turn(self.state)
+        self.strategy.make_selection(self.state, self.selection)
+        self.refresh_selection()
+        self.pending_ai = self.root.after(AI_DELAY_MS, self.perform_ai_action)
+
+    def perform_ai_action(self):
+        self.pending_ai = None
+        if not self.ai_turn:
+            return
+        self.selection.perform_action(self.state)
         self.refresh()
 
     def on_destroy(self, event):
@@ -130,31 +143,28 @@ class App:
     def new_game(self):
         self.cancel_ai()
         self.state = create_initial_state()
+        self.selection = Selection()
         self.refresh()
 
     def select_card(self, card):
         if self.manual_turn:
-            self.state.selection.select_card(card, self.state)
+            self.selection.select_card(card, self.state)
             self.refresh_selection()
 
     def select_token(self, token):
         if self.manual_turn:
-            self.state.selection.select_token(token, self.state)
+            self.selection.select_token(token, self.state)
             self.refresh_selection()
 
     def deselect_token(self, token):
         if self.manual_turn:
-            self.state.selection.deselect_token(token, self.state)
+            self.selection.deselect_token(token, self.state)
             self.refresh_selection()
 
     def perform_action(self):
         if not self.manual_turn:
             return
-        try:
-            self.state.perform_action()
-        except ValueError as error:
-            messagebox.showinfo("Cannot perform action", str(error), parent=self.field)
-            return
+        self.selection.perform_action(self.state)
         self.refresh()
 
     def size_window(self, root):

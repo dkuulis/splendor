@@ -22,17 +22,26 @@ rules without a request.
 - `main.py` creates Tk, the initial state, and the selected AI strategy.
 - `game/` contains plain Python models and rules; keep it independent of Tkinter.
   `selection.py` owns pending choices and boolean permissions for selection
-  interactions and action confirmation. `state.py` owns card affordability,
-  action execution, and market replacement; actions check Selection permissions
-  before changing holdings. The UI uses the same permissions to enable controls.
+  interactions and action confirmation, and dispatches the selected action.
+  `state.py` owns card affordability, action execution, and market replacement.
+  State actions take explicit arguments: `buy_card(card)`, `reserve_card(card)`,
+  and `take_tokens(tokens)`; Selection dispatch supplies its pending choices.
+  Action methods and Selection dispatch execute without validation. Callers must
+  choose an allowed action; the UI uses Selection permissions to enable controls.
 - `player.py` owns holdings and derived points, discounts, capacity, and payment.
   Use these calculations through the relevant player.
-- `State.finish_turn()` awards a noble, clears selection, and advances the turn.
+- `State.finish_turn(passed)` updates consecutive passes, awards a noble,
+  and advances the turn. Actions pass `passed` explicitly. Selection dispatch
+  clears pending choices after execution; State does not own selection.
   `noble.py` handles awards; `turn.py` handles final rounds, completion, and ties.
   `initialize.py` defines cards, nobles, and shuffled setup.
-- `ai/` strategies implement `play_turn(state)` and perform one legal action
-  through State. Register them in `ai/__init__.py`.
-- `app/app.py` assembles panels, dispatches actions, and schedules AI callbacks.
+- `ai/` strategies implement `make_selection(state, selection)` and prepare
+  one legal selection without mutating State or executing an action.
+  App displays the selection, then dispatches the action in a delayed callback.
+  Register them in `ai/__init__.py`.
+- `app/app.py` owns separate `state` and `selection` models, assembles panels,
+  delegates action dispatch to Selection, and schedules AI callbacks.
+  `selection_panel` is the widget; Restart replaces both models.
   AI runs on the UI thread: keep strategies quick and cancel pending callbacks
   on Restart and window destruction.
 - `app/selection_panel.py` contains one action button and a separate Restart.
@@ -54,7 +63,8 @@ rules without a request.
 - Use `TOKENS` for display and selection ordering. Payment calculations
   can iterate over cost entries directly.
 - `State.supply` holds available tokens; `Player.tokens` holds owned tokens.
-  Selection is pending and does not transfer tokens. Finishing a turn clears it.
+  Selection is pending and does not transfer tokens. Dispatching an action
+  clears it.
   `Selection.action_kind` derives pass, buy, reserve, or take from pending
   choices. Empty selection means pass. Market-card selection clears selected
   tokens, then adds gold for reservation only if the card is unaffordable.

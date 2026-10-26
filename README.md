@@ -32,6 +32,8 @@ Purchases update scores, replace market cards, and trigger the final round at
 15 points. Manual lets you control both players. Pass-only AI automatically
 passes on the computer's turn. Restart with a different `--ai` value to change
 modes. New game preserves the selected strategy and cancels any pending AI action.
+The computer displays its selection for half a second before executing it.
+Manual controls remain disabled during both AI stages; Restart cancels either stage.
 
 Greedy AI buys the highest-point affordable card, breaking equal-point ties by
 the fewest gems spent after discounts. Otherwise, it collects up to three
@@ -46,8 +48,9 @@ collection is possible, it passes.
 ## Selection rules
 
 Selections are pending choices: they do not transfer tokens or cards until
-the action is confirmed. `game/selection.py` owns the selection decisions;
-the UI delegates clicks to it.
+the action is confirmed. App owns `state` and `selection` separately;
+`selection_panel` is the widget that displays pending choices.
+`game/selection.py` owns the selection decisions; the UI delegates clicks to it.
 
 1. **Select a colored gem:** clear the selected card and gold, keep other
    selected colored gems, and add one gem of this color. Selecting the same
@@ -77,22 +80,30 @@ The action button derives its action from the pending selection:
 
 Unavailable tokens and cards cannot be selected. Deselecting an absent item
 does nothing. Selection changes are disabled after the game ends. Confirming
-an action or restarting clears the selection.
+an action through Selection dispatch clears the selection. Restart creates a
+fresh state and selection while keeping the existing widgets.
 
-Selection changes and action confirmation have separate permissions. For example, an unaffordable
-market card still selects Reserve when the bank has no gold or reservation
+Selection changes and action confirmation have separate permissions. For example,
+an unaffordable market card still selects Reserve when the bank has no gold or reservation
 limits are reached; confirmation stays disabled. `Selection.can_select_card`,
 `can_select_token`, and `can_deselect_token` return booleans for interaction
 availability. `can_perform_action` checks the current action through
 `can_buy_card`, `can_reserve_card`, `can_take_tokens`, or `can_pass_turn`, using
-the supplied game state. The UI and `game/state.py` use these same permissions
-to enable controls and reject disallowed actions before changing holdings.
+the supplied game state. `Selection.perform_action(state)` dispatches the
+selected action to `buy_card(card)`, `reserve_card(card)`, `take_tokens(tokens)`,
+or `pass_turn()` in `game/state.py`, passing the pending card or tokens directly.
+The UI uses these permissions to enable controls. Dispatch and State's action
+methods execute without validation; callers must choose an allowed action before
+executing it.
 
 ## Adding AI strategies
 
-Add a strategy class under `ai/` with `play_turn(state)`, performing exactly
-one legal action through the state's methods, then register its command-line name
-and class in `ai/__init__.py`. The `--ai` option uses this registry automatically.
+Add a strategy class under `ai/` with `make_selection(state, selection)`. Clear
+pending choices and prepare one legal selection using the supplied state;
+leave it empty to choose Pass. Strategies do not change State or execute actions.
+App displays the selection, then dispatches the action once in a delayed callback.
+Register the command-line name and class in `ai/__init__.py`; `--ai` uses this
+registry automatically.
 Strategies should run quickly because they execute on the UI thread; a future
 search-based AI will need background execution.
 

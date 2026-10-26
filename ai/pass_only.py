@@ -1,6 +1,5 @@
 class PassOnlyAI:
-    """Minimal strategy: always use the legal pass action."""
+    """Minimal strategy: leave an empty selection for Pass."""
 
-    def play_turn(self, state):
-        state.selection.clear()
-        state.perform_action()
+    def make_selection(self, state, selection):
+        selection.clear()

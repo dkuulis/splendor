@@ -1,5 +1,7 @@
 import unittest
 
+from game.selection import Selection
+
 from game.constants import GEMS, DIAMOND, RUBY, ONYX, GOLD
 from game import Card, Noble, State
 from game.initialize import create_initial_state
@@ -30,6 +32,7 @@ class NobleTests(unittest.TestCase):
 
     def test_purchase_qualifies_using_new_card_without_spending_bonuses(self):
         state = State()
+        selection = Selection()
         player = state.current_player
         player.add_card(Card('owned', 1, RUBY, 0, {}))
         player.tokens = {DIAMOND: 1}
@@ -37,8 +40,8 @@ class NobleTests(unittest.TestCase):
         noble = Noble('noble', 3, {RUBY: 2})
         state.market[1] = [card]
         state.nobles = [noble]
-        state.selection.select_card(card, state)
-        state.buy_card()
+        selection.select_card(card, state)
+        state.buy_card(card)
         self.assertEqual(player.nobles, [noble])
         self.assertEqual(state.nobles, [])
         self.assertEqual(player.discounts, {**dict.fromkeys(GEMS, 0), RUBY: 2})
@@ -58,14 +61,15 @@ class NobleTests(unittest.TestCase):
 
     def test_first_qualifying_noble_only_and_cannot_be_awarded_twice(self):
         state = State()
+        selection = Selection()
         for player in state.players:
             player.add_card(Card('ruby', 1, RUBY, 0, {}))
         unavailable = Noble('unavailable', 3, {ONYX: 1})
         first = Noble('first', 3, {RUBY: 1})
         second = Noble('second', 3, {RUBY: 1})
         state.nobles = [unavailable, first, second]
-        state.selection.select_token(DIAMOND, state)
-        state.take_tokens()
+        selection.select_token(DIAMOND, state)
+        state.take_tokens(selection.tokens)
         self.assertEqual(state.players[0].nobles, [first])
         self.assertEqual(state.players[0].tokens, {DIAMOND: 1})
         self.assertEqual(state.nobles, [unavailable, second])
@@ -73,19 +77,20 @@ class NobleTests(unittest.TestCase):
         self.assertEqual(state.players[1].nobles, [second])
         self.assertEqual(state.nobles, [unavailable])
 
-    def test_rejected_action_does_not_award_noble(self):
+    def test_checking_disallowed_action_does_not_award_noble(self):
         state = State()
+        selection = Selection()
         noble = Noble('noble', 3, {RUBY: 1})
         state.nobles = [noble]
         state.current_player.add_card(Card('ruby', 1, RUBY, 0, {}))
-        state.selection.tokens = {RUBY: 2}
-        with self.assertRaises(ValueError):
-            state.take_tokens()
+        selection.tokens = {RUBY: 2}
+        self.assertFalse(selection.can_take_tokens(state))
         self.assertEqual(state.nobles, [noble])
         self.assertEqual(state.current_player.nobles, [])
 
     def test_computer_noble_can_end_game_and_change_winner(self):
         state = State()
+        selection = Selection()
         state.turn.active_player = 1
         state.players[0].add_card(Card('human', 3, ONYX, 14, {}))
         state.current_player.add_card(Card('computer', 3, RUBY, 12, {}))
@@ -95,8 +100,7 @@ class NobleTests(unittest.TestCase):
         self.assertTrue(state.turn.finished)
         self.assertEqual(state.turn.winner, 1)
         self.assertEqual(state.players[1].nobles, [noble])
-        with self.assertRaises(ValueError):
-            state.pass_turn()
+        self.assertFalse(selection.can_pass_turn(state))
         self.assertEqual(state.players[1].nobles, [noble])
 
     def test_noble_points_count_toward_final_round(self):

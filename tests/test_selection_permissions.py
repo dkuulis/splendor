@@ -8,6 +8,7 @@ from game.selection import Selection
 class SelectionPermissionTests(unittest.TestCase):
     def setUp(self):
         self.state = State()
+        self.selection = Selection()
         self.card = Card('market', 1, RUBY, 0, {})
         self.costly = Card('costly', 1, RUBY, 0, {RUBY: 2})
         self.reserved = Card('reserved', 1, RUBY, 0, {RUBY: 1})
@@ -16,7 +17,7 @@ class SelectionPermissionTests(unittest.TestCase):
 
     def test_card_permissions_allow_market_cards_and_only_affordable_reserved(self):
         state = self.state
-        selection = state.selection
+        selection = self.selection
         self.assertIs(selection.can_select_card(self.card, state), True)
         self.assertIs(selection.can_select_card(self.costly, state), True)
         self.assertIs(selection.can_select_card(self.reserved, state), False)
@@ -32,7 +33,7 @@ class SelectionPermissionTests(unittest.TestCase):
 
     def test_gold_permissions_follow_market_card_affordability(self):
         state = self.state
-        selection = state.selection
+        selection = self.selection
         self.assertIs(selection.can_select_token(GOLD, state), False)
         self.assertIs(selection.can_deselect_token(GOLD, state), False)
         selection.select_card(self.card, state)
@@ -52,6 +53,7 @@ class SelectionPermissionTests(unittest.TestCase):
         for limit in ('gold supply', 'inventory', 'reservations'):
             with self.subTest(limit=limit):
                 state = State()
+                selection = Selection()
                 state.market[1] = [self.costly]
                 if limit == 'gold supply':
                     state.supply[GOLD] = 0
@@ -59,13 +61,10 @@ class SelectionPermissionTests(unittest.TestCase):
                     state.current_player.tokens = {SAPPHIRE: 10}
                 else:
                     state.current_player.reserved_cards = [self.reserved] * 3
-                selection = state.selection
                 self.assertIs(selection.can_select_card(self.costly, state), True)
                 selection.select_card(self.costly, state)
                 self.assertIs(selection.can_reserve_card(state), False)
                 self.assertIs(selection.can_perform_action(state), False)
-                with self.assertRaises(ValueError):
-                    state.perform_action()
                 self.assertIs(selection.card, self.costly)
                 self.assertEqual(selection.tokens, {GOLD: 1})
 
@@ -81,8 +80,8 @@ class SelectionPermissionTests(unittest.TestCase):
         self.assertIs(selection.can_buy_card(state), False)
         self.assertIs(selection.can_reserve_card(state), True)
         self.assertIs(selection.can_perform_action(state), True)
-        self.assertIsNone(state.selection.card)
-        self.assertEqual(state.selection.tokens, {})
+        self.assertIsNone(self.selection.card)
+        self.assertEqual(self.selection.tokens, {})
         self.assertEqual(state.current_player.tokens, {})
         self.assertEqual(state.market[1], [self.card, self.costly])
         self.assertEqual(state.supply, supply)
@@ -90,7 +89,7 @@ class SelectionPermissionTests(unittest.TestCase):
 
     def test_gem_permissions_distinguish_selection_from_inventory_limit(self):
         state = self.state
-        selection = state.selection
+        selection = self.selection
         state.current_player.tokens = {SAPPHIRE: 10}
         self.assertIs(selection.can_select_token(RUBY, state), True)
         self.assertIs(selection.can_select_token('unknown', state), False)
@@ -104,7 +103,7 @@ class SelectionPermissionTests(unittest.TestCase):
 
     def test_finished_game_disables_all_permissions(self):
         state = self.state
-        selection = state.selection
+        selection = self.selection
         selection.select_card(self.card, state)
         selection.select_token(GOLD, state)
         state.turn.finished = True

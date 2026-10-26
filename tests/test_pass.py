@@ -1,5 +1,7 @@
 import unittest
 
+from game.selection import Selection
+
 from game.constants import DIAMOND, RUBY
 from game import Card, State
 
@@ -15,14 +17,14 @@ class PassTests(unittest.TestCase):
         self.assertEqual(state.players[0].tokens, {RUBY: 2})
         self.assertEqual(state.supply[RUBY], 4)
 
-    def test_two_passes_end_in_draw_and_reject_further_moves(self):
+    def test_two_passes_end_in_draw_and_disable_further_moves(self):
         state = State()
+        selection = Selection()
         state.pass_turn()
         state.pass_turn()
         self.assertTrue(state.turn.finished)
         self.assertIsNone(state.turn.winner)
-        with self.assertRaises(ValueError):
-            state.pass_turn()
+        self.assertFalse(selection.can_pass_turn(state))
         self.assertEqual(state.turn.consecutive_passes, 2)
 
     def test_points_then_fewer_cards_decide_winner(self):

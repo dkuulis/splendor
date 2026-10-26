@@ -8,65 +8,68 @@ from game.selection import Selection
 class SelectionTests(unittest.TestCase):
     def setUp(self):
         self.state = State()
+        self.selection = Selection()
         self.card = Card('selected', 1, RUBY, 1, {})
         self.state.market[1] = [self.card]
 
     def test_selection_is_pending_and_mutually_exclusive(self):
         state = self.state
+        selection = self.selection
         supply = dict(state.supply)
-        state.selection.select_token(RUBY, state)
-        state.selection.select_card(self.card, state)
-        self.assertEqual(state.selection.tokens, {})
-        self.assertIs(state.selection.card, self.card)
+        selection.select_token(RUBY, state)
+        selection.select_card(self.card, state)
+        self.assertEqual(selection.tokens, {})
+        self.assertIs(selection.card, self.card)
         self.assertEqual(state.market[1], [self.card])
         for cards in state.players[0].cards.values():
             self.assertEqual(cards, [])
         self.assertEqual(state.turn.active_player, 0)
-        state.selection.select_token(SAPPHIRE, state)
-        self.assertIsNone(state.selection.card)
-        self.assertEqual(state.selection.tokens, {SAPPHIRE: 1})
+        selection.select_token(SAPPHIRE, state)
+        self.assertIsNone(selection.card)
+        self.assertEqual(selection.tokens, {SAPPHIRE: 1})
         self.assertEqual(state.supply, supply)
-        state.selection.deselect_token(SAPPHIRE, state)
-        self.assertEqual(state.selection.tokens, {})
+        selection.deselect_token(SAPPHIRE, state)
+        self.assertEqual(selection.tokens, {})
 
     def test_card_toggle_and_replacement(self):
         other = Card('other', 1, ONYX, 0, {})
         self.state.market[1].append(other)
-        self.state.selection.select_card(self.card, self.state)
-        self.state.selection.select_card(other, self.state)
-        self.assertIs(self.state.selection.card, other)
-        self.state.selection.select_card(other, self.state)
-        self.assertIsNone(self.state.selection.card)
+        self.selection.select_card(self.card, self.state)
+        self.selection.select_card(other, self.state)
+        self.assertIs(self.selection.card, other)
+        self.selection.select_card(other, self.state)
+        self.assertIsNone(self.selection.card)
 
     def test_invalid_selection_preserves_pending_action(self):
-        self.state.selection.select_card(self.card, self.state)
-        self.state.selection.select_token('unknown', self.state)
+        self.selection.select_card(self.card, self.state)
+        self.selection.select_token('unknown', self.state)
         self.state.supply[RUBY] = 0
-        self.state.selection.select_token(RUBY, self.state)
-        self.state.selection.select_card(Card('missing', 1, RUBY, 0, {}), self.state)
-        self.assertIs(self.state.selection.card, self.card)
+        self.selection.select_token(RUBY, self.state)
+        self.selection.select_card(Card('missing', 1, RUBY, 0, {}), self.state)
+        self.assertIs(self.selection.card, self.card)
 
     def test_non_gold_selection_clears_card_and_gold_but_keeps_other_gems(self):
         state = self.state
-        state.selection.select_card(self.card, state)
-        state.selection.select_token(GOLD, state)
-        state.selection.select_token(RUBY, state)
-        self.assertIsNone(state.selection.card)
-        self.assertEqual(state.selection.tokens, {RUBY: 1})
-        state.selection.select_token(SAPPHIRE, state)
-        self.assertEqual(state.selection.tokens, {RUBY: 1, SAPPHIRE: 1})
-        self.assertTrue(state.selection.can_perform_action(state))
+        selection = self.selection
+        selection.select_card(self.card, state)
+        selection.select_token(GOLD, state)
+        selection.select_token(RUBY, state)
+        self.assertIsNone(selection.card)
+        self.assertEqual(selection.tokens, {RUBY: 1})
+        selection.select_token(SAPPHIRE, state)
+        self.assertEqual(selection.tokens, {RUBY: 1, SAPPHIRE: 1})
+        self.assertTrue(selection.can_perform_action(state))
 
     def test_finished_game_cannot_select(self):
         self.state.turn.finished = True
-        self.state.selection.select_card(self.card, self.state)
-        self.state.selection.select_token(RUBY, self.state)
-        self.assertIsNone(self.state.selection.card)
-        self.assertEqual(self.state.selection.tokens, {})
+        self.selection.select_card(self.card, self.state)
+        self.selection.select_token(RUBY, self.state)
+        self.assertIsNone(self.selection.card)
+        self.assertEqual(self.selection.tokens, {})
 
     def test_clear_resets_pending_action_even_after_game_ends(self):
         state = self.state
-        selection = state.selection
+        selection = self.selection
         selection.select_card(self.card, state)
         selection.select_token(GOLD, state)
         state.turn.finished = True
@@ -79,27 +82,28 @@ class SelectionTests(unittest.TestCase):
 
     def test_finished_game_preserves_pending_selection_on_deselect(self):
         state = self.state
-        state.selection.select_token(RUBY, state)
+        selection = self.selection
+        selection.select_token(RUBY, state)
         state.turn.finished = True
-        state.selection.deselect_token(RUBY, state)
-        self.assertEqual(state.selection.tokens, {RUBY: 1})
+        selection.deselect_token(RUBY, state)
+        self.assertEqual(selection.tokens, {RUBY: 1})
 
-    def test_independent_selection_uses_supplied_state_without_changing_its_selection(self):
+    def test_independent_selection_uses_supplied_state_without_changing_it(self):
         state = self.state
         selection = Selection()
         selection.select_card(self.card, state)
         selection.select_token(GOLD, state)
         self.assertEqual(selection.action_kind, 'reserve')
-        self.assertIsNone(state.selection.card)
-        self.assertEqual(state.selection.tokens, {})
+        self.assertIsNone(self.selection.card)
+        self.assertEqual(self.selection.tokens, {})
         self.assertEqual(state.current_player.tokens, {})
         self.assertEqual(state.market[1], [self.card])
 
     def test_reservation_replaces_and_toggles_cards(self):
         state = self.state
+        selection = self.selection
         other = Card('other', 1, ONYX, 0, {})
         state.market[1].append(other)
-        selection = state.selection
         selection.reserve_card(self.card, state)
         selection.reserve_card(other, state)
         self.assertIs(selection.card, other)
@@ -112,7 +116,7 @@ class SelectionTests(unittest.TestCase):
 
     def test_token_transitions_follow_selection(self):
         state = self.state
-        selection = state.selection
+        selection = self.selection
         selection.select_token(GOLD, state)
         self.assertEqual(selection.action_kind, 'pass')
         selection.select_card(self.card, state)
@@ -136,7 +140,7 @@ class SelectionTests(unittest.TestCase):
 
     def test_invalid_reservation_preserves_pending_buy(self):
         state = self.state
-        selection = state.selection
+        selection = self.selection
         selection.select_card(self.card, state)
         reserved = Card('reserved', 1, RUBY, 0, {})
         state.current_player.reserved_cards.append(reserved)
@@ -167,6 +171,7 @@ class SelectionTests(unittest.TestCase):
             for index, destination in enumerate(destinations):
                 with self.subTest(event=event, initial=index):
                     state = State()
+                    selection = Selection()
                     initial_card = Card('initial', 1, RUBY, 0, {})
                     market = Card('affordable', 1, RUBY, 0, {})
                     costly = Card('costly', 1, RUBY, 0, {RUBY: 2})
@@ -175,7 +180,6 @@ class SelectionTests(unittest.TestCase):
                     costly_reserved = Card('costly_reserved', 1, RUBY, 0, {RUBY: 2})
                     state.market[1] = [initial_card, market, costly]
                     state.current_player.reserved_cards = [initial_reserved, reserved, costly_reserved]
-                    selection = state.selection
                     if index in (1, 4):
                         selection.select_card(initial_card, state)
                     elif index == 2:
@@ -221,8 +225,8 @@ class SelectionTests(unittest.TestCase):
 
     def test_unaffordable_reservation_keeps_gold_until_card_is_deselected(self):
         state = self.state
+        selection = self.selection
         self.card.cost = {RUBY: 2}
-        selection = state.selection
         selection.select_card(self.card, state)
         selection.deselect_token(GOLD, state)
         self.assertEqual(selection.tokens, {GOLD: 1})
@@ -233,7 +237,7 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(selection.action_kind, 'pass')
 
     def test_removing_one_of_multiple_gems_keeps_take(self):
-        selection = self.state.selection
+        selection = self.selection
         selection.select_token(RUBY, self.state)
         selection.select_token(SAPPHIRE, self.state)
         selection.deselect_token(RUBY, self.state)

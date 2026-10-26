@@ -47,6 +47,7 @@ class Selection:
 
     def can_take_tokens(self, state):
         return (not state.turn.finished and self.card is None
+                and bool(self.tokens)
                 and len(self.tokens) <= MAX_TAKE
                 and len(self.tokens) <= state.current_player.max_take
                 and all(token in TOKENS and token != GOLD and amount == 1
@@ -73,6 +74,19 @@ class Selection:
         if kind == "take":
             return self.can_take_tokens(state)
         return self.can_pass_turn(state)
+
+    def perform_action(self, state):
+        """Dispatch an allowed action; callers check can_perform_action first."""
+        kind = self.action_kind
+        if kind == "reserve":
+            state.reserve_card(self.card)
+        elif kind == "buy":
+            state.buy_card(self.card)
+        elif kind == "pass":
+            state.pass_turn()
+        else:
+            state.take_tokens(self.tokens)
+        self.clear()
 
     def select_card(self, card, state):
         if not self.can_select_card(card, state):

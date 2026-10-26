@@ -2,33 +2,30 @@ from game.constants import TOKENS, MAX_TAKE
 
 
 class GreedyAI:
-    """Buy for points, otherwise collect gems toward the quickest cards."""
+    """Select cards for points, otherwise gems toward the quickest cards."""
 
-    def play_turn(self, state):
-        state.selection.clear()
+    def make_selection(self, state, selection):
+        selection.clear()
         cards = ([card for row in state.market.values() for card in row]
                  + state.current_player.reserved_cards)
-        if self.buy_card(state, cards):
+        if self.select_card(state, selection, cards):
             return
-        if self.take_tokens(state, cards):
-            return
-        state.perform_action()
+        self.select_tokens(state, selection, cards)
 
-    def buy_card(self, state, cards):
-        """Buy the best affordable card and report whether an action was taken."""
+    def select_card(self, state, selection, cards):
+        """Select the best affordable card and report whether one was found."""
         affordable = [card for card in cards if state.can_buy(card)]
         if affordable:
             card = min(affordable, key=lambda card: (-card.points, sum(state.current_player.card_cost(card).values())))
-            state.selection.select_card(card, state)
-            state.perform_action()
+            selection.select_card(card, state)
             return True
         return False
 
-    def take_tokens(self, state, cards):
-        """Collect useful gems and report whether an action was taken."""
+    def select_tokens(self, state, selection, cards):
+        """Select useful gems toward visible cards."""
         capacity = state.current_player.max_take
         if capacity == 0:
-            return False
+            return
 
         tokens = []
         for _, _, available in self.rank_targets(state, cards):
@@ -38,12 +35,8 @@ class GreedyAI:
                     tokens.append(token)
             if len(tokens) == capacity:
                 break
-        if not tokens:
-            return False
         for token in tokens:
-            state.selection.select_token(token, state)
-        state.perform_action()
-        return True
+            selection.select_token(token, state)
 
     def rank_targets(self, state, cards):
         """Rank collectible targets by turns needed, then missing gem count."""

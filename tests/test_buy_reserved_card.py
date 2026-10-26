@@ -1,5 +1,7 @@
 import unittest
 
+from game.selection import Selection
+
 from game import Card, State
 from game.constants import GEMS, GOLD, RUBY, SAPPHIRE
 
@@ -7,25 +9,28 @@ from game.constants import GEMS, GOLD, RUBY, SAPPHIRE
 class BuyReservedCardTests(unittest.TestCase):
     def setUp(self):
         self.state = State()
+        self.selection = Selection()
         self.card = Card('reserved', 2, SAPPHIRE, 3, {RUBY: 3})
         self.state.current_player.reserved_cards.append(self.card)
 
     def test_reserved_card_selects_toggles_and_rejects_gold(self):
         state = self.state
+        selection = self.selection
         state.current_player.tokens = {RUBY: 3}
-        state.selection.select_card(self.card, state)
-        self.assertIs(state.selection.card, self.card)
-        self.assertEqual(state.selection.action_kind.capitalize(), 'Buy')
-        self.assertTrue(state.selection.can_perform_action(state))
-        state.selection.select_token(GOLD, state)
-        self.assertIs(state.selection.card, self.card)
-        self.assertEqual(state.selection.tokens, {})
-        self.assertEqual(state.selection.action_kind.capitalize(), 'Buy')
-        state.selection.select_card(self.card, state)
-        self.assertIsNone(state.selection.card)
+        selection.select_card(self.card, state)
+        self.assertIs(selection.card, self.card)
+        self.assertEqual(selection.action_kind.capitalize(), 'Buy')
+        self.assertTrue(selection.can_perform_action(state))
+        selection.select_token(GOLD, state)
+        self.assertIs(selection.card, self.card)
+        self.assertEqual(selection.tokens, {})
+        self.assertEqual(selection.action_kind.capitalize(), 'Buy')
+        selection.select_card(self.card, state)
+        self.assertIsNone(selection.card)
 
     def test_reserved_purchase_uses_discounts_and_gold_without_touching_market(self):
         state = self.state
+        selection = self.selection
         player = state.current_player
         player.add_card(Card('bonus', 1, RUBY, 0, {}))
         player.tokens = {RUBY: 1, GOLD: 1}
@@ -34,8 +39,8 @@ class BuyReservedCardTests(unittest.TestCase):
         state.market[2] = [market]
         state.decks[2] = [deck]
         self.assertTrue(state.can_buy(self.card))
-        state.selection.select_card(self.card, state)
-        state.perform_action()
+        selection.select_card(self.card, state)
+        selection.perform_action(state)
         self.assertEqual(player.reserved_cards, [])
         self.assertEqual(player.cards[SAPPHIRE], [self.card])
         self.assertEqual(player.tokens, {})
@@ -44,21 +49,20 @@ class BuyReservedCardTests(unittest.TestCase):
         self.assertEqual(state.market[2], [market])
         self.assertEqual(state.decks[2], [deck])
         self.assertEqual(state.turn.active_player, 1)
-        self.assertIsNone(state.selection.card)
+        self.assertIsNone(selection.card)
 
-    def test_unaffordable_reserved_purchase_and_rereservation_are_rejected(self):
+    def test_unaffordable_reserved_purchase_and_rereservation_are_disallowed(self):
         state = self.state
-        state.selection.select_card(self.card, state)
-        self.assertIsNone(state.selection.card)
-        self.assertEqual(state.selection.action_kind, 'pass')
-        # Execution still rejects invalid selections supplied directly.
-        state.selection.card = self.card
-        with self.assertRaises(ValueError):
-            state.buy_card()
-        state.selection.tokens = {GOLD: 1}
+        selection = self.selection
+        selection.select_card(self.card, state)
+        self.assertIsNone(selection.card)
+        self.assertEqual(selection.action_kind, 'pass')
+        # Permission checks also cover selections supplied directly.
+        selection.card = self.card
+        self.assertFalse(selection.can_buy_card(state))
+        selection.tokens = {GOLD: 1}
         gold = state.supply[GOLD]
-        with self.assertRaises(ValueError):
-            state.reserve_card()
+        self.assertFalse(selection.can_reserve_card(state))
         self.assertEqual(state.current_player.reserved_cards, [self.card])
         self.assertEqual(state.current_player.tokens, {})
         self.assertEqual(state.supply[GOLD], gold)
@@ -66,15 +70,15 @@ class BuyReservedCardTests(unittest.TestCase):
 
     def test_opponents_or_removed_reserved_card_cannot_be_selected_or_bought(self):
         state = self.state
+        selection = self.selection
         state.current_player.reserved_cards.clear()
         state.players[1].reserved_cards.append(self.card)
         state.current_player.tokens = {GOLD: 5}
-        state.selection.select_card(self.card, state)
-        self.assertIsNone(state.selection.card)
+        selection.select_card(self.card, state)
+        self.assertIsNone(selection.card)
         self.assertFalse(state.can_buy(self.card))
-        state.selection.card = self.card
-        with self.assertRaises(ValueError):
-            state.buy_card()
+        selection.card = self.card
+        self.assertFalse(selection.can_buy_card(state))
         self.assertEqual(state.players[1].reserved_cards, [self.card])
         state.players[1].reserved_cards.clear()
         self.assertFalse(state.can_buy(self.card))
