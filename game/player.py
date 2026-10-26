@@ -7,6 +7,7 @@ class Player:
         self.is_ai = is_ai
         self.tokens = {}
         self.cards = {token: [] for token in GEMS}
+        self.reserved_cards = []
         self.nobles = []
 
     def add_card(self, card):

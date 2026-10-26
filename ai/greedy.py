@@ -1,4 +1,4 @@
-from game.constants import TOKENS
+from game.constants import TOKENS, MAX_TAKE
 
 
 class GreedyAI:
@@ -55,7 +55,7 @@ class GreedyAI:
             if available:
                 total = sum(missing.values())
                 # At most three tokens per turn, and only one of each type.
-                turns = max(max(missing.values()), (total + 2) // 3)
+                turns = max(max(missing.values()), (total + MAX_TAKE - 1) // MAX_TAKE)
                 targets.append((turns, total, available))
         # Prefer fewer gems when turn counts tie; otherwise keep market order.
         return sorted(targets, key=lambda target: target[:2])

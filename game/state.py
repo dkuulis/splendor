@@ -1,4 +1,5 @@
-from .constants import GOLD, TOKENS
+from .constants import (GOLD, TOKENS, TARGET_POINTS, TOKEN_LIMIT, MAX_TAKE,
+                        INITIAL_GOLD_SUPPLY, INITIAL_GEM_SUPPLY)
 from .player import Player
 from .turn import Turn
 
@@ -12,7 +13,8 @@ class State:
 
     def __init__(self):
         self.players = [Player("YOU"), Player("COMPUTER", is_ai=True)]
-        self.supply = {token: 5 if token == GOLD else 4 for token in TOKENS}
+        self.supply = {token: INITIAL_GOLD_SUPPLY if token == GOLD else INITIAL_GEM_SUPPLY
+                       for token in TOKENS}
         # Pending token counts by type; unselected types are omitted.
         self.selected_tokens = {}
         self.selected_card = None
@@ -22,8 +24,6 @@ class State:
         self.nobles = []
         self.turn = Turn()
         self.log = []
-        self.target_points = 15
-        self.token_limit = 10
 
     @property
     def current_player(self):
@@ -31,7 +31,7 @@ class State:
 
     @property
     def max_take(self):
-        return min(3, max(0, self.token_limit - sum(self.current_player.tokens.values())))
+        return min(MAX_TAKE, max(0, TOKEN_LIMIT - sum(self.current_player.tokens.values())))
 
     def select_card(self, card):
         if self.turn.finished or card not in self.market.get(card.tier, []):
@@ -89,14 +89,14 @@ class State:
         """Return why a gem collection is illegal, or None when it is legal."""
         if self.turn.finished:
             return "The game has already ended."
-        if (not 1 <= len(self.selected_tokens) <= 3
+        if (not 1 <= len(self.selected_tokens) <= MAX_TAKE
                 or any(amount != 1 for amount in self.selected_tokens.values())):
             return "Select one to three different token types."
         if any(token not in TOKENS or token == GOLD or self.supply.get(token, 0) < 1
                for token in self.selected_tokens):
             return "A selected gem is not available."
         if len(self.selected_tokens) > self.max_take:
-            return f"You cannot hold more than {self.token_limit} gems."
+            return f"You cannot hold more than {TOKEN_LIMIT} gems."
         return None
 
     def take_tokens(self):
@@ -178,7 +178,7 @@ class State:
     def finish_turn(self):
         self.assign_noble()
         self.clear_selection()
-        if not self.turn.final_round and self.current_player.points >= self.target_points:
+        if not self.turn.final_round and self.current_player.points >= TARGET_POINTS:
             self.turn.final_round = True
             self.log.append(f"{self.current_player.name} reached {self.current_player.points} points "
                             "and triggered the final round.")
