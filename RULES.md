@@ -1,0 +1,82 @@
+# Simplified Splendour rules
+
+This document defines the intended first playable version: one human against
+one computer opponent.
+
+## Setup
+
+- The human plays first. Players alternate turns.
+- Each player starts with no gems, no cards, and zero points.
+- The bank starts with four gems of each color: Diamond, Sapphire, Emerald,
+  Ruby, and Onyx.
+- Shuffle each of the three development decks separately and reveal four
+  cards per level. Remaining cards stay face down.
+
+## Taking a turn
+
+Choose one action:
+
+1. **Take gems:** take one, two, or three different colors from the bank,
+   one gem per color. Each selected color must be available. Taking fewer
+   than three is allowed even when more colors are available. You cannot
+   take gems that would bring your inventory above 10. You cannot return
+   or exchange gems to make room; gems leave your inventory only when spent
+   on a card.
+2. **Buy a card:** purchase one face-up market card you can afford.
+3. **Pass:** take no action and give the turn to the opponent.
+
+A player cannot take gems and buy a card on the same turn.
+
+## Cards and payment
+
+Each card has a color, a points value, and a cost by gem color. Every owned
+card reduces future costs of its color by one. Discounts stack and are never
+spent. For each color, pay `max(0, cost - owned cards of that color)`.
+
+For example, a card costing three Ruby and two Sapphire costs one Ruby and
+two Sapphire if you already own two Ruby cards.
+
+Return payment to the bank and add the card to your inventory. Its points
+count immediately; its discount applies to later purchases. A free card
+still uses your turn. Refill the market from the matching deck; an exhausted
+deck leaves fewer cards available.
+
+## Ending the game
+
+Reaching at least 15 points triggers the final round. Finish that round so
+both players have taken equal turns: if the human triggers it, the computer
+still takes its turn; if the computer triggers it, the game ends immediately.
+
+Highest score wins. If tied, the player with fewer purchased cards wins.
+If still tied, the game is a draw.
+
+As a simplified stalemate rule, two consecutive passes end the game using
+the same scoring and tie-break rules, even below 15 points. Any purchase or
+gem-taking action resets the consecutive-pass count.
+
+## Computer opponent
+
+The computer follows the same rules, with no extra resources or access to
+hidden deck order. Its planned strategy is to buy useful affordable cards,
+otherwise collect gems toward a visible target, and pass when necessary.
+Exact priorities will be defined when the AI is implemented.
+
+## Rules omitted or changed from full Splendor
+
+- **Nobles:** no noble tiles, qualification checks, or noble points.
+- **Reservations and gold:** no reserved cards, blind reservations, or wild gems.
+- **Two matching gems:** omitted for now; the full game permits this only
+  when at least four gems of that color are available before taking them.
+- **Player count:** only two players; no three- or four-player setup.
+- **Gem collection:** this version freely permits taking fewer than three
+  different colors; the referenced full rules require three when available.
+- **Gem limit and returns:** the full game allows taking gems above the
+  10-gem limit during a turn, then returning gems of your choice until you
+  hold 10. This can change the mix of gems you hold. Here, taking gems must
+  never exceed 10, and returning or exchanging gems is not allowed. At 10
+  gems, you must buy a card or pass.
+- **Passing:** voluntary passes and the two-pass ending are house rules.
+- **First player:** the human always starts instead of choosing by age.
+
+The comparison is with base Splendor, not Splendor Duel or expansions.
+Reference: [publisher rulebook](https://cdn.svc.asmodee.net/production-asmodeeca/uploads/2022/01/SCSPL01EN_SPLENDOR_RULES_LIGHT.pdf).
