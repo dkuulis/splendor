@@ -32,9 +32,8 @@ def scale_fragment(master, source, width, height):
 class Background:
     """Simulate transparency by giving each panel a crop of one window-sized image."""
 
-    def __init__(self, root, excluded):
+    def __init__(self, root):
         self.root = root
-        self.excluded = excluded
         self.fragments = {
             (row, column): load_image(root, f"background_{vertical}_{horizontal}")
             for row, vertical in enumerate(("top", "middle", "bottom"))
@@ -62,9 +61,7 @@ class Background:
             self.pending = None
 
     def register(self, widget):
-        """Add background surfaces once, skipping excluded widgets and their children."""
-        if widget in self.excluded:
-            return
+        """Add background surfaces once throughout the widget tree."""
         children = widget.winfo_children()
         if widget not in self.surfaces:
             if isinstance(widget, (tk.Frame, ttk.Frame)):
@@ -147,4 +144,7 @@ class Background:
                 # Frames use labels; canvases use an item beneath their content.
                 surface.configure(image=image)
             else:
+                # Scrolling canvases keep the background at the viewport origin,
+                # not at the origin of their scrollable content.
+                surface.coords(item, surface.canvasx(0), surface.canvasy(0))
                 surface.itemconfigure(item, image=image)

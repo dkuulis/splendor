@@ -30,7 +30,7 @@ class App:
         self.shell = ttk.Frame(root, padding=20)
         self.shell.pack(fill="both", expand=True)
         self.create_ui()
-        self.background = Background(root, excluded=(self.log,))
+        self.background = Background(root)
 
     def create_ui(self):
         body = ttk.Frame(self.shell)

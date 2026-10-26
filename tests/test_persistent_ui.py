@@ -42,7 +42,7 @@ class PersistentUITests(unittest.TestCase):
                                  (frame.winfo_width(), frame.winfo_height()))
             for widget in (self.app.shell, self.app.player.panel,
                            self.app.supply.cells[RUBY], self.app.selection.tokens,
-                           self.app.scores):
+                           self.app.scores, self.app.log, self.app.log.canvas):
                 surface, item, image = background.surfaces[widget]
                 x = surface.winfo_rootx() - self.root.winfo_rootx()
                 y = surface.winfo_rooty() - self.root.winfo_rooty()
@@ -418,29 +418,43 @@ class PersistentUITests(unittest.TestCase):
         stack.event_generate('<Button-1>', x=75, y=100)
         self.assertIsNone(app.state.selected_card)
 
-    def test_log_scroll_and_label_reuse(self):
+    def test_log_scroll_and_text_reuse(self):
         app = self.app
         app.state.log.extend(f'Message {index}' for index in range(100))
         app.log.refresh(app.state.log)
         self.root.update()
         self.assertGreaterEqual(app.log.canvas.yview()[1], 0.999)
-        labels = list(app.log.labels)
+        items = list(app.log.items)
+        canvas = app.log.canvas
+        background = app.background.surfaces[canvas][1]
+        for fraction in (0, 0.5, 1):
+            canvas.yview_moveto(fraction)
+            self.root.update()
+            self.assertEqual(canvas.coords(background), [canvas.canvasx(0), canvas.canvasy(0)])
+            self.assertEqual(canvas.find_all()[0], background)
+        app.state.log.append("A long message that wraps across several lines. " * 20)
+        app.log.refresh(app.state.log)
+        self.root.update()
+        self.assertGreaterEqual(canvas.yview()[1], 0.999)
+        self.assertGreater(canvas.bbox(app.log.items[-1])[3] - canvas.bbox(app.log.items[-1])[1], 40)
+        items = list(app.log.items)
         app.log.canvas.yview_moveto(0.3)
         top = app.log.canvas.canvasy(0)
         app.state.log.append('New entry')
         app.log.refresh(app.state.log)
         self.root.update()
         self.assertAlmostEqual(app.log.canvas.canvasy(0), top, delta=1)
-        self.assertEqual(labels, app.log.labels[:-1])
+        self.assertEqual(items, app.log.items[:-1])
         app.new_game()
         self.root.update()
-        self.assertEqual(labels, app.log.labels[:-1])
+        self.assertEqual(items, app.log.items[:-1])
         self.assertEqual(len(app.log.displayed_messages), 1)
-        self.assertTrue(all(not label.winfo_ismapped() for label in app.log.labels[1:]))
+        self.assertTrue(all(app.log.canvas.itemcget(item, 'state') == 'hidden'
+                            for item in app.log.items[1:]))
         app.perform_action()
         self.root.update()
-        self.assertTrue(app.log.labels[1].winfo_ismapped())
-        self.assertEqual(app.log.labels[1].cget('text'), app.state.log[1])
+        self.assertEqual(app.log.canvas.itemcget(app.log.items[1], 'state'), 'normal')
+        self.assertEqual(app.log.canvas.itemcget(app.log.items[1], 'text'), app.state.log[1])
 
     def test_reserved_cards_are_last_disabled_block_and_refresh_in_place(self):
         app = self.app

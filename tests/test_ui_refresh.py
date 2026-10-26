@@ -45,31 +45,33 @@ class SelectionRefreshTests(unittest.TestCase):
 class LogRefreshTests(unittest.TestCase):
     def make_log(self, at_bottom):
         log = SimpleNamespace(
-            labels=[Mock()], messages=['Old entry'], displayed_messages=['Old entry'], canvas=Mock(),
-            content=Mock(), update_scroll_region=Mock(),
+            items=[1], messages=['Old entry'], displayed_messages=['Old entry'], canvas=Mock(),
+            update_scroll_region=Mock(),
         )
         log.canvas.yview.return_value = (0.8, 1.0) if at_bottom else (0.2, 0.4)
         log.canvas.canvasy.return_value = 200
         log.canvas.winfo_height.return_value = 200
-        log.content.winfo_reqheight.return_value = 1200
-        log.create_message = Mock(side_effect=lambda message: log.labels.append(Mock()))
+        log.canvas.cget.return_value = '0 0 250 1200'
+        log.canvas.create_text.return_value = 2
         return log
 
     def test_unchanged_log_does_not_touch_widgets_or_scroll(self):
         log = self.make_log(False)
         Log.refresh(log, log.messages)
         log.canvas.yview.assert_not_called()
-        log.create_message.assert_not_called()
+        log.canvas.create_text.assert_not_called()
         log.update_scroll_region.assert_not_called()
 
-    def test_append_preserves_existing_labels_and_reading_position(self):
+    def test_append_preserves_existing_text_and_reading_position(self):
         log = self.make_log(False)
-        label = log.labels[0]
+        item = log.items[0]
         log.messages.append('New entry')
         Log.refresh(log, log.messages)
-        log.create_message.assert_called_once_with('New entry')
-        self.assertIs(log.labels[0], label)
-        label.destroy.assert_not_called()
+        log.canvas.create_text.assert_called_once()
+        self.assertEqual(log.canvas.create_text.call_args.kwargs['text'], 'New entry')
+        self.assertEqual(log.items[0], item)
+        log.canvas.itemconfigure.assert_not_called()
+        log.canvas.delete.assert_not_called()
         log.canvas.yview_moveto.assert_called_once_with(200 / 1200)
 
     def test_append_follows_latest_when_already_at_bottom(self):
