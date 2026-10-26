@@ -44,6 +44,25 @@ python tools/resize_token.py images/gold.png assets/gold.png
 
 ## Generating card assets
 
+Compress original card and deck artwork with the optional Pillow-based tool:
+
+```sh
+python tools/convert_artwork.py images artwork
+```
+
+It converts every `card*.png` and `deck*.png` in the source folder to WebP
+at quality 80, drops alpha, and preserves dimensions and base filenames.
+Original PNGs remain unchanged; matching destination files are replaced.
+
+Use `--rgba` to preserve transparency and repeat `--pattern` to select other
+files. WebP color remains lossy at quality 80; alpha is preserved losslessly.
+
+```sh
+python tools/convert_artwork.py images artwork --rgba \
+  --pattern diamond.png --pattern sapphire.png --pattern emerald.png \
+  --pattern ruby.png --pattern onyx.png --pattern gold.png --pattern 'disabled*.png'
+```
+
 With Pillow installed, compose all 90 cards from the high-resolution artwork
 and gem PNGs in `images`, using attributes from `game/initialize.py`:
 
