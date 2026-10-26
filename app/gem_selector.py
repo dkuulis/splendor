@@ -5,6 +5,7 @@ from .drawing import draw_gem, row_centers
 from .styles import (
     GEM_RADIUS,
     GEM_SPACING,
+    MUTED_TEXT_COLOR,
     OUTLINE_PALETTE,
     SELECTION_MARKER_FONT,
     SELECTION_OUTLINE_COLOR,
@@ -15,7 +16,7 @@ BANK_CANVAS_WIDTH = 176
 BANK_CANVAS_HEIGHT = 48
 
 
-class GemColumn(ttk.Frame):
+class GemSelector(ttk.Frame):
     def __init__(self, parent, color, available, on_selection_changed, enabled=True):
         super().__init__(parent)
         self.color = color
@@ -47,7 +48,8 @@ class GemColumn(ttk.Frame):
         self.tokens.tag_bind("gem", "<Button-1>", lambda event: self.toggle_selection())
         self.tokens.tag_bind("gem", "<Enter>", lambda event: self.tokens.configure(cursor="hand2"))
         self.tokens.tag_bind("gem", "<Leave>", lambda event: self.tokens.configure(cursor=""))
-        ttk.Label(self, text=color).pack()
+        if not available:
+            self.tokens.create_text(BANK_CANVAS_WIDTH / 2, y, text=color, fill=MUTED_TEXT_COLOR)
 
     def toggle_selection(self):
         if not self.enabled or not self.available:

@@ -56,16 +56,17 @@ class App:
         self.computer = PlayerPanel(field, state.players[1], self.player_subtitle(state.players[1]),
                                     active=state.player_status(state.players[1]) == "active")
         self.computer.pack(fill="x")
-        self.market = MarketPanel(field, state.market, state.decks, self.buy_card,
+        table = ttk.Frame(field)
+        table.pack(pady=10)
+        self.market = MarketPanel(table, state.market, state.decks, self.buy_card,
                                   lambda card: self.manual_turn and state.can_buy(card))
-        self.market.pack(pady=10)
+        self.market.grid(row=0, column=1)
         self.bank = BankPanel(
-            field, state.bank, self.pass_turn, self.take_gems,
+            table, state.bank, self.pass_turn, self.take_gems,
             enabled=self.manual_turn,
-            disabled_text="Game over" if state.turn.finished else "Computer is playing…",
             max_take=state.max_take,
         )
-        self.bank.pack(fill="x", pady=(0, 10))
+        self.bank.grid(row=0, column=0, sticky="ns", padx=(0, 12))
         self.player = PlayerPanel(field, state.players[0], self.player_subtitle(state.players[0]),
                                   active=state.player_status(state.players[0]) == "active")
         self.player.pack(fill="x")
