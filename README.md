@@ -40,6 +40,16 @@ and class in `ai/__init__.py`. The dropdown uses this registry automatically.
 Strategies should run quickly because they execute on the UI thread; a future
 search-based AI will need background execution.
 
+## Background assets
+
+The app loads nine `assets/background_<row>_<column>.png` fragments separately.
+Corners retain their native size; the edges and center stretch to fill the window.
+To regenerate the fragments from artwork with Pillow installed:
+
+```sh
+python tools/split_background.py artwork/background.webp assets --corner-size 260
+```
+
 ## Resizing token assets
 
 The optional asset tool requires Pillow (`python -m pip install Pillow`). It

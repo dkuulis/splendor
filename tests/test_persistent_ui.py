@@ -52,13 +52,17 @@ class PersistentUITests(unittest.TestCase):
             # Every corner retains its original pixels and proportions even
             # when the middle of the window is stretched in either direction.
             w, h = background.size
-            sw, sh = background.source.width(), background.source.height()
             for dx, dy in ((10, 10), (80, 150), (230, 30), (30, 230), (259, 259)):
-                for x, sx in ((dx, dx), (w - 1 - dx, sw - 1 - dx)):
-                    for y, sy in ((dy, dy), (h - 1 - dy, sh - 1 - dy)):
-                        self.assertEqual(background.image.get(x, y), background.source.get(sx, sy))
+                for column, x in ((0, dx), (2, w - 1 - dx)):
+                    for row, y in ((0, dy), (2, h - 1 - dy)):
+                        corner = background.fragments[row, column]
+                        sx = dx if column == 0 else corner.width() - 1 - dx
+                        sy = dy if row == 0 else corner.height() - 1 - dy
+                        self.assertEqual(background.image.get(x, y), corner.get(sx, sy))
+            center = background.fragments[1, 1]
             self.assertEqual(background.image.get(w // 2, h // 2),
-                             background.source.get(sw // 2, sh // 2))
+                             center.get(center.width() // 2, center.height() // 2))
+            self.assertNotIn("background", self.root._splendor_images)
         surfaces = dict(background.surfaces)
         self.app.new_game()
         self.root.update()

@@ -4,24 +4,39 @@ import tkinter as tk
 from tkinter import ttk
 
 from .assets import load_image
-from .styles import BACKGROUND_CORNER_SIZE
 
 
-def source_coordinates(length, source_length):
-    border = BACKGROUND_CORNER_SIZE
-    if length <= 2 * border:
-        return [position * source_length // length for position in range(length)]
-    # Preserve both ends at native size; stretch only the undecorated middle.
-    middle = [border + position * (source_length - 2 * border) // (length - 2 * border)
-              for position in range(length - 2 * border)]
-    return list(range(border)) + middle + list(range(source_length - border, source_length))
+def scale_fragment(master, source, width, height):
+    if (width, height) == (source.width(), source.height()):
+        return source
+    # Tk supports only integer zoom factors; copy resampled pixel strips to
+    # stretch each fragment without tiling or adding a runtime dependency.
+    horizontal = source
+    if width != source.width():
+        horizontal = tk.PhotoImage(master=master, width=width, height=source.height())
+        for x in range(width):
+            sx = x * source.width() // width
+            horizontal.tk.call(str(horizontal), "copy", str(source),
+                               "-from", sx, 0, sx + 1, source.height(), "-to", x, 0)
+    if height == source.height():
+        return horizontal
+    scaled = tk.PhotoImage(master=master, width=width, height=height)
+    for y in range(height):
+        sy = y * source.height() // height
+        scaled.tk.call(str(scaled), "copy", str(horizontal),
+                       "-from", 0, sy, width, sy + 1, "-to", 0, y)
+    return scaled
 
 
 class Background:
     def __init__(self, root, excluded):
         self.root = root
         self.excluded = excluded
-        self.source = load_image(root, "background")
+        self.fragments = {
+            (row, column): load_image(root, f"background_{vertical}_{horizontal}")
+            for row, vertical in enumerate(("top", "middle", "bottom"))
+            for column, horizontal in enumerate(("left", "center", "right"))
+        }
         self.image = tk.PhotoImage(master=root)
         self.size = None
         self.surfaces = {}
@@ -61,20 +76,18 @@ class Background:
 
     def resize(self, width, height):
         self.image.configure(width=width, height=height)
-        # Tk only offers integer zoom factors. Resample in two passes of
-        # one-pixel strips for arbitrary window sizes without a runtime dependency.
-        # Fixed ends on both axes preserve all four corners. Edge strips stretch
-        # along one axis and the center along both, without repeating artwork.
-        source_width, source_height = self.source.width(), self.source.height()
-        horizontal = tk.PhotoImage(master=self.root, width=width, height=source_height)
-        for x, source_x in enumerate(source_coordinates(width, source_width)):
-            horizontal.tk.call(str(horizontal), "copy", str(self.source),
-                               "-from", source_x, 0, source_x + 1, source_height,
-                               "-to", x, 0)
-        for y, source_y in enumerate(source_coordinates(height, source_height)):
-            self.image.tk.call(str(self.image), "copy", str(horizontal),
-                               "-from", 0, source_y, width, source_y + 1,
-                               "-to", 0, y)
+        corner = self.fragments[0, 0]
+        edge_width = min(corner.width(), width // 2)
+        edge_height = min(corner.height(), height // 2)
+        xs = (0, edge_width, width - edge_width, width)
+        ys = (0, edge_height, height - edge_height, height)
+        for (row, column), fragment in self.fragments.items():
+            w = xs[column + 1] - xs[column]
+            h = ys[row + 1] - ys[row]
+            if w and h:
+                scaled = scale_fragment(self.root, fragment, w, h)
+                self.image.tk.call(str(self.image), "copy", str(scaled),
+                                   "-to", xs[column], ys[row])
         self.size = (width, height)
 
     def draw(self):
