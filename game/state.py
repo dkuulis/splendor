@@ -58,27 +58,33 @@ class State:
         self.selected_card = None
 
     @property
-    def action_label(self):
+    def action_kind(self):
+        """Infer the pending action; taking no tokens is a pass."""
         if self.selected_card is not None:
-            return "Reserve" if self.selected_tokens.get(GOLD, 0) else "Buy"
-        return "Take"
+            return "reserve" if self.selected_tokens.get(GOLD, 0) else "buy"
+        return "take"
+
+    @property
+    def action_label(self):
+        return self.action_kind.capitalize()
 
     @property
     def action_error(self):
         """Return why the selected action is illegal, or None when it is legal."""
-        if self.selected_card is not None:
-            if self.selected_tokens.get(GOLD, 0):
-                return self.reserve_card_error()
+        kind = self.action_kind
+        if kind == "reserve":
+            return self.reserve_card_error()
+        if kind == "buy":
             return self.buy_card_error()
         return self.take_tokens_error()
 
     def perform_action(self):
         """Validate and execute the selection, passing when nothing is selected."""
-        if self.selected_card is not None:
-            if self.selected_tokens.get(GOLD, 0):
-                self.reserve_card()
-            else:
-                self.buy_card()
+        kind = self.action_kind
+        if kind == "reserve":
+            self.reserve_card()
+        elif kind == "buy":
+            self.buy_card()
         else:
             self.take_tokens()
 
