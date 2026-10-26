@@ -3,7 +3,7 @@
 from tkinter import ttk
 
 from .bank_panel import BankPanel
-from .footer import Footer
+from .log import Log
 from .header import Header
 from .market_panel import MarketPanel
 from .player_panel import PlayerPanel
@@ -18,16 +18,24 @@ class App:
 
         self.header = Header(shell, state)
         self.header.pack(fill="x")
-        self.computer = PlayerPanel(shell, state.players[1], self.player_subtitle(state.players[1]))
+
+        body = ttk.Frame(shell)
+        body.pack(fill="both", expand=True, pady=(12, 0))
+        body.columnconfigure(0, weight=1)
+        body.rowconfigure(0, weight=1)
+        field = ttk.Frame(body)
+        field.grid(row=0, column=0, sticky="nsew")
+        self.log = Log(body)
+        self.log.grid(row=0, column=1, sticky="nsew", padx=(16, 0))
+
+        self.computer = PlayerPanel(field, state.players[1], self.player_subtitle(state.players[1]))
         self.computer.pack(fill="x")
-        self.market = MarketPanel(shell, state.market, state.decks)
+        self.market = MarketPanel(field, state.market, state.decks)
         self.market.pack(fill="both", expand=True, pady=10)
-        self.bank = BankPanel(shell, state.bank)
+        self.bank = BankPanel(field, state.bank)
         self.bank.pack(fill="x", pady=(0, 10))
-        self.player = PlayerPanel(shell, state.players[0], self.player_subtitle(state.players[0]))
+        self.player = PlayerPanel(field, state.players[0], self.player_subtitle(state.players[0]))
         self.player.pack(fill="x")
-        self.footer = Footer(shell, self.bank.selection_text)
-        self.footer.pack(fill="x")
 
         self.size_window(root)
 
@@ -41,7 +49,7 @@ class App:
 
     def size_window(self, root):
         # Measure the complete layout using the current platform's fonts and
-        # widget sizes, including the footer, before setting window bounds.
+        # widget sizes, including the log, before setting window bounds.
         root.update_idletasks()
         width = max(1100, root.winfo_reqwidth())
         height = root.winfo_reqheight()

@@ -16,5 +16,3 @@ class Header(ttk.Frame):
         ttk.Label(header, text="  vs  ".join(player.name for player in self.state.players), font=SUBTITLE_FONT).pack(side="left", padx=24)
         ttk.Button(header, text="New game", state="disabled").pack(side="right")
         ttk.Button(header, text="Rules", state="disabled").pack(side="right", padx=8)
-
-        ttk.Label(self, text="Layout preview • Sample cards and balances • Gameplay coming next").pack(anchor="w", pady=(8, 14))

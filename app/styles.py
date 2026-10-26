@@ -10,9 +10,9 @@ SELECTION_OUTLINE_COLOR = "#f59e0b"
 
 TITLE_FONT = ("Helvetica", 24, "bold")
 SUBTITLE_FONT = ("Helvetica", 12)
+LOG_FONT = ("Helvetica", 11)
 DECK_LABEL_FONT = ("Helvetica", 11, "bold")
 DECK_SYMBOL_FONT = ("Helvetica", 16, "bold")
 POINTS_FONT = ("Helvetica", 28, "bold")
 CARD_DETAIL_FONT = ("Helvetica", 13, "bold")
 SELECTION_MARKER_FONT = ("Helvetica", 20, "bold")
-
