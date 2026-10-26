@@ -11,14 +11,12 @@ class MarketPanel(ttk.Frame):
         self.card_panels = {}
 
         for row, tier in enumerate((3, 2, 1)):
-            self.rowconfigure(row, weight=1, uniform="rows")
             deck = DeckPanel(self, tier, decks[tier])
-            deck.grid(row=row, column=0, sticky="nsew", padx=(0, 8), pady=4)
+            deck.grid(row=row, column=0, padx=4, pady=4)
             self.deck_panels[tier] = deck
             self.card_panels[tier] = []
 
             for slot, card in enumerate(market[tier]):
-                self.columnconfigure(slot + 1, weight=1, uniform="cards")
                 panel = CardPanel(self, card, on_buy, can_buy(card) if can_buy else False)
-                panel.grid(row=row, column=slot + 1, sticky="nsew", padx=4, pady=4)
+                panel.grid(row=row, column=slot + 1, padx=4, pady=4)
                 self.card_panels[tier].append(panel)

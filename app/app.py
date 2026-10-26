@@ -57,7 +57,7 @@ class App:
         self.computer.pack(fill="x")
         self.market = MarketPanel(field, state.market, state.decks, self.buy_card,
                                   lambda card: self.manual_turn and state.can_buy(card))
-        self.market.pack(fill="both", expand=True, pady=10)
+        self.market.pack(pady=10)
         self.bank = BankPanel(
             field, state.bank, self.pass_turn, self.take_gems,
             enabled=self.manual_turn,
