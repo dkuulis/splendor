@@ -4,9 +4,10 @@ A two-player Splendour desktop UI using Tkinter and themed `ttk` widgets.
 
 The app starts with shuffled decks and empty player inventories. The Computer
 dropdown switches between Manual (the default), Pass-only AI, and Greedy AI.
-Pass switches turns; two consecutive passes end
+Go! passes when no gems are selected; two consecutive passes end
 the game using score and card-count tie-breaks. The log records actual actions.
-Select one to three different gems and use Take selected gems to collect them.
+Select one to three different gems and use Go! to collect them. The button is
+disabled when the selection is invalid.
 The 10-gem inventory limit is enforced. Click anywhere on an affordable market
 card to buy it, applying owned-card discounts and returning payment to the bank.
 Purchases update scores, replace market cards, and trigger the final round at

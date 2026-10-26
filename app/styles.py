@@ -8,6 +8,7 @@ MUTED_TEXT_COLOR = "#64748b"
 LOG_BACKGROUND = "#f8fafc"
 PLAYER_PANEL_BACKGROUND = "#ffffff"
 ACTIVE_PLAYER_BORDER = "#c5b58d"
+INACTIVE_PLAYER_BORDER = "#e5e7eb"
 
 LOG_FONT = ("Helvetica", 11)
 POINTS_FONT = ("Forum", -48, "bold")

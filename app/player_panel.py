@@ -7,6 +7,7 @@ from .player_column import PlayerColumn
 
 from .styles import (
     ACTIVE_PLAYER_BORDER,
+    INACTIVE_PLAYER_BORDER,
     MARKET_CARD_HEIGHT,
     PLAYER_COLUMN_GAP,
     PLAYER_PANEL_BACKGROUND,
@@ -16,7 +17,7 @@ from .styles import (
 
 class PlayerPanel(tk.Frame):
     def __init__(self, parent, player, active=False):
-        border = ACTIVE_PLAYER_BORDER if active else PLAYER_PANEL_BACKGROUND
+        border = ACTIVE_PLAYER_BORDER if active else INACTIVE_PLAYER_BORDER
         super().__init__(parent, background=PLAYER_PANEL_BACKGROUND, highlightthickness=2,
                          highlightbackground=border, highlightcolor=border, borderwidth=0)
         # Grid's row minimum takes effect only when there are children. Reserve

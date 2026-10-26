@@ -6,7 +6,6 @@ from .styles import (
     GEM_SPACING,
     GEM_SIZE,
     GEM_SELECTION_RAISE,
-    MUTED_TEXT_COLOR,
     gem_centers,
 )
 
@@ -37,8 +36,6 @@ class GemSelector(ttk.Frame):
         self.tokens.tag_bind("gem", "<Button-1>", lambda event: self.toggle_selection())
         self.tokens.tag_bind("gem", "<Enter>", lambda event: self.tokens.configure(cursor="hand2"))
         self.tokens.tag_bind("gem", "<Leave>", lambda event: self.tokens.configure(cursor=""))
-        if not available:
-            self.tokens.create_text(BANK_CANVAS_WIDTH / 2, y, text=color, fill=MUTED_TEXT_COLOR)
 
     def toggle_selection(self):
         if not self.enabled or not self.available:
