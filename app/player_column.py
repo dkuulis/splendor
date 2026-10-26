@@ -26,7 +26,7 @@ class PlayerColumn(ttk.Frame):
         stack.pack()
         start = (width - stack_width) / 2
         for index, card in enumerate(cards):
-            CardPanel.draw(stack, card, x=start + index * PLAYER_CARD_OFFSET)
+            CardPanel.draw(stack, card, x=start + index * PLAYER_CARD_OFFSET, owned=True)
         if not cards:
             stack.create_text(width / 2, MARKET_CARD_HEIGHT / 2,
                               text=color, fill=MUTED_TEXT_COLOR)
