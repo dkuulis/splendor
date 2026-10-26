@@ -6,5 +6,6 @@ action through State's action methods. Strategies must not depend on Tkinter.
 """
 
 from .pass_only import PassOnlyAI
+from .greedy import GreedyAI
 
-STRATEGIES = {"Pass-only AI": PassOnlyAI}
+STRATEGIES = {"Pass-only AI": PassOnlyAI, "Greedy AI": GreedyAI}
