@@ -1,8 +1,9 @@
+import tkinter as tk
 from tkinter import ttk
 
+from .assets import load_image
 from .card_panel import CardPanel
-from .deck_panel import DeckPanel
-from .styles import MARKET_ROW_PADDING, MARKET_CARD_WIDTH, MARKET_CARD_HEIGHT
+from .styles import DECK_PALETTE, MARKET_ROW_PADDING, MARKET_CARD_WIDTH, MARKET_CARD_HEIGHT
 
 
 class MarketPanel(ttk.Frame):
@@ -13,7 +14,10 @@ class MarketPanel(ttk.Frame):
         self.can_buy = can_buy
 
         for row, tier in enumerate((3, 2, 1)):
-            deck = DeckPanel(self, tier)
+            deck = tk.Canvas(self, background=DECK_PALETTE[tier],
+                             width=MARKET_CARD_WIDTH, height=MARKET_CARD_HEIGHT,
+                             highlightthickness=0, borderwidth=0)
+            deck.create_image(0, 0, image=load_image(deck, f"deck_level_{tier}"), anchor="nw")
             deck.grid(row=row, column=0, padx=4, pady=MARKET_ROW_PADDING)
 
             self.slots[tier] = []
@@ -21,7 +25,7 @@ class MarketPanel(ttk.Frame):
                 space = ttk.Frame(self, width=MARKET_CARD_WIDTH, height=MARKET_CARD_HEIGHT)
                 space.grid_propagate(False)
                 space.grid(row=row, column=slot + 1, padx=4, pady=MARKET_ROW_PADDING)
-                panel = CardPanel(space, on_buy=on_select)
+                panel = CardPanel(space, on_select=on_select)
                 panel.grid(row=0, column=0)
                 self.slots[tier].append(panel)
         self.refresh(market, selected_card)

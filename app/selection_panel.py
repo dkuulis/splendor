@@ -23,7 +23,7 @@ class SelectionPanel(tk.Frame):
         self.on_deselect = on_deselect
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
-        self.card = CardPanel(self, on_buy=on_card)
+        self.card = CardPanel(self, on_select=on_card)
         self.card.grid(row=0, column=0)
         self.tokens = tk.Canvas(self, width=TOKEN_SIZE + 4 * TOKEN_SPACING, height=TOKEN_SIZE,
                                 background=CARD_BACKGROUND, highlightthickness=0)
