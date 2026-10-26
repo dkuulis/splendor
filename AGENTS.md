@@ -1,139 +1,92 @@
 # Project overview
 
 Splendor is a two-player desktop game built with Python, Tkinter, and ttk.
-The human starts; the computer can use manual control or AI.
+The human starts; `--ai` selects the computer strategy or manual control.
+Follow the simplified rules in `RULES.md`; do not introduce full Splendor
+rules without a request.
 
-`RULES.md` describes the simplified rules; do not introduce full Splendor rules without a request.
+## Setup and checks
 
-## Setup and commands
+- Use the project `.venv` when available. Runtime requires Python 3.9+ with
+  Tkinter and no third-party packages. Asset tools additionally need Pillow.
+- Setup and platform-specific installation instructions are in `README.md`.
+  On macOS, use modern Tk; Apple's old system Tk can produce blank windows.
+- Launch: `.venv/bin/python main.py` (defaults to greedy AI).
+- Tests: `.venv/bin/python -m unittest discover -s tests`.
+- Include GUI tests: `SPLENDOR_GUI_TESTS=1 .venv/bin/python -m unittest discover -s tests`.
+  These need window-server access and may fail inside a sandbox.
+- Whitespace: `git diff --check`.
 
-- Use the project `.venv` when available. The application needs Python 3.9+
-  with Tkinter; it has no third-party runtime dependencies.
-- Create an environment with `python3 -m venv .venv`.
-- Launch: `.venv/bin/python main.py`.
-- Run tests: `.venv/bin/python -m unittest discover -s tests`.
-- Check whitespace: `git diff --check`.
-- Check Tk support: `.venv/bin/python -m tkinter`.
-- On macOS, use a Python installation with modern Tk. The setup documented
-  in README uses Homebrew `python@3.13` and `python-tk@3.13`; Apple's old
-  system Tk can produce blank windows. GUI smoke checks need window-server
-  access and may fail inside a sandbox even when the code is valid.
-- Asset tools additionally require Pillow: `python -m pip install Pillow`
-  in the environment used to run those tools.
+## Code responsibilities
 
-## Structure and responsibilities
+- `main.py` creates Tk, the initial state, and the selected AI strategy.
+- `game/` contains plain Python models and rules; keep it independent of Tkinter.
+  `state.py` owns selection, action validation/execution, and market replacement.
+  Keep validation beside its action.
+- `player.py` owns holdings and derived points, discounts, capacity, and payment.
+  Use these calculations through the relevant player.
+- `State.finish_turn()` awards a noble, clears selection, and advances the turn.
+  `noble.py` handles awards; `turn.py` handles final rounds, completion, and ties.
+  `initialize.py` defines cards, nobles, and shuffled setup.
+- `ai/` strategies implement `play_turn(state)` and perform one legal action
+  through State. Register them in `ai/__init__.py`.
+- `app/app.py` assembles panels, dispatches actions, and schedules AI callbacks.
+  AI runs on the UI thread: keep strategies quick and cancel pending callbacks
+  on Restart and window destruction.
+- `app/selection_panel.py` contains Buy, Reserve, Take, and Restart.
+  Take with zero gems ends the turn without collecting.
+- `app/divider_panel.py` shows scores and turn/result highlights. A winner
+  stays highlighted with laurels; a draw leaves both dividers inactive.
+  There is no header, separate score panel, or log panel.
+- Keep shared visual constants in `app/styles.py`. Use `app/assets.py` to
+  load and cache images; retain Python references to Tk PhotoImage objects.
+- Hide exhausted market decks without shifting card alignment; restore them
+  when replenished, including on Restart.
+- `tests/` uses standard-library unittest; `tools/` contains optional asset tools.
 
-- `main.py`: creates Tk and explicitly passes `create_initial_state()` to App.
-- `game/`: plain Python model objects, legal actions, turn transitions, and
-  initialization. Keep this package independent of Tkinter.
-- `game/state.py`: owns shared game state, selection, action validation and
-  execution, and market replacement. Keep validation beside its action.
-  `State.finish_turn()` coordinates noble awards, selection clearing, and
-  turn progression.
-- `game/player.py`: owns player holdings and derived calculations: points,
-  discounts, `max_take`, `card_cost(card)`, and `card_payment(card)`.
-  Call these through the relevant player, usually `state.current_player`.
-- `game/noble.py`: defines Noble and `assign_noble(player, nobles)`. The helper
-  transfers the first qualifying noble and returns a log message or `None`;
-  the caller appends the message to the log.
-- `game/turn.py`: defines Turn and `advance_turn(state)`, which handles final
-  round detection, game completion, tie-breaking, and player/round advancement.
-- `game/initialize.py`: all 90 card definitions, ten noble definitions, and
-  shuffled initial setup.
-- `ai/`: strategies implementing `play_turn(state)`. Each performs one legal
-  action through State. Register strategies in `ai/__init__.py`.
-- `app/app.py`: assembles panels, dispatches actions, refreshes the UI, and
-  schedules/cancels AI callbacks. AI currently runs on the UI thread; keep
-  strategies quick and preserve cancellation when changing mode/new game.
-- Other `app/` modules implement market, card, deck, player, score, header, supply, selection
-  and log controls. Keep shared visual constants in `app/styles.py`.
-- `MarketPanel` receives both market cards and decks. Hide a tier's deck when
-  `State.decks[tier]` is empty, preserving market alignment; show it again when
-  replenished, including on a new game.
-- `app/nobles_panel.py` displays available nobles left of supply and selection.
-  The player panel's leftmost column stacks owned nobles with gold coins
-  overlaid, using the same display code as cards and gems.
-- `tests/`: standard-library unittest coverage for actions and AI.
-- `tools/`: optional command-line artwork conversion and asset generation.
-
-## Game model conventions
+## Model conventions
 
 - Prefer simple objects, dictionaries, and lists. Do not introduce dataclasses
-  or typing imports for these models. Keep abstractions small and direct.
-- `TOKENS` in `game/constants.py` defines canonical order. Use it for
-  rendering, cost display, selections, and log output. Payment calculations
-  iterate over cost entries directly; they do not need display ordering.
-- `State.supply` contains available token counts;
-- `Player.tokens` contains holdings.
-- `State.selected_tokens` contains pending counts, currently one per selected
-  type. Selection does not change supply until `take_tokens()` succeeds.
-  Finishing a turn clears selection.
-- Missing entries in sparse count dictionaries (tokens, costs, selections)
-  mean zero. Use direct indexing for guaranteed gem keys in `Player.cards`
-  and `Player.discounts`, and tier keys in market/decks.
-- `Card.token` identifies its permanent discount type. `Card.cost` is a token
-  count dictionary. `Player.cards` maps each gem color (excluding Gold) to a
-  list of owned cards, initialized empty. `Player.discounts` includes every
-  gem color, with zero for empty lists. Discounts are derived only from owned
-  cards; points include owned cards and nobles.
-- `Player.max_take` limits collection by remaining token capacity and the
-  per-turn maximum; State separately validates supply and selected types.
-  `Player.card_payment(card)` uses matching gems before gold and returns only
-  nonzero payment entries. `State.can_buy(card)` checks affordability, card
-  availability, and whether the game has ended.
-- `State.nobles` is a list of available nobles; `Player.nobles` is a list of
-  owned nobles. `Noble.requirements` counts permanent card bonuses, not tokens.
-  Qualifying for a noble does not spend cards or tokens.
-- `finish_turn()` awards the first qualifying available noble, at most one
-  per turn, before checking the final round and switching players. Awarded
-  nobles leave `State.nobles` without replacement.
-- `State.market` and `State.decks` always contain tiers 1, 2, and 3, with empty
-  lists for exhausted tiers.
-- `State.log` is a list of action messages rendered by the log panel.
+  or typing imports for the models.
+- Use `TOKENS` for display, selection, and log ordering. Payment calculations
+  can iterate over cost entries directly.
+- `State.supply` holds available tokens; `Player.tokens` holds owned tokens.
+  Selection is pending and does not transfer tokens. Finishing a turn clears it.
+- Missing entries in sparse token/cost/selection dictionaries mean zero.
+  Gem keys in `Player.cards` and `Player.discounts`, and tiers 1–3 in
+  `State.market` and `State.decks`, are always present; index them directly.
+- Discounts derive only from owned cards. Points include cards and nobles.
+  Payments use matching gems before gold and include only nonzero amounts.
+- Noble requirements count permanent card bonuses, not tokens. Award at most
+  the first qualifying available noble each turn, without spending holdings
+  or replacing the noble, before checking turn completion.
+- `State.log` retains internal action history; it is not displayed.
 
 ## Artwork and assets
 
 - `images/`: high-resolution originals and previews, ignored by Git.
-- `artwork/`: tracked quality-80 WebP source artwork. Preserve alpha for
-  tokens, piles, and overlays; card/deck backgrounds may use RGB.
-- `assets/`: runtime PNGs.
-- `font/`: Forum font and license.
-- `prompts/`: image and artwork generation prompts.
-- Card assets are 150×210; card IDs match asset filenames without extensions.
-  The generator prefers `card_<nnn>_l<level>_<token>.webp`, falling back to
-  `card_l<level>_<token>.webp`.
-- Single token assets are 60×60. Pile assets retain approximately 60px per
-  token, not per entire image. Names are `<token>.png` for one and
-  `<token><count>.png` for multiple; gems support 2–7, gold 2–5.
-- `artwork/gems.txt` and `artwork/golds.txt` record complete source-token
-  diameters for resizing.
-- Retain Python references to displayed Tk PhotoImage objects. A list of
-  current images is sufficient.
-
-Example asset commands (run with a Pillow-enabled Python):
-
-```sh
-python tools/convert_artwork.py images artwork
-python tools/convert_artwork.py images artwork --rgba --pattern 'ruby*.png'
-python tools/resize_token.py artwork/gold.webp assets/gold.png
-python tools/resize_pile.py artwork/diamond2.webp assets/diamond2.png --token-diameter 770
-python tools/generate_cards.py artwork assets --card 78
-```
-
-Conversion and generation tools replace matching outputs. Use a temporary
-output directory for smoke checks, and regenerate only requested assets.
+- `artwork/`: tracked quality-80 WebP sources. Preserve alpha where needed,
+  including tokens, piles, dividers, plaques, and laurels.
+- `assets/`: runtime PNGs; `font/`: Forum font and license;
+  `prompts/`: saved generation prompts.
+- Cards are 150×210; card IDs match runtime filenames without extensions.
+  Card generation prefers per-card artwork, falling back to tier/color artwork.
+- Single tokens are 60×60. Piles retain approximately 60 px per token,
+  not per image. Source-token diameters are in `artwork/gems.txt` and
+  `artwork/golds.txt`.
+- Conversion/generation commands are documented in `README.md` and tool
+  `--help`. They overwrite matching outputs: use temporary directories for
+  smoke checks and regenerate only requested assets.
 
 ## Working conventions
 
 - Keep changes focused and preserve unrelated user edits.
-- Prefer straightforward functions and loops over extra wrapper classes or
-  defensive guards around established model invariants.
-- Keep arguments required when callers already supply them. Add defaults only
-  for meaningful optional behavior, not to avoid updating call sites. Pass
-  interaction state such as `enabled` explicitly; initialize empty UI
-  placeholders as disabled.
-- Run relevant unit tests for logic changes. For UI changes, also check Tk
-  construction, callbacks, and the affected layout where possible.
-- Prefer behavioral tests; avoid tests that merely duplicate static
-  definitions or style constants.
-- Add comments for rare/obscure library calls/parameters/options.
+- Prefer straightforward functions and loops over extra wrappers or defensive
+  guards around established invariants.
+- Keep arguments required when callers supply them. Add defaults only for
+  meaningful optional behavior. Pass interaction state such as `enabled`
+  explicitly; initialize empty UI placeholders as disabled.
+- Run relevant tests for logic changes. For UI changes, also check Tk
+  construction, callbacks, and affected layout where possible.
+- Prefer behavioral tests over checks that duplicate definitions or constants.
+- Comment obscure library calls and options.
