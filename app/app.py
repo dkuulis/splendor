@@ -67,21 +67,21 @@ class App:
             winner = state.turn.finished and state.turn.winner == index
             active = winner if state.turn.finished else state.is_active_player(state.players[index])
             divider.refresh(active, state.players[index].points, winner)
-        self.computer.refresh_selection(state.selected_card)
-        self.player.refresh_selection(state.selected_card)
-        self.market.refresh(state.market, state.decks, state.selected_card, enabled=self.manual_turn)
+        self.computer.refresh_selection(state.selection.card)
+        self.player.refresh_selection(state.selection.card)
+        self.market.refresh(state.market, state.decks, state.selection.card, enabled=self.manual_turn)
         self.nobles.refresh(state.nobles)
-        self.supply.refresh(state.supply, state.selected_tokens, enabled=self.manual_turn)
+        self.supply.refresh(state.supply, state.selection.tokens, enabled=self.manual_turn)
         self.selection.refresh(state, enabled=self.manual_turn)
         self.size_window(self.root)
         if self.ai_turn:
             self.pending_ai = self.root.after(500, self.run_ai)
 
     def refresh_selection(self):
-        self.supply.refresh(self.state.supply, self.state.selected_tokens, enabled=self.manual_turn)
-        self.market.refresh_selection(self.state.selected_card)
-        self.computer.refresh_selection(self.state.selected_card)
-        self.player.refresh_selection(self.state.selected_card)
+        self.supply.refresh(self.state.supply, self.state.selection.tokens, enabled=self.manual_turn)
+        self.market.refresh_selection(self.state.selection.card)
+        self.computer.refresh_selection(self.state.selection.card)
+        self.player.refresh_selection(self.state.selection.card)
         self.selection.refresh(self.state, enabled=self.manual_turn)
 
     @property
@@ -115,17 +115,20 @@ class App:
 
     def select_card(self, card):
         if self.manual_turn:
-            self.state.select_card(card)
+            if self.state.selection.action_kind == "reserve":
+                self.state.selection.reserve_card(card, self.state)
+            else:
+                self.state.selection.select_card(card, self.state)
             self.refresh_selection()
 
     def select_token(self, token):
         if self.manual_turn:
-            self.state.select_token(token)
+            self.state.selection.select_token(token, self.state)
             self.refresh_selection()
 
     def deselect_token(self, token):
         if self.manual_turn:
-            self.state.deselect_token(token)
+            self.state.selection.deselect_token(token, self.state)
             self.refresh_selection()
 
     def perform_action(self):

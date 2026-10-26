@@ -5,7 +5,7 @@ class GreedyAI:
     """Buy for points, otherwise collect gems toward the quickest cards."""
 
     def play_turn(self, state):
-        state.clear_selection()
+        state.selection.clear()
         cards = ([card for row in state.market.values() for card in row]
                  + state.current_player.reserved_cards)
         if self.buy_card(state, cards):
@@ -19,7 +19,7 @@ class GreedyAI:
         affordable = [card for card in cards if state.can_buy(card)]
         if affordable:
             card = min(affordable, key=lambda card: (-card.points, sum(state.current_player.card_cost(card).values())))
-            state.select_card(card)
+            state.selection.select_card(card, state)
             state.perform_action()
             return True
         return False
@@ -41,7 +41,7 @@ class GreedyAI:
         if not tokens:
             return False
         for token in tokens:
-            state.select_token(token)
+            state.selection.select_token(token, state)
         state.perform_action()
         return True
 

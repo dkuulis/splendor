@@ -51,7 +51,7 @@ class TakeTokensTests(unittest.TestCase):
                 state.turn.finished = finished
                 before = copy.deepcopy((state.supply, state.current_player.tokens,
                                         vars(state.turn), state.log))
-                state.selected_tokens = dict(Counter(tokens))
+                state.selection.tokens = dict(Counter(tokens))
                 self.assertEqual(state.take_tokens_error(), expected)
                 self.assertEqual((state.supply, state.current_player.tokens,
                                   vars(state.turn), state.log), before)
@@ -64,12 +64,12 @@ class TakeTokensTests(unittest.TestCase):
 
     def test_transfer_and_manual_second_player(self):
         state = State()
-        state.selected_tokens = {RUBY: 1, ONYX: 1, DIAMOND: 1}
+        state.selection.tokens = {RUBY: 1, ONYX: 1, DIAMOND: 1}
         state.take_tokens()
         self.assertEqual(state.players[0].tokens, {RUBY: 1, ONYX: 1, DIAMOND: 1})
         self.assertEqual(state.supply[RUBY], 3)
         self.assertEqual(state.turn.active_player, 1)
-        state.selected_tokens = {RUBY: 1}
+        state.selection.tokens = {RUBY: 1}
         state.take_tokens()
         self.assertEqual(state.players[1].tokens, {RUBY: 1})
         self.assertEqual(state.supply[RUBY], 2)
@@ -84,7 +84,7 @@ class TakeTokensTests(unittest.TestCase):
                 state.supply[SAPPHIRE] = 0
                 before = copy.deepcopy((state.supply, state.players[0].tokens, vars(state.turn), state.log))
                 with self.assertRaises(ValueError):
-                    state.selected_tokens = dict(Counter(tokens))
+                    state.selection.tokens = dict(Counter(tokens))
                     state.take_tokens()
                 self.assertEqual((state.supply, state.players[0].tokens, vars(state.turn), state.log), before)
 
@@ -92,20 +92,20 @@ class TakeTokensTests(unittest.TestCase):
         state = State()
         state.players[0].tokens = {RUBY: 9}
         with self.assertRaises(ValueError):
-            state.selected_tokens = {ONYX: 1, EMERALD: 1}
+            state.selection.tokens = {ONYX: 1, EMERALD: 1}
             state.take_tokens()
-        state.selected_tokens = {ONYX: 1}
+        state.selection.tokens = {ONYX: 1}
         state.take_tokens()
         self.assertEqual(sum(state.players[0].tokens.values()), 10)
         state.pass_turn()
         with self.assertRaises(ValueError):
-            state.selected_tokens = {ONYX: 1}
+            state.selection.tokens = {ONYX: 1}
             state.take_tokens()
         self.assertEqual(state.turn.consecutive_passes, 1)
 
         state = State()
         state.pass_turn()
-        state.selected_tokens = {RUBY: 1}
+        state.selection.tokens = {RUBY: 1}
         state.take_tokens()
         self.assertEqual(state.turn.consecutive_passes, 0)
         state.pass_turn()
@@ -116,7 +116,7 @@ class TakeTokensTests(unittest.TestCase):
         state.pass_turn()
         state.pass_turn()
         with self.assertRaises(ValueError):
-            state.selected_tokens = {RUBY: 1}
+            state.selection.tokens = {RUBY: 1}
             state.take_tokens()
         self.assertEqual(state.players[1].tokens, {})
 

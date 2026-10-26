@@ -12,16 +12,16 @@ class BuyReservedCardTests(unittest.TestCase):
 
     def test_reserved_card_selects_toggles_and_rejects_gold(self):
         state = self.state
-        state.select_card(self.card)
-        self.assertIs(state.selected_card, self.card)
-        self.assertEqual(state.action_label, 'Buy')
+        state.selection.select_card(self.card, state)
+        self.assertIs(state.selection.card, self.card)
+        self.assertEqual(state.selection.action_kind.capitalize(), 'Buy')
         self.assertIsNotNone(state.action_error)
-        state.select_token(GOLD)
-        self.assertIs(state.selected_card, self.card)
-        self.assertEqual(state.selected_tokens, {})
-        self.assertEqual(state.action_label, 'Buy')
-        state.select_card(self.card)
-        self.assertIsNone(state.selected_card)
+        state.selection.select_token(GOLD, state)
+        self.assertIs(state.selection.card, self.card)
+        self.assertEqual(state.selection.tokens, {})
+        self.assertEqual(state.selection.action_kind.capitalize(), 'Buy')
+        state.selection.select_card(self.card, state)
+        self.assertIsNone(state.selection.card)
 
     def test_reserved_purchase_uses_discounts_and_gold_without_touching_market(self):
         state = self.state
@@ -33,7 +33,7 @@ class BuyReservedCardTests(unittest.TestCase):
         state.market[2] = [market]
         state.decks[2] = [deck]
         self.assertTrue(state.can_buy(self.card))
-        state.select_card(self.card)
+        state.selection.select_card(self.card, state)
         state.perform_action()
         self.assertEqual(player.reserved_cards, [])
         self.assertEqual(player.cards[SAPPHIRE], [self.card])
@@ -44,14 +44,14 @@ class BuyReservedCardTests(unittest.TestCase):
         self.assertEqual(state.decks[2], [deck])
         self.assertEqual(len(state.log), 1)
         self.assertEqual(state.turn.active_player, 1)
-        self.assertIsNone(state.selected_card)
+        self.assertIsNone(state.selection.card)
 
     def test_unaffordable_reserved_purchase_and_rereservation_are_rejected(self):
         state = self.state
-        state.select_card(self.card)
+        state.selection.select_card(self.card, state)
         with self.assertRaises(ValueError):
             state.buy_card()
-        state.selected_tokens = {GOLD: 1}
+        state.selection.tokens = {GOLD: 1}
         gold = state.supply[GOLD]
         with self.assertRaisesRegex(ValueError, 'already reserved'):
             state.reserve_card()
@@ -66,10 +66,10 @@ class BuyReservedCardTests(unittest.TestCase):
         state.current_player.reserved_cards.clear()
         state.players[1].reserved_cards.append(self.card)
         state.current_player.tokens = {GOLD: 5}
-        state.select_card(self.card)
-        self.assertIsNone(state.selected_card)
+        state.selection.select_card(self.card, state)
+        self.assertIsNone(state.selection.card)
         self.assertFalse(state.can_buy(self.card))
-        state.selected_card = self.card
+        state.selection.card = self.card
         with self.assertRaises(ValueError):
             state.buy_card()
         self.assertEqual(state.players[1].reserved_cards, [self.card])

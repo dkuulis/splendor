@@ -2,17 +2,17 @@ Rectangular enamel-and-gold buttons — approved palette.
 Generated with the built-in image tool, one call per source artwork variant.
 The approved maroon sample is reused as the Take source.
 
-Layout: 140 x 42 px per button. Vertical order: Buy, Reserve, Take, Restart.
-Top positions: 5, 55, 105, 163 px. Gaps: 8, 8, 16 px.
-Total: 5 + 4*42 + 8 + 8 + 16 + 5 = 210 px.
+Runtime layout: 140 x 42 px per button. One action button above Restart.
+Top positions: 55, 113 px, with a 16 px gap in the 210 px panel.
+The generator's default preview still displays all four original variants.
 All sources and runtime assets are fully opaque rectangles with square corners.
 Enabled artwork is action-specific; disabled artwork is shared.
 Labels use font/Forum-Regular.ttf at 20 px, rendered at 8x and downsampled.
 Enabled labels: cream #FFF0CC. Disabled labels: muted cream #C9C2B4.
 
-Labels: Buy, Reserve, Take, Restart. Take keeps its label with zero selected
-gems: clicking it ends the turn without collecting gems and counts toward
-the existing stalemate rule. Nonempty selections keep the existing limits.
+Labels: Buy, Reserve, Take, Pass, Restart. The action button switches artwork
+with action_kind, showing plum Pass when selection is empty. Passing ends the turn without collecting
+gems and counts toward the existing stalemate rule.
 Restart remains available during AI turns and after the game ends.
 
 Palette: Buy sapphire blue #245A86; Reserve emerald green #246747;
@@ -22,11 +22,25 @@ Disabled: matte gray-brown #504B42 with a dull bronze rim.
 Original generated PNGs: images/button_*.png (ignored by Git).
 Source artwork: artwork/button_*.webp (quality 80, fully opaque).
 Runtime assets: assets/button_<action>_<enabled|disabled>.png (140x42 RGB).
+Additional assets: Pass uses muted plum #594568 with the same cream label
+and gold rim. The blank disabled asset is assets/button_disabled.png,
+rendered from artwork/button_disabled.webp without a label.
+Generate only Pass (enabled and disabled) and the blank disabled asset:
+  .venv/bin/python tools/generate_buttons.py --buttons pass blank --preview images/pass_buttons_preview.png
 Regenerate runtime assets and an actual-size enabled/disabled preview:
   .venv/bin/python tools/generate_buttons.py --preview images/buttons_preview.png
 
 Exact image-generation prompts follow. The Take prompt originally requested
 an approval sample; that approved original is now used in production.
+
+=== button_pass_enabled ===
+Generated with the built-in image tool using artwork/button_take_enabled.webp
+as the edit target. Original PNG: images/button_pass_enabled.png.
+Use case: precise-object-edit.
+Asset type: text-free enabled Pass button artwork for a Renaissance jewel-trading desktop game.
+Input image: edit target, existing maroon Take button artwork.
+Primary request: change ONLY the maroon enamel face to muted plum, base color #594568. Preserve the antique-gold double rim, square corners, geometry, shallow bevel, top highlight, clean blank center and restrained enamel texture exactly. Keep the gold metal gold; do not tint it purple. Full-bleed horizontal rectangular plaque, same 3:1 canvas proportions as reference, intended to downsample to 140x42 pixels. Entire image fully opaque, border entirely visible on all four sides, no exterior margin or shadow.
+No text, letters, labels, icons, ornament, watermark or additional elements. The word Pass will be added later by the existing font renderer.
 
 === button_buy_enabled ===
 Use case: ui-mockup.

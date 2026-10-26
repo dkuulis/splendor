@@ -10,8 +10,7 @@ class ReserveCardTests(unittest.TestCase):
         state = State()
         card = Card('reserve', 2, RUBY, 3, {RUBY: 7})
         state.market[2] = [card]
-        state.select_card(card)
-        state.select_token(GOLD)
+        state.selection.reserve_card(card, state)
         return state, card
 
     def test_reserve_transfers_card_and_gold_and_refills_same_slot(self):
@@ -24,7 +23,7 @@ class ReserveCardTests(unittest.TestCase):
         state.decks[2] = [replacement]
         gold = state.supply[GOLD]
         state.turn.consecutive_passes = 1
-        self.assertEqual(state.action_label, 'Reserve')
+        self.assertEqual(state.selection.action_kind.capitalize(), 'Reserve')
         self.assertIsNone(state.action_error)
         state.perform_action()
         self.assertIs(player.reserved_cards[-1], card)
@@ -38,8 +37,8 @@ class ReserveCardTests(unittest.TestCase):
         self.assertEqual(state.players[1].reserved_cards, [])
         self.assertEqual(state.turn.active_player, 1)
         self.assertEqual(state.turn.consecutive_passes, 0)
-        self.assertIsNone(state.selected_card)
-        self.assertEqual(state.selected_tokens, {})
+        self.assertIsNone(state.selection.card)
+        self.assertEqual(state.selection.tokens, {})
         self.assertIn('reserved by YOU', state.log[0])
         self.assertIn('Revealed:', state.log[1])
 
@@ -67,20 +66,21 @@ class ReserveCardTests(unittest.TestCase):
                 elif case == 'missing card':
                     state.market[2].clear()
                 elif case == 'no selected gold':
-                    state.selected_tokens.clear()
+                    state.selection.tokens.clear()
                 elif case == 'extra gem':
-                    state.selected_tokens[RUBY] = 1
+                    state.selection.tokens[RUBY] = 1
                 else:
                     state.turn.finished = True
                 before = copy.deepcopy((state.supply, state.current_player.tokens,
-                                        vars(state.turn), state.log, state.selected_tokens))
+                                        vars(state.turn), state.log, state.selection.tokens))
                 reserved = list(state.current_player.reserved_cards)
                 market = list(state.market[2])
-                self.assertIsNotNone(state.reserve_card_error())
+                self.assertEqual(state.action_error, state.reserve_card_error())
+                self.assertIsNotNone(state.action_error)
                 with self.assertRaises(ValueError):
-                    state.reserve_card()
+                    state.perform_action()
                 self.assertEqual((state.supply, state.current_player.tokens,
-                                  vars(state.turn), state.log, state.selected_tokens), before)
+                                  vars(state.turn), state.log, state.selection.tokens), before)
                 self.assertEqual(state.current_player.reserved_cards, reserved)
                 self.assertEqual(state.market[2], market)
-                self.assertIs(state.selected_card, card)
+                self.assertIs(state.selection.card, card)

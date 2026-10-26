@@ -12,19 +12,19 @@ class GreedyAITests(unittest.TestCase):
 
     def test_replaces_pending_selection_before_collecting(self):
         self.state.market[1] = [Card('target', 1, EMERALD, 0, {RUBY: 1})]
-        self.state.select_token(DIAMOND)
+        self.state.selection.select_token(DIAMOND, self.state)
         GreedyAI().play_turn(self.state)
         self.assertEqual(self.player.tokens, {RUBY: 1})
-        self.assertEqual(self.state.selected_tokens, {})
-        self.assertIsNone(self.state.selected_card)
+        self.assertEqual(self.state.selection.tokens, {})
+        self.assertIsNone(self.state.selection.card)
 
     def test_buys_an_already_selected_card_without_toggling_it_off(self):
         card = Card('free', 1, RUBY, 1, {})
         self.state.market[1] = [card]
-        self.state.select_card(card)
+        self.state.selection.select_card(card, self.state)
         GreedyAI().play_turn(self.state)
         self.assertEqual(self.player.cards[RUBY], [card])
-        self.assertIsNone(self.state.selected_card)
+        self.assertIsNone(self.state.selection.card)
         self.assertEqual(self.state.turn.active_player, 1)
 
     def test_buys_highest_points_before_cheapest(self):

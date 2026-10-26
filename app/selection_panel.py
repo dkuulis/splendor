@@ -40,28 +40,27 @@ class SelectionPanel(tk.Frame):
         self.actions = tk.Frame(self, width=ACTION_BUTTON_WIDTH, height=MARKET_CARD_HEIGHT,
                                 background=CARD_BACKGROUND, borderwidth=0)
         self.actions.grid(row=0, column=2, padx=5)
-        self.buttons = {}
-        for name, top in zip(("buy", "reserve", "take", "restart"), ACTION_BUTTON_TOPS):
-            command = on_restart if name == "restart" else lambda name=name: self.go(name)
-            button = ttk.Button(self.actions, text=name.capitalize(), style="Action.TButton",
-                                command=command, state="disabled", compound="none")
+        self.action_button = ttk.Button(self.actions, style="Action.TButton",
+                                        command=self.go, state="disabled", compound="none")
+        self.restart_button = ttk.Button(self.actions, style="Action.TButton",
+                                         command=on_restart, state="disabled", compound="none")
+        for button, action, top in zip((self.action_button, self.restart_button),
+                                       ("pass", "restart"), ACTION_BUTTON_TOPS):
             button.place(x=0, y=top, width=ACTION_BUTTON_WIDTH, height=ACTION_BUTTON_HEIGHT)
-            self.buttons[name] = button
-            self.set_button(name, False)
+            self.set_button(button, action, False)
         self.configure(width=TOKEN_SIZE + 4 * TOKEN_SPACING + ACTION_BUTTON_WIDTH + 24)
 
     def refresh(self, state, enabled):
         self.state = state
         self.enabled = enabled
-        affordable = (self.enabled and state.selected_card is not None
-                      and state.can_buy(state.selected_card))
-        self.card.refresh(state.selected_card, affordable=affordable, enabled=self.enabled)
+        affordable = self.enabled and state.selected_card_affordable
+        self.card.refresh(state.selection.card, affordable=affordable, enabled=self.enabled)
         self.card.itemconfigure(self.disabled_overlay,
-                                state="normal" if state.selected_card is not None and not affordable
+                                state="normal" if state.selection.card is not None and not affordable
                                 else "hidden")
-        if state.selected_card is not None:
+        if state.selection.card is not None:
             self.card.grid()
-            if state.selected_tokens:
+            if state.selection.tokens:
                 self.tokens.grid(padx=(0, 10))
             else:
                 self.tokens.grid_remove()
@@ -70,20 +69,20 @@ class SelectionPanel(tk.Frame):
             self.tokens.grid(padx=0)
         index = 0
         for token, item in self.items.items():
-            selected = bool(state.selected_tokens.get(token, 0))
+            selected = bool(state.selection.tokens.get(token, 0))
             self.tokens.itemconfigure(item, state="normal" if selected else "hidden")
             if selected:
                 self.tokens.coords(item, TOKEN_SIZE / 2 + index * TOKEN_SPACING, TOKEN_SIZE / 2)
                 index += 1
         self.tokens.configure(width=TOKEN_SIZE + max(0, index - 1) * TOKEN_SPACING)
-        for name in self.buttons:
-            available = name == "restart" or (self.can_go and name == state.action_label.lower())
-            self.set_button(name, available)
+        self.set_button(self.action_button, state.selection.action_kind, self.can_go)
+        self.set_button(self.restart_button, "restart", True)
 
-    def set_button(self, name, enabled):
-        self.buttons[name].configure(
-            image=(load_image(self, f"button_{name}_enabled"),
-                   "disabled", load_image(self, f"button_{name}_disabled")),
+    def set_button(self, button, action, enabled):
+        button.configure(
+            text=action.capitalize(),
+            image=(load_image(self, f"button_{action}_enabled"),
+                   "disabled", load_image(self, f"button_{action}_disabled")),
             state="normal" if enabled else "disabled")
 
     def deselect(self, token):
@@ -94,7 +93,6 @@ class SelectionPanel(tk.Frame):
     def can_go(self):
         return self.enabled and self.state.action_error is None
 
-    def go(self, name):
-        action = self.state.action_label.lower()
-        if self.can_go and name == action:
+    def go(self):
+        if self.can_go:
             self.on_action()

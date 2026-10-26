@@ -9,7 +9,8 @@ one computer opponent.
 - Each player starts with no gems, no cards, and zero points.
 - The bank starts with four gems of each color: Diamond, Sapphire, Emerald,
   Ruby, and Onyx. It also holds five Gold tokens. Gold can be selected, but
-  gold alone cannot be taken. Select a market card and then gold to reserve it.
+  gold alone cannot be taken. Select a market card and gold, in either order,
+  to reserve it.
 - Shuffle each of the three development decks separately and reveal four
   cards per level. Remaining cards stay face down.
 - Shuffle the ten nobles and reveal three, displayed left of the supply.
@@ -26,12 +27,12 @@ Choose one action:
    on a card.
 2. **Buy a card:** purchase one face-up market card or one of your reserved
    cards you can afford. Reserved cards cannot be reserved again.
-3. **Reserve a card:** select a face-up market card, then gold, and confirm
+3. **Reserve a card:** select a face-up market card and gold, and confirm
    Reserve. Move the card to your reserved cards and take one gold from the
    bank. You may hold at most three reserved cards, and taking the gold must
    not exceed the 10-token inventory limit. Refill the market slot from its
    deck if possible. Reserved cards grant no points or discounts.
-4. **Take zero gems:** click Take with nothing selected to give the turn to
+4. **Pass:** click Pass with nothing selected to give the turn to
    the opponent without collecting anything. This counts toward the
    two-consecutive-pass ending described below.
 

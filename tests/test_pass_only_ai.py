@@ -9,13 +9,13 @@ class PassOnlyAITests(unittest.TestCase):
     def test_strategy_passes_once(self):
         state = State()
         state.turn.active_player = 1
-        state.select_token(RUBY)
+        state.selection.select_token(RUBY, state)
         PassOnlyAI().play_turn(state)
         self.assertEqual(state.turn.active_player, 0)
         self.assertEqual(state.turn.consecutive_passes, 1)
         self.assertEqual(state.log, ['COMPUTER passed.'])
         self.assertEqual(state.players[1].tokens, {})
-        self.assertEqual(state.selected_tokens, {})
+        self.assertEqual(state.selection.tokens, {})
 
     def test_two_passes_end_game(self):
         state = State()

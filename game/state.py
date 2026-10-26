@@ -1,6 +1,7 @@
 from .constants import (GOLD, TOKENS, TOKEN_LIMIT, MAX_TAKE,
                         INITIAL_GOLD_SUPPLY, INITIAL_GEM_SUPPLY, MAX_RESERVATIONS)
 from .player import Player
+from .selection import Selection
 from .noble import assign_noble
 from .turn import Turn, advance_turn
 
@@ -16,9 +17,7 @@ class State:
         self.players = [Player("YOU"), Player("COMPUTER", is_ai=True)]
         self.supply = {token: INITIAL_GOLD_SUPPLY if token == GOLD else INITIAL_GEM_SUPPLY
                        for token in TOKENS}
-        # Pending token counts by type; unselected types are omitted.
-        self.selected_tokens = {}
-        self.selected_card = None
+        self.selection = Selection()
         # Every tier is always present; no cards means an empty list, not None.
         self.decks = {tier: [] for tier in (1, 2, 3)}
         self.market = {tier: [] for tier in (1, 2, 3)}
@@ -30,67 +29,39 @@ class State:
     def current_player(self):
         return self.players[self.turn.active_player]
 
-    def select_card(self, card):
-        if self.turn.finished or not self.card_available(card):
-            return
-        self.selected_tokens.clear()
-        self.selected_card = None if self.selected_card is card else card
-
-    def select_token(self, token):
-        if (self.turn.finished or token not in TOKENS
-                or not self.supply.get(token, 0)):
-            return
-        if token == GOLD:
-            if self.selected_card in self.current_player.reserved_cards:
-                return
-            self.selected_tokens.clear()
-        else:
-            self.selected_card = None
-            self.selected_tokens.pop(GOLD, None)
-        self.selected_tokens[token] = 1
-
-    def deselect_token(self, token):
-        if not self.turn.finished:
-            self.selected_tokens.pop(token, None)
-
-    def clear_selection(self):
-        self.selected_tokens.clear()
-        self.selected_card = None
-
-    @property
-    def action_kind(self):
-        """Infer the pending action; taking no tokens is a pass."""
-        if self.selected_card is not None:
-            return "reserve" if self.selected_tokens.get(GOLD, 0) else "buy"
-        return "take"
-
-    @property
-    def action_label(self):
-        return self.action_kind.capitalize()
-
     @property
     def action_error(self):
         """Return why the selected action is illegal, or None when it is legal."""
-        kind = self.action_kind
+        kind = self.selection.action_kind
         if kind == "reserve":
             return self.reserve_card_error()
         if kind == "buy":
             return self.buy_card_error()
+        if kind == "pass":
+            return self.pass_turn_error()
         return self.take_tokens_error()
 
     def perform_action(self):
         """Validate and execute the selection, passing when nothing is selected."""
-        kind = self.action_kind
+        kind = self.selection.action_kind
         if kind == "reserve":
             self.reserve_card()
         elif kind == "buy":
             self.buy_card()
+        elif kind == "pass":
+            self.pass_turn()
         else:
             self.take_tokens()
 
-    def pass_turn(self):
+    def pass_turn_error(self):
         if self.turn.finished:
-            raise ValueError("The game has already ended.")
+            return "The game has already ended."
+        return None
+
+    def pass_turn(self):
+        error = self.pass_turn_error()
+        if error is not None:
+            raise ValueError(error)
         self.log.append(f"{self.current_player.name} passed.")
         self.turn.consecutive_passes += 1
         self.finish_turn()
@@ -99,13 +70,13 @@ class State:
         """Return why a gem collection is illegal, or None when it is legal."""
         if self.turn.finished:
             return "The game has already ended."
-        if (len(self.selected_tokens) > MAX_TAKE
-                or any(amount != 1 for amount in self.selected_tokens.values())):
+        if (len(self.selection.tokens) > MAX_TAKE
+                or any(amount != 1 for amount in self.selection.tokens.values())):
             return "Select up to three different token types."
         if any(token not in TOKENS or token == GOLD or self.supply.get(token, 0) < 1
-               for token in self.selected_tokens):
+               for token in self.selection.tokens):
             return "A selected gem is not available."
-        if len(self.selected_tokens) > self.current_player.max_take:
+        if len(self.selection.tokens) > self.current_player.max_take:
             return f"You cannot hold more than {TOKEN_LIMIT} gems."
         return None
 
@@ -113,17 +84,21 @@ class State:
         error = self.take_tokens_error()
         if error is not None:
             raise ValueError(error)
-        if not self.selected_tokens:
+        if not self.selection.tokens:
             self.pass_turn()
             return
-        for token in self.selected_tokens:
+        for token in self.selection.tokens:
             self.supply[token] -= 1
             self.current_player.tokens[token] = self.current_player.tokens.get(token, 0) + 1
 
-        taken = ", ".join(token for token in TOKENS if token in self.selected_tokens)
+        taken = ", ".join(token for token in TOKENS if token in self.selection.tokens)
         self.log.append(f"{self.current_player.name} took {taken}.")
         self.turn.consecutive_passes = 0
         self.finish_turn()
+
+    @property
+    def selected_card_affordable(self):
+        return self.selection.card is not None and self.can_buy(self.selection.card)
 
     def can_buy(self, card):
         if self.turn.finished or not self.card_available(card):
@@ -139,11 +114,11 @@ class State:
         """Return why a purchase is illegal, or None when it is legal."""
         if self.turn.finished:
             return "The game has already ended."
-        if self.selected_tokens.get(GOLD, 0):
+        if self.selection.tokens.get(GOLD, 0):
             return "Deselect gold before buying a card."
-        if self.selected_card is None or not self.card_available(self.selected_card):
+        if self.selection.card is None or not self.card_available(self.selection.card):
             return "That card is not in the market or your reserved cards."
-        if not self.can_buy(self.selected_card):
+        if not self.can_buy(self.selection.card):
             return "You do not have enough gems/gold to buy that card."
         return None
 
@@ -152,7 +127,7 @@ class State:
         if error is not None:
             raise ValueError(error)
         player = self.current_player
-        card = self.selected_card
+        card = self.selection.card
         cost = player.card_payment(card)
         for token, amount in cost.items():
             player.tokens[token] -= amount
@@ -173,12 +148,12 @@ class State:
         """Return why a reservation is illegal, or None when it is legal."""
         if self.turn.finished:
             return "The game has already ended."
-        if self.selected_card in self.current_player.reserved_cards:
+        if self.selection.card in self.current_player.reserved_cards:
             return "That card is already reserved."
-        if (self.selected_card is None
-                or self.selected_card not in self.market[self.selected_card.tier]):
+        if (self.selection.card is None
+                or self.selection.card not in self.market[self.selection.card.tier]):
             return "That card is no longer in the market."
-        if self.selected_tokens != {GOLD: 1}:
+        if self.selection.tokens != {GOLD: 1}:
             return "Select one gold token to reserve a card."
         if self.supply.get(GOLD, 0) < 1:
             return "Gold is not available."
@@ -193,7 +168,7 @@ class State:
         if error is not None:
             raise ValueError(error)
         player = self.current_player
-        card = self.selected_card
+        card = self.selection.card
         player.reserved_cards.append(card)
         self.supply[GOLD] -= 1
         player.tokens[GOLD] = player.tokens.get(GOLD, 0) + 1
@@ -220,7 +195,7 @@ class State:
         message = assign_noble(self.current_player, self.nobles)
         if message:
             self.log.append(message)
-        self.clear_selection()
+        self.selection.clear()
         advance_turn(self)
 
     def is_active_player(self, player):

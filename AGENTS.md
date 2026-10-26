@@ -21,7 +21,8 @@ rules without a request.
 
 - `main.py` creates Tk, the initial state, and the selected AI strategy.
 - `game/` contains plain Python models and rules; keep it independent of Tkinter.
-  `state.py` owns selection, action validation/execution, and market replacement.
+  `selection.py` owns pending choices; `state.py` owns action
+  validation/execution and market replacement.
   Keep validation beside its action.
 - `player.py` owns holdings and derived points, discounts, capacity, and payment.
   Use these calculations through the relevant player.
@@ -33,8 +34,9 @@ rules without a request.
 - `app/app.py` assembles panels, dispatches actions, and schedules AI callbacks.
   AI runs on the UI thread: keep strategies quick and cancel pending callbacks
   on Restart and window destruction.
-- `app/selection_panel.py` contains Buy, Reserve, Take, and Restart.
-  Take with zero gems ends the turn without collecting.
+- `app/selection_panel.py` contains one action button and a separate Restart.
+  The action button follows `Selection.action_kind`: Buy, Reserve, Take,
+  or Pass. Pass ends the turn without collecting.
 - `app/divider_panel.py` shows scores and turn/result highlights. A winner
   stays highlighted with laurels; a draw leaves both dividers inactive.
   There is no header, separate score panel, or log panel.
@@ -52,6 +54,10 @@ rules without a request.
   can iterate over cost entries directly.
 - `State.supply` holds available tokens; `Player.tokens` holds owned tokens.
   Selection is pending and does not transfer tokens. Finishing a turn clears it.
+  `Selection.action_kind` stores pass, buy, reserve, or take and is updated
+  by selection methods. Empty selection means pass; gold starts reservation.
+  Selecting an unaffordable market card automatically selects gold and
+  reservation. Reserved cards remain buy selections, even if unaffordable.
 - Missing entries in sparse token/cost/selection dictionaries mean zero.
   Gem keys in `Player.cards` and `Player.discounts`, and tiers 1–3 in
   `State.market` and `State.decks`, are always present; index them directly.

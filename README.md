@@ -11,11 +11,12 @@ computer strategy at launch with `--ai` (default: `greedy`):
 .venv/bin/python main.py --ai manual
 ```
 
-Take ends the turn without collecting when no gems are selected; two consecutive empty turns end
+Pass ends the turn without collecting when nothing is selected; two consecutive passes end
 the game using score and card-count tie-breaks. Action history is retained internally without a log panel.
 Select one to three different gems and use Take to collect them. The button is
 disabled when the selection is invalid.
-Buy, Reserve, Take, and Restart are grouped in the selection panel.
+The selection panel has one action button and a separate Restart button.
+The action button shows Buy, Reserve, Take, or Pass to match the selection.
 At game end, the winner's divider stays highlighted with gold laurels beside
 the score plaque. A draw leaves both dividers inactive without laurels.
 The 10-gem inventory limit is enforced. Click any market card to move it into
@@ -23,7 +24,9 @@ the selection panel; click it again to deselect it. Buy is enabled only when
 you have enough gems after owned-card discounts, using owned gold as a wildcard
 for missing colors. Buying spends matching gems first and returns the actual
 gem and gold payment to the bank.
-Select a card and then gold to enable Reserve. This takes the card and one gold,
+Selecting a market card you cannot afford automatically selects gold and
+shows Reserve. Remove the selected gold to switch back to Buy.
+Select a market card and gold, in either order, to enable Reserve. This takes the card and one gold,
 subject to the three-reservation and 10-token limits. Click your reserved cards
 in the last player-panel block to select and buy them using discounts and gold.
 Already reserved cards cannot be reserved again.

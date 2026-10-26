@@ -1,6 +1,7 @@
 """Run with SPLENDOR_GUI_TESTS=1 when Tk has window-server access."""
 import os
 import tkinter as tk
+from tkinter import ttk
 import unittest
 from unittest.mock import patch
 
@@ -29,8 +30,7 @@ class PersistentUITests(unittest.TestCase):
 
     @property
     def action_button(self):
-        name = self.app.state.action_label.lower()
-        return self.app.selection.buttons[name]
+        return self.app.selection.action_button
 
     def widgets(self, widget):
         return [widget] + [child for item in widget.winfo_children() for child in self.widgets(item)]
@@ -38,45 +38,77 @@ class PersistentUITests(unittest.TestCase):
     def test_action_buttons_fit_and_keep_positions_across_selection_and_restart(self):
         app = self.app
         panel = app.selection
-        buttons = panel.buttons
-        positions = {}
-        for name, button in buttons.items():
+        action = panel.action_button
+        restart = panel.restart_button
+        buttons = (action, restart)
+        self.assertEqual([child for child in panel.actions.winfo_children()
+                          if isinstance(child, ttk.Button)], list(buttons))
+        positions = []
+        for button in buttons:
             self.assertTrue(button.winfo_ismapped())
             self.assertEqual((button.winfo_width(), button.winfo_height()), (140, 42))
             self.assertGreaterEqual(button.winfo_y(), 0)
             self.assertLessEqual(button.winfo_y() + button.winfo_height(), 210)
-            positions[name] = (button.winfo_x(), button.winfo_y())
+            positions.append((button.winfo_x(), button.winfo_y()))
+        self.assertLess(action.winfo_y() + action.winfo_height(), restart.winfo_y())
         self.assertEqual(panel.actions.winfo_height(), 210)
-        self.assertTrue(buttons['buy'].instate(['disabled']))
-        self.assertTrue(buttons['reserve'].instate(['disabled']))
-        self.assertFalse(buttons['take'].instate(['disabled']))
-        self.assertEqual(buttons['take'].cget('text'), 'Take')
+        self.assertFalse(action.instate(['disabled']))
+        self.assertEqual(action.cget('text'), 'Pass')
+        self.assertEqual(action.cget('image')[0], str(load_image(panel, 'button_pass_enabled')))
         app.select_token(RUBY)
-        self.assertEqual(buttons['take'].cget('text'), 'Take')
-        buttons['buy'].invoke()
-        buttons['reserve'].invoke()
-        self.assertEqual(app.state.selected_tokens, {RUBY: 1})
-        self.assertEqual(app.state.turn.active_player, 0)
-        buttons['take'].invoke()
+        self.assertEqual(action.cget('text'), 'Take')
+        self.assertEqual(action.cget('image')[0], str(load_image(panel, 'button_take_enabled')))
+        action.invoke()
         self.assertEqual(app.state.players[0].tokens, {RUBY: 1})
-        # The same Take button remains usable with zero gems selected.
-        self.assertEqual(buttons['take'].cget('text'), 'Take')
-        buttons['take'].invoke()
+        self.assertEqual(action.cget('text'), 'Pass')
+        action.invoke()
         self.assertEqual(app.state.players[1].tokens, {})
         self.assertEqual(app.state.turn.active_player, 0)
         self.assertEqual(app.state.turn.consecutive_passes, 1)
+        card = app.state.market[1][0]
+        card.cost = {RUBY: 1}
+        app.select_card(card)
+        self.assertEqual(action.cget('text'), 'Buy')
+        self.assertEqual(action.cget('image')[0], str(load_image(panel, 'button_buy_enabled')))
+        self.assertFalse(action.instate(['disabled']))
+        app.select_token(GOLD)
+        self.assertEqual(action.cget('text'), 'Reserve')
+        self.assertEqual(action.cget('image')[0], str(load_image(panel, 'button_reserve_enabled')))
+        self.assertFalse(action.instate(['disabled']))
+        self.assertIs(panel.action_button, action)
+        self.assertEqual(positions, [(button.winfo_x(), button.winfo_y()) for button in buttons])
         app.state.turn.finished = True
         app.refresh()
-        for name in ('buy', 'reserve', 'take'):
-            self.assertTrue(buttons[name].instate(['disabled']))
-        self.assertFalse(buttons['restart'].instate(['disabled']))
+        self.assertTrue(action.instate(['disabled']))
+        self.assertFalse(restart.instate(['disabled']))
         old_state = app.state
-        buttons['restart'].invoke()
+        restart.invoke()
         self.root.update()
         self.assertIsNot(app.state, old_state)
         self.assertFalse(app.state.turn.finished)
-        self.assertEqual(positions, {name: (button.winfo_x(), button.winfo_y())
-                                    for name, button in buttons.items()})
+        self.assertIs(panel.action_button, action)
+        self.assertEqual(action.cget('text'), 'Pass')
+        self.assertEqual(positions, [(button.winfo_x(), button.winfo_y()) for button in buttons])
+
+    def test_gold_first_selects_and_toggles_a_reservation(self):
+        app = self.app
+        card = app.state.market[1][0]
+        app.select_token(GOLD)
+        self.assertEqual(app.state.selection.action_kind, 'reserve')
+        self.assertTrue(self.action_button.instate(['disabled']))
+        app.select_card(card)
+        self.assertIs(app.state.selection.card, card)
+        self.assertEqual(app.state.selection.tokens, {GOLD: 1})
+        self.assertFalse(self.action_button.instate(['disabled']))
+        app.selection.card.select(None)
+        self.assertEqual(app.state.selection.action_kind, 'pass')
+        self.assertIsNone(app.state.selection.card)
+        self.assertEqual(app.state.selection.tokens, {})
+        app.select_token(GOLD)
+        app.select_card(card)
+        self.action_button.invoke()
+        self.assertIn(card, app.state.players[0].reserved_cards)
+        self.assertEqual(app.state.players[0].tokens, {GOLD: 1})
 
     def test_dividers_tile_across_resizes_and_switch_with_turns(self):
         app = self.app
@@ -242,10 +274,10 @@ class PersistentUITests(unittest.TestCase):
         panel = app.market.slots[1][0]
         panel.select(None)
         self.root.update()
-        self.assertIs(app.state.selected_card, card)
+        self.assertIs(app.state.selection.card, card)
         self.assertFalse(panel.winfo_ismapped())
         app.selection.card.select(None)
-        self.assertIsNone(app.state.selected_card)
+        self.assertIsNone(app.state.selection.card)
         panel.select(None)
         self.action_button.invoke()
         self.assertIn(card, app.state.players[0].cards[card.token])
@@ -256,8 +288,13 @@ class PersistentUITests(unittest.TestCase):
         app.refresh()
         self.root.update()
         self.assertTrue(all(not slot.winfo_ismapped() for slot in app.market.slots[1]))
+        app.select_token(RUBY)
+        previous_selection = app.state.selection
         app.new_game()
         self.root.update()
+        self.assertIsNot(app.state.selection, previous_selection)
+        self.assertIsNone(app.state.selection.card)
+        self.assertEqual(app.state.selection.tokens, {})
         self.assertEqual(widgets, self.widgets(app.field))
         self.assertEqual(selection_items, app.selection.tokens.find_all())
         self.assertEqual(market_items, [panel.find_all() for panels in app.market.slots.values() for panel in panels])
@@ -275,12 +312,12 @@ class PersistentUITests(unittest.TestCase):
         app.perform_action()
         self.assertIsNotNone(app.pending_ai)
         app.supply.pick(RUBY)
-        self.assertEqual(app.state.selected_tokens, {})
+        self.assertEqual(app.state.selection.tokens, {})
         self.assertFalse(app.selection.can_go)
         app.market.slots[1][0].select(None)
-        self.assertIsNone(app.state.selected_card)
+        self.assertIsNone(app.state.selection.card)
         pending = app.pending_ai
-        app.selection.buttons["restart"].invoke()
+        app.selection.restart_button.invoke()
         self.assertIsNone(app.pending_ai)
         self.assertNotIn(pending, self.root.tk.call('after', 'info'))
         self.assertIs(app.strategy, strategy)
@@ -289,7 +326,7 @@ class PersistentUITests(unittest.TestCase):
         app.run_ai()
         self.assertEqual(app.state.turn.active_player, 0)
 
-    def test_unaffordable_card_selection_blocks_buy_until_affordable(self):
+    def test_unaffordable_card_selects_reserve_and_can_switch_back_to_buy(self):
         app = self.app
         panel = app.market.slots[1][0]
         card = panel.card
@@ -297,22 +334,26 @@ class PersistentUITests(unittest.TestCase):
         app.refresh()
         panel.event_generate('<Button-1>')
         self.root.update()
-        self.assertIs(app.state.selected_card, card)
+        self.assertIs(app.state.selection.card, card)
         self.assertFalse(panel.winfo_ismapped())
         self.assertTrue(app.selection.card.winfo_ismapped())
-        self.assertTrue(self.action_button.instate(['disabled']))
+        self.assertEqual(app.state.selection.tokens, {GOLD: 1})
+        self.assertEqual(self.action_button.cget('text'), 'Reserve')
+        self.assertFalse(self.action_button.instate(['disabled']))
         overlay = app.selection.disabled_overlay
         self.assertEqual(app.selection.card.itemcget(overlay, 'image'),
                          str(load_image(app.selection, 'disabled')))
         self.assertEqual(app.selection.card.itemcget(overlay, 'state'), 'normal')
-        self.action_button.invoke()
         self.assertEqual(app.state.turn.active_player, 0)
         self.assertIn(card, app.state.market[1])
         app.selection.card.event_generate('<Button-1>')
         self.root.update()
-        self.assertIsNone(app.state.selected_card)
+        self.assertIsNone(app.state.selection.card)
         self.assertTrue(panel.winfo_ismapped())
         panel.event_generate('<Button-1>')
+        app.deselect_token(GOLD)
+        self.assertEqual(self.action_button.cget('text'), 'Buy')
+        self.assertTrue(self.action_button.instate(['disabled']))
         app.state.current_player.tokens[RUBY] = 2
         app.state.supply[RUBY] -= 2
         app.refresh()
@@ -328,6 +369,8 @@ class PersistentUITests(unittest.TestCase):
         card = app.state.market[1][0]
         card.cost = {RUBY: 2}
         app.select_card(card)
+        self.assertEqual(self.action_button.cget('text'), 'Reserve')
+        app.deselect_token(GOLD)
         self.assertTrue(self.action_button.instate(['disabled']))
         app.state.current_player.tokens[GOLD] = 2
         app.state.supply[GOLD] -= 2
@@ -438,15 +481,15 @@ class PersistentUITests(unittest.TestCase):
         cell.event_generate('<Motion>', x=int(x), y=int(y))
         cell.event_generate('<Button-1>', x=int(x), y=int(y))
         self.root.update()
-        self.assertEqual(app.state.selected_tokens, {GOLD: 1})
+        self.assertEqual(app.state.selection.tokens, {GOLD: 1})
         self.assertEqual(app.selection.tokens.itemcget(app.selection.items[GOLD], 'state'), 'normal')
         self.assertTrue(self.action_button.instate(['disabled']))
         app.select_token(RUBY)
-        self.assertEqual(app.state.selected_tokens, {RUBY: 1})
+        self.assertEqual(app.state.selection.tokens, {RUBY: 1})
         self.assertEqual(app.selection.tokens.itemcget(app.selection.items[GOLD], 'state'), 'hidden')
         self.assertFalse(self.action_button.instate(['disabled']))
         app.select_token(GOLD)
-        self.assertEqual(app.state.selected_tokens, {GOLD: 1})
+        self.assertEqual(app.state.selection.tokens, {GOLD: 1})
         self.assertEqual(app.selection.tokens.itemcget(app.selection.items[RUBY], 'state'), 'hidden')
         self.assertTrue(self.action_button.instate(['disabled']))
         self.action_button.invoke()
@@ -456,7 +499,7 @@ class PersistentUITests(unittest.TestCase):
         app.selection.tokens.event_generate('<Motion>', x=int(x), y=int(y))
         app.selection.tokens.event_generate('<Button-1>', x=int(x), y=int(y))
         self.root.update()
-        self.assertEqual(app.state.selected_tokens, {})
+        self.assertEqual(app.state.selection.tokens, {})
         self.assertFalse(self.action_button.instate(['disabled']))
         app.select_token(RUBY)
         self.action_button.invoke()
@@ -469,7 +512,7 @@ class PersistentUITests(unittest.TestCase):
         app.select_card(card)
         app.supply.pick(GOLD)
         self.root.update()
-        self.assertIs(app.state.selected_card, card)
+        self.assertIs(app.state.selection.card, card)
         self.assertFalse(app.market.slots[1][0].winfo_ismapped())
         self.assertTrue(app.selection.card.winfo_ismapped())
         self.assertTrue(app.selection.tokens.winfo_ismapped())
@@ -487,7 +530,7 @@ class PersistentUITests(unittest.TestCase):
         self.assertFalse(self.action_button.instate(['disabled']))
         app.selection.deselect(GOLD)
         self.root.update()
-        self.assertIs(app.state.selected_card, card)
+        self.assertIs(app.state.selection.card, card)
         self.assertFalse(app.selection.tokens.winfo_ismapped())
         self.assertAlmostEqual(app.selection.card.winfo_rootx() + app.selection.card.winfo_width() / 2,
                                app.selection.winfo_rootx() + x + width / 2, delta=1)
@@ -516,7 +559,7 @@ class PersistentUITests(unittest.TestCase):
                 self.assertEqual(self.action_button.cget('text'), 'Reserve')
                 self.assertTrue(self.action_button.instate(['disabled']))
                 self.action_button.invoke()
-                self.assertIs(app.state.selected_card, card)
+                self.assertIs(app.state.selection.card, card)
                 self.assertEqual(app.state.turn.active_player, 0)
                 player.tokens.clear()
                 player.reserved_cards.clear()
@@ -540,13 +583,13 @@ class PersistentUITests(unittest.TestCase):
         stack = app.computer.reserved.stack
         stack.event_generate('<Motion>', x=75, y=100)
         stack.event_generate('<Button-1>', x=75, y=100)
-        self.assertIsNone(app.state.selected_card)
+        self.assertIsNone(app.state.selection.card)
         stack = app.player.reserved.stack
         for index, card in enumerate(cards):
             x, y = stack.coords(app.player.reserved.card_items[index])
             stack.event_generate('<Motion>', x=int(x) + 10, y=int(y) + 100)
             stack.event_generate('<Button-1>', x=int(x) + 10, y=int(y) + 100)
-            self.assertIs(app.state.selected_card, card)
+            self.assertIs(app.state.selection.card, card)
             self.assertEqual(self.action_button.cget('text'), 'Buy')
             self.assertFalse(self.action_button.instate(['disabled']))
             for slot, item in enumerate(app.player.reserved.card_items):
@@ -556,11 +599,11 @@ class PersistentUITests(unittest.TestCase):
             app.refresh()
             self.assertEqual(stack.itemcget(app.player.reserved.card_items[index], 'state'), 'hidden')
             app.selection.card.select(None)
-            self.assertIsNone(app.state.selected_card)
+            self.assertIsNone(app.state.selection.card)
             self.assertEqual(stack.itemcget(app.player.reserved.card_items[index], 'state'), 'normal')
             app.select_card(card)
             app.select_token(GOLD)
-            self.assertEqual(app.state.selected_tokens, {})
+            self.assertEqual(app.state.selection.tokens, {})
         market = {tier: list(row) for tier, row in app.state.market.items()}
         decks = {tier: list(row) for tier, row in app.state.decks.items()}
         self.action_button.invoke()
@@ -573,7 +616,7 @@ class PersistentUITests(unittest.TestCase):
         stack = app.computer.reserved.stack
         stack.event_generate('<Motion>', x=75, y=100)
         stack.event_generate('<Button-1>', x=75, y=100)
-        self.assertIsNone(app.state.selected_card)
+        self.assertIsNone(app.state.selection.card)
 
     def test_reserved_cards_are_last_disabled_block_and_refresh_in_place(self):
         app = self.app
@@ -598,10 +641,10 @@ class PersistentUITests(unittest.TestCase):
                 self.assertEqual(reserved.stack.itemcget(overlay, 'state'), 'normal')
             reserved.stack.event_generate('<Button-1>', x=75, y=100)
             if player is app.state.current_player:
-                self.assertIn(app.state.selected_card, player.reserved_cards)
-                app.select_card(app.state.selected_card)
+                self.assertIn(app.state.selection.card, player.reserved_cards)
+                app.select_card(app.state.selection.card)
             else:
-                self.assertIsNone(app.state.selected_card)
+                self.assertIsNone(app.state.selection.card)
             player.reserved_cards.pop(0)
             app.refresh()
             self.assertEqual(reserved.stack.itemcget(reserved.card_items[0], 'image'),

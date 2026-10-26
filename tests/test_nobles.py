@@ -37,7 +37,7 @@ class NobleTests(unittest.TestCase):
         noble = Noble('noble', 3, {RUBY: 2})
         state.market[1] = [card]
         state.nobles = [noble]
-        state.select_card(card)
+        state.selection.select_card(card, state)
         state.buy_card()
         self.assertEqual(player.nobles, [noble])
         self.assertEqual(state.nobles, [])
@@ -65,7 +65,7 @@ class NobleTests(unittest.TestCase):
         first = Noble('first', 3, {RUBY: 1})
         second = Noble('second', 3, {RUBY: 1})
         state.nobles = [unavailable, first, second]
-        state.select_token(DIAMOND)
+        state.selection.select_token(DIAMOND, state)
         state.take_tokens()
         self.assertEqual(state.players[0].nobles, [first])
         self.assertEqual(state.players[0].tokens, {DIAMOND: 1})
@@ -79,7 +79,7 @@ class NobleTests(unittest.TestCase):
         noble = Noble('noble', 3, {RUBY: 1})
         state.nobles = [noble]
         state.current_player.add_card(Card('ruby', 1, RUBY, 0, {}))
-        state.selected_tokens = {RUBY: 2}
+        state.selection.tokens = {RUBY: 2}
         with self.assertRaises(ValueError):
             state.take_tokens()
         self.assertEqual(state.nobles, [noble])
