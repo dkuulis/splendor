@@ -1,0 +1,35 @@
+# Approximate complete single-gem size in source pixels (longest dimension).
+# Measured from a full gem, including parts hidden by overlapping gems.
+# Use tools/resize_pile.py --token-diameter with these values for ~60px gems.
+# WebP files preserve alpha and use quality 80; PNG assets add 2px padding.
+# Filename           Token diameter (px)
+diamond2.webp        770
+diamond3.webp        640
+diamond4.webp        610
+diamond5.webp        520
+diamond6.webp        550
+diamond7.webp        500
+sapphire2.webp       820
+sapphire3.webp       700
+sapphire4.webp       690
+sapphire5.webp       540
+sapphire6.webp       540
+sapphire7.webp       520
+emerald2.webp        680
+emerald3.webp        580
+emerald4.webp        570
+emerald5.webp        540
+emerald6.webp        550
+emerald7.webp        550
+ruby2.webp           775
+ruby3.webp           530
+ruby4.webp           660
+ruby5.webp           530
+ruby6.webp           535
+ruby7.webp           520
+onyx2.webp           680
+onyx3.webp           660
+onyx4.webp           570
+onyx5.webp           530
+onyx6.webp           530
+onyx7.webp           500

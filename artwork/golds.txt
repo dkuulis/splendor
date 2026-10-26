@@ -1,0 +1,7 @@
+# Complete single-coin diameter in source pixels, including obscured portions.
+# Use with tools/resize_pile.py --token-diameter to render coins at 60px.
+# Filename       Token diameter (px)
+gold2.webp       820
+gold3.webp       640
+gold4.webp       670
+gold5.webp       550

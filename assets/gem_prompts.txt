@@ -1,5 +1,5 @@
 Shared prompt
-Create a single {gem} game token in a realistic jeweled style matching ornate arabesque playing cards. Use a polished gemstone with {appearance} and only a few large, clearly defined facets (roughly 6–10 visible faces). Avoid tiny facets, dense reflections, microtexture, and fine detail that becomes clutter at 60×60px. Keep the prescribed outer silhouette independent of the facet count. Normal gems must be brightly lit and brilliant, with luminous facets and clearly recognizable colors rather than dark, subdued shading. Center it in a square image with genuine alpha transparency and a small transparent margin. Front view, crisp silhouette, readable at 60×60px. No text, checkmarks, surrounding scene, cast shadow, or rendered checkerboard.
+Create exactly {count} {gem} game tokens, from one to seven, in a realistic jeweled style matching ornate arabesque playing cards. Use the existing single-gem image as the design and scale reference. Use polished gemstones with {appearance} and only a few large, clearly defined facets (roughly 6–10 visible faces per gem). Avoid tiny facets, dense reflections, microtexture, and fine detail that becomes clutter at 60×60px. Keep the prescribed outer silhouette independent of the facet count. Gems must be brightly lit and brilliant, with luminous facets and clearly recognizable colors rather than dark, subdued shading. Front view, crisp silhouettes, genuine alpha transparency outside the pile and through gaps. No text, checkmarks, surrounding scene, cast shadow, external glow, or rendered checkerboard.
 
 Gem variants
 Use the specified shape for the outer silhouette, not just the internal facets.
@@ -8,3 +8,62 @@ sapphire.png: Sapphire — vivid blue, heptagonal cut with seven sides.
 emerald.png: Emerald — rich bright green, cushion cut with a rounded-square silhouette.
 ruby.png: Ruby — luminous red, round brilliant cut with a circular silhouette.
 onyx.png: Onyx — glossy near-black, cushion cut with bright reflective facets; preserve its black identity.
+
+Pile composition and scale — applies to every variant
+Use equal-sized gems, small varied rotations, and partial overlaps. Keep exactly the requested count individually recognizable from exposed faces and rims. Favor a broad, bottom-heavy mound, slightly wider than tall, with foreground gems covering the lower edges of rear gems. Never stretch gems or shrink rear gems with perspective. No isolated outliers or hidden extra gems.
+The visible pile must fit within THREE single-gem widths and TWO single-gem heights, including rotated corners. These are maximum bounds, not a target to fill for small counts. Increase overlap to fit; do not reduce gem size. Leave only a small transparent margin outside these bounds.
+Row descriptions below run BACK TO FRONT. For two rows, overlap vertically by about half a gem height. For three rows, separate row centers by at most 0.45 gem heights. Within rows, overlap as needed; three-across rows should span about 2.4–2.8 gem widths. Minor staggering and rotations must stay within the overall bounds.
+
+IMPORTANT — final asset rendering
+Count 1 already exists as <gem>.png at 60×60px; reuse it as the reference and retain it unchanged. Counts 2–7 are larger images, NOT piles fitted into 60×60px. Each individual gem must retain the same apparent scale as the existing 60×60px single asset. If rendering at S times final resolution, each complete gem uses approximately a 60S×60S token box; downsample the whole composition by S, never normalize each pile to a fixed thumbnail size. Allow up to 180×120px for visible pile content plus a small transparent margin. Preserve aspect ratio and alpha; do not stretch or independently resize gems. Judge size using the implied complete gem, not just its exposed portion. Verify count, individual gem scale, and overall bounds after downscaling.
+Save high-resolution originals separately. File names use lowercase token names: <token>.png for one gem and <token><count>.png for counts 2–7, with no separator before the count.
+Diamond: diamond.png, diamond2.png, diamond3.png, diamond4.png, diamond5.png, diamond6.png, diamond7.png.
+Sapphire: sapphire.png, sapphire2.png, sapphire3.png, sapphire4.png, sapphire5.png, sapphire6.png, sapphire7.png.
+Emerald: emerald.png, emerald2.png, emerald3.png, emerald4.png, emerald5.png, emerald6.png, emerald7.png.
+Ruby: ruby.png, ruby2.png, ruby3.png, ruby4.png, ruby5.png, ruby6.png, ruby7.png.
+Onyx: onyx.png, onyx2.png, onyx3.png, onyx4.png, onyx5.png, onyx6.png, onyx7.png.
+
+Diamond layouts
+1: Existing centered single octagonal diamond.
+2: Low horizontal pair, left diamond slightly forward, right a little higher; modest overlap.
+3: Lopsided triangle, one rear diamond left of center and two foreground diamonds forming a broad base.
+4: Two behind and two in front, rear pair tucked inward; front-right diamond slightly lower.
+5: Two behind and three across the front; front-center diamond lowest, small alternating rotations.
+6: Three behind and three in front, rear row shifted slightly left; front-center diamond overlaps its neighbors.
+7: Two behind, two in the middle, three across the front; middle pair tucked tightly inward, broad front base.
+
+Sapphire layouts
+1: Existing centered single heptagonal sapphire.
+2: Close horizontal pair, right sapphire slightly forward and lower, subtly different rotations.
+3: One rear sapphire right of center, two overlapping front sapphires with left one lowest.
+4: Tight staggered two-by-two clump, rear-right sapphire highest and front-left one most prominent.
+5: Two closely overlapped rear sapphires and three along the front; front-right sapphire angled slightly inward.
+6: Three rear and three front sapphires, rear row shifted slightly right; broad shallow foreground arc.
+7: Two rear, two middle, three front sapphires, middle row offset slightly left; front-center sapphire lowest.
+
+Emerald layouts
+1: Existing centered single cushion-cut emerald.
+2: Horizontal pair with left emerald slightly forward, right subtly tilted inward.
+3: One rear emerald slightly left of center, two front emeralds with the right slightly lower.
+4: Two rear and two front emeralds, front row offset a little right; opposing small rotations.
+5: Two rear and three front emeralds, center-front emerald upright and lowest; outer gems tilted inward.
+6: Three rear and three front emeralds, tightly interlocked with rear-center gem slightly higher.
+7: Compact two-three-two arrangement; front pair spread enough to form a broad low base while overlapping the middle row. Keep three row centers within 0.9 gem heights and widest row within three gem widths.
+
+Ruby layouts
+1: Existing centered single round ruby.
+2: Horizontal overlapping pair, left ruby slightly lower and in front.
+3: Slightly lopsided triangle, upper ruby left of center, two below with right ruby slightly higher than left.
+4: Two rear and two front rubies, rear row offset slightly right; front pair strongly overlapping.
+5: Two rear and three front rubies in a shallow asymmetric arc, front-left ruby slightly lowest.
+6: Three rear and three front rubies, rear row tucked inward; front-right ruby overlaps the center one.
+7: Two rear, two middle, three front rubies; rear pair slightly right of center, foreground row broad and low.
+
+Onyx layouts
+1: Existing centered single cushion-cut onyx.
+2: Nearly level horizontal pair, left gem slightly in front, right rotated subtly clockwise.
+3: One rear onyx slightly right of center, two in front with left gem lowest; keep reflective rims distinct.
+4: Two rear and two front onyx gems, rear-left highest, front-right most prominent.
+5: Two rear and three front onyx gems, front-center slightly lower; vary rotations enough to separate black faces.
+6: Three rear and three front onyx gems, front row offset slightly left; retain bright visible edge highlights.
+7: Two rear, two middle, three front onyx gems, middle pair shifted slightly right; wide foreground base and distinct reflective rims on all seven.
