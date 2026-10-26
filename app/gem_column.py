@@ -3,15 +3,14 @@ from tkinter import ttk
 
 from .drawing import draw_gem, row_centers
 from .styles import (
+    GEM_RADIUS,
+    GEM_SPACING,
     OUTLINE_PALETTE,
     SELECTION_MARKER_FONT,
     SELECTION_OUTLINE_COLOR,
     TEXT_PALETTE,
 )
 
-BANK_GEM_RADIUS = 19
-BANK_GEM_GAP = 4
-BANK_GEM_SPACING = BANK_GEM_RADIUS * 2 + BANK_GEM_GAP
 BANK_CANVAS_WIDTH = 176
 BANK_CANVAS_HEIGHT = 48
 
@@ -33,9 +32,9 @@ class GemColumn(ttk.Frame):
         self.tokens.pack()
 
         y = BANK_CANVAS_HEIGHT / 2
-        for x in row_centers(available, BANK_CANVAS_WIDTH, BANK_GEM_SPACING):
+        for x in row_centers(available, BANK_CANVAS_WIDTH, GEM_SPACING):
             gem = draw_gem(
-                self.tokens, color, x, y, BANK_GEM_RADIUS, width=2, tags=("gem",),
+                self.tokens, color, x, y, GEM_RADIUS, width=2, tags=("gem",),
             )
             marker = self.tokens.create_text(
                 x, y, text="✓",

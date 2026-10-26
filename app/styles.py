@@ -1,4 +1,4 @@
-"""Shared UI colors, fonts, and theme configuration."""
+"""Shared UI colors, fonts, dimensions, and theme configuration."""
 
 from tkinter import ttk
 
@@ -20,6 +20,10 @@ DECK_SYMBOL_FONT = ("Helvetica", 16, "bold")
 POINTS_FONT = ("Helvetica", 28, "bold")
 CARD_DETAIL_FONT = ("Helvetica", 13, "bold")
 SELECTION_MARKER_FONT = ("Helvetica", 20, "bold")
+
+GEM_RADIUS = 19
+GEM_GAP = 4
+GEM_SPACING = GEM_RADIUS * 2 + GEM_GAP
 
 
 def configure_styles(root):
