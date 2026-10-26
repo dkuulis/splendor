@@ -39,7 +39,7 @@ crops transparent margins, preserves proportions, and writes a centered,
 transparent 60×60 PNG:
 
 ```sh
-python tools/resize_token.py images/gold.png assets/gold.png
+python tools/resize_token.py artwork/gold.webp assets/gold.png
 ```
 
 ## Generating card assets
@@ -64,23 +64,24 @@ python tools/convert_artwork.py images artwork --rgba \
 ```
 
 With Pillow installed, compose all 90 cards from the high-resolution artwork
-and gem PNGs in `images`, using attributes from `game/initialize.py`:
+and gem WebP files in `artwork`, using attributes from `game/initialize.py`:
 
 ```sh
-python tools/generate_cards.py images assets --font /path/to/Forum-Regular.ttf
+python tools/generate_cards.py artwork assets
 ```
 
-The input folder must contain `<gem>.png` icons (lowercase gem names).
-For artwork, the tool first looks for `card_<nnn>_l<level>_<gem>.png`
-(for example, `card_068_l2_ruby.png`), then falls back to
-`card_l<level>_<gem>.png`. It logs the artwork path and output path for each
+The input folder must contain `<gem>.webp` icons (lowercase gem names).
+For artwork, the tool first looks for `card_<nnn>_l<level>_<gem>.webp`
+(for example, `card_068_l2_ruby.webp`), then falls back to
+`card_l<level>_<gem>.webp`. It logs the artwork path and output path for each
 generated file. Output is fixed at 150×210px, using
 card IDs as filenames. Existing output files are replaced. The Forum font
 uses synthetic bold to match the current assets.
 
 Use `--card 78` to render one card, and `--high-res images/cards` to also save
-1200×1680 versions. Original artwork and fonts must be supplied locally;
-the `images` folder is ignored by Git.
+1200×1680 versions. Input and output default to `artwork` and `assets`; the
+bundled `assets/Forum-Regular.ttf` is used unless overridden with `--font`.
+The `images` folder is ignored by Git.
 
 ## Setup
 

@@ -1,4 +1,4 @@
-"""Resize a gem or gold image to a transparent 60×60 PNG (requires Pillow)."""
+"""Resize a gem or gold WebP image to a transparent 60×60 PNG (requires Pillow)."""
 
 import argparse
 from pathlib import Path
@@ -20,7 +20,7 @@ def resize_token(source, destination):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("input", type=Path, help="Original gem or gold image")
+    parser.add_argument("input", type=Path, help="Source WebP, e.g. artwork/gold.webp")
     parser.add_argument("output", type=Path, help="Destination PNG path")
     args = parser.parse_args()
     try:

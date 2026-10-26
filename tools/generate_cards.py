@@ -27,7 +27,7 @@ COST_TEXT = {color: "white" for color in COLORS}
 COST_TEXT["Diamond"] = "#111827"
 
 
-def generate_cards(cards, images, output, font_path, high_res=None):
+def generate_cards(cards, artwork_dir, output, font_path, high_res=None):
     fonts = {size: ImageFont.truetype(str(font_path), size * SCALE) for size in (16, 48)}
     output.mkdir(parents=True, exist_ok=True)
     if high_res:
@@ -39,7 +39,7 @@ def generate_cards(cards, images, output, font_path, high_res=None):
     # Prepare a reusable, card-sized transparent gem overlay for each color.
     gems = {}
     for color in {card.color for card in cards}:
-        with Image.open(images / f"{color.lower()}.png") as original:
+        with Image.open(artwork_dir / f"{color.lower()}.webp") as original:
             gem = original.convert("RGBA")
         if gem.getchannel("A").getbbox() is None:
             raise ValueError(f"{color} gem is fully transparent.")
@@ -61,9 +61,9 @@ def generate_cards(cards, images, output, font_path, high_res=None):
         # IDs begin with card_<nnn>; omit the cost suffix for artwork lookup.
         number = card.id.split("_")[1]
 
-        artwork = images / f"card_{number}_l{card.tier}_{card.color.lower()}.png"
+        artwork = artwork_dir / f"card_{number}_l{card.tier}_{card.color.lower()}.webp"
         if not artwork.is_file():
-            artwork = images / f"card_l{card.tier}_{card.color.lower()}.png"
+            artwork = artwork_dir / f"card_l{card.tier}_{card.color.lower()}.webp"
 
         if artwork not in backgrounds:
             # RGBA provides opacity for overlays. LANCZOS blends neighboring
@@ -109,9 +109,9 @@ def generate_cards(cards, images, output, font_path, high_res=None):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("images", type=Path, help="Folder containing card_l<level>_<gem>.png and <gem>.png")
-    parser.add_argument("output", type=Path, help="Destination folder for 150×210 card assets")
-    parser.add_argument("--font", required=True, type=Path, help="Path to Forum-Regular.ttf")
+    parser.add_argument("artwork", type=Path, nargs="?", default=ROOT / "artwork", help="Folder containing card and gem WebP originals (default: artwork)")
+    parser.add_argument("output", type=Path, nargs="?", default=ROOT / "assets", help="Destination folder for 150×210 PNG assets (default: assets)")
+    parser.add_argument("--font", type=Path, default=ROOT / "assets" / "Forum-Regular.ttf", help="Font file (default: bundled assets/Forum-Regular.ttf)")
     parser.add_argument("--card", type=int, choices=range(1, 91), metavar="1-90", help="Generate only this card number; default: all cards")
     parser.add_argument("--high-res", type=Path, help="Also save 1200×1680 cards in this folder")
     args = parser.parse_args()
@@ -122,7 +122,7 @@ def main():
     try:
         if args.high_res and args.high_res.resolve() == args.output.resolve():
             raise ValueError("High-resolution and asset output folders must differ.")
-        generate_cards(cards, args.images, args.output, args.font, args.high_res)
+        generate_cards(cards, args.artwork, args.output, args.font, args.high_res)
     except (OSError, ValueError) as error:
         parser.exit(1, f"Error: {error}\n")
     print(f"Generated {len(cards)} card assets in {args.output}")
