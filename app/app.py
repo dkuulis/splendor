@@ -35,9 +35,9 @@ class App:
         self.log = Log(body, state.log)
         self.log.grid(row=0, column=1, sticky="nsew", padx=(16, 0))
 
-        self.refresh_field()
+        self.refresh()
 
-    def refresh_field(self):
+    def refresh(self):
         state = self.state
         field = self.field
         for child in field.winfo_children():
@@ -57,6 +57,7 @@ class App:
         self.player.pack(fill="x")
 
         self.bank.reset_selection(state.turn.finished)
+        self.log.refresh()
 
     def new_game(self):
         self.state = create_initial_state()
@@ -68,8 +69,7 @@ class App:
         if self.state.turn.finished:
             return
         self.state.pass_turn()
-        self.log.refresh()
-        self.refresh_field()
+        self.refresh()
 
     def take_gems(self, colors):
         try:
@@ -77,8 +77,7 @@ class App:
         except ValueError as error:
             messagebox.showinfo("Cannot take gems", str(error), parent=self.shell)
             return
-        self.refresh_field()
-        self.log.refresh()
+        self.refresh()
 
     def buy_card(self, card):
         try:
@@ -86,8 +85,7 @@ class App:
         except ValueError as error:
             messagebox.showinfo("Cannot buy card", str(error), parent=self.shell)
             return
-        self.refresh_field()
-        self.log.refresh()
+        self.refresh()
 
     def player_subtitle(self, player):
         status = self.state.player_status(player)
