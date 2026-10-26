@@ -1,5 +1,6 @@
 import unittest
 
+from game.constants import RUBY
 from game import State
 from ai.pass_only import PassOnlyAI
 
@@ -8,7 +9,7 @@ class PassOnlyAITests(unittest.TestCase):
     def test_strategy_passes_once(self):
         state = State()
         state.turn.active_player = 1
-        state.select_token('Ruby')
+        state.select_token(RUBY)
         PassOnlyAI().play_turn(state)
         self.assertEqual(state.turn.active_player, 0)
         self.assertEqual(state.turn.consecutive_passes, 1)

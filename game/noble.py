@@ -1,5 +1,5 @@
 class Noble:
-    def __init__(self, noble_id, points, requirements=None):
+    def __init__(self, noble_id, points, requirements):
         self.id = noble_id
         self.points = points
-        self.requirements = dict(requirements) if requirements is not None else {}
+        self.requirements = dict(requirements)

@@ -1,4 +1,4 @@
-from .constants import TOKENS
+from .constants import GOLD, TOKENS
 from .player import Player
 from .turn import Turn
 
@@ -12,7 +12,7 @@ class State:
 
     def __init__(self):
         self.players = [Player("YOU"), Player("COMPUTER", is_ai=True)]
-        self.supply = {token: 5 if token == "Gold" else 4 for token in TOKENS}
+        self.supply = {token: 5 if token == GOLD else 4 for token in TOKENS}
         # Pending token counts by type; unselected types are omitted.
         self.selected_tokens = {}
         self.selected_card = None
@@ -40,7 +40,7 @@ class State:
         self.selected_card = None if self.selected_card is card else card
 
     def select_token(self, token):
-        if (self.turn.finished or token not in TOKENS or token == "Gold"
+        if (self.turn.finished or token not in TOKENS or token == GOLD
                 or not self.supply.get(token, 0)):
             return
         self.selected_card = None
@@ -92,7 +92,7 @@ class State:
         if (not 1 <= len(self.selected_tokens) <= 3
                 or any(amount != 1 for amount in self.selected_tokens.values())):
             return "Select one to three different token types."
-        if any(token not in TOKENS or token == "Gold" or self.supply.get(token, 0) < 1
+        if any(token not in TOKENS or token == GOLD or self.supply.get(token, 0) < 1
                for token in self.selected_tokens):
             return "A selected gem is not available."
         if len(self.selected_tokens) > self.max_take:
@@ -146,7 +146,7 @@ class State:
                 self.supply[token] = self.supply.get(token, 0) + amount
                 if player.tokens[token] == 0:
                     del player.tokens[token]
-        player.cards[card.token].append(card)
+        player.add_card(card)
         row = self.market[card.tier]
         slot = row.index(card)
         revealed = None

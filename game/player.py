@@ -1,4 +1,4 @@
-from .constants import TOKENS
+from .constants import GEMS
 
 
 class Player:
@@ -6,8 +6,12 @@ class Player:
         self.name = name
         self.is_ai = is_ai
         self.tokens = {}
-        self.cards = {token: [] for token in TOKENS if token != "Gold"}
+        self.cards = {token: [] for token in GEMS}
         self.nobles = []
+
+    def add_card(self, card):
+        self.cards[card.token].append(card)
+        return card
 
     @property
     def points(self):

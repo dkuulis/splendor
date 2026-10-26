@@ -4,6 +4,7 @@ from unittest.mock import Mock
 
 from app.app import App
 from app.log import Log
+from game.constants import RUBY
 from game import Card, State
 
 
@@ -20,14 +21,14 @@ class SelectionRefreshTests(unittest.TestCase):
         app.size_window = Mock()
         app.log = Mock()
         app.scores = Mock()
-        card = Card('selected', 1, 'Ruby', 0)
+        card = Card('selected', 1, RUBY, 0, {})
         app.state.market[1].append(card)
 
         app.select_card(card)
         app.market.refresh_selection.assert_called_with(card)
-        app.select_token('Ruby')
+        app.select_token(RUBY)
         app.market.refresh_selection.assert_called_with(None)
-        app.deselect_token('Ruby')
+        app.deselect_token(RUBY)
 
         self.assertEqual(app.supply.refresh.call_count, 3)
         self.assertEqual(app.selection.refresh.call_count, 3)

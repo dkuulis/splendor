@@ -15,16 +15,16 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from game.initialize import create_decks
-from game.constants import TOKENS
+from game.constants import DIAMOND, SAPPHIRE, EMERALD, RUBY, ONYX, TOKENS
 
 # Compose at eight times the displayed size so text, curves, and gem edges
 # remain smooth after downsampling. Layout coordinates below use base pixels;
 # Pillow stroke widths and filter sizes are already in high-resolution pixels.
 SCALE = 8
 SIZE = (150 * SCALE, 210 * SCALE)
-PALETTE = {'Diamond': '#e5e7eb', 'Sapphire': '#2563eb', 'Emerald': '#15803d', 'Ruby': '#be123c', 'Onyx': '#334155'}
+PALETTE = {DIAMOND: '#e5e7eb', SAPPHIRE: '#2563eb', EMERALD: '#15803d', RUBY: '#be123c', ONYX: '#334155'}
 COST_TEXT = {token: "white" for token in TOKENS}
-COST_TEXT["Diamond"] = "#111827"
+COST_TEXT[DIAMOND] = "#111827"
 
 
 def generate_cards(cards, artwork_dir, output, font_path, high_res=None):

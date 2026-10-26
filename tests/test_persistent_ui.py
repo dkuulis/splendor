@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 from app.app import App
 from app.assets import load_image
+from game.constants import RUBY, GOLD
 from game.initialize import create_initial_state
 
 
@@ -32,15 +33,15 @@ class PersistentUITests(unittest.TestCase):
         widgets = self.widgets(app.field)
         selection_items = app.selection.tokens.find_all()
         market_items = [panel.find_all() for _, panel in app.market.cards]
-        app.select_token('Ruby')
-        app.deselect_token('Ruby')
+        app.select_token(RUBY)
+        app.deselect_token(RUBY)
         with patch('app.assets.tk.PhotoImage', side_effect=AssertionError('Reloaded cached image')):
             load_image(app.selection, 'ruby')
-            app.select_token('Ruby')
-            app.deselect_token('Ruby')
-        app.select_token('Ruby')
+            app.select_token(RUBY)
+            app.deselect_token(RUBY)
+        app.select_token(RUBY)
         app.selection.go_button.invoke()
-        self.assertEqual(app.state.players[0].tokens['Ruby'], 1)
+        self.assertEqual(app.state.players[0].tokens[RUBY], 1)
         app.selection.go_button.invoke()  # Computer passes in manual mode.
         card = app.state.market[1][0]
         for token, count in card.cost.items():
@@ -81,14 +82,14 @@ class PersistentUITests(unittest.TestCase):
         app.control.set('Greedy AI')
         app.change_control()
         self.assertIsNotNone(app.pending_ai)
-        app.supply.pick('Ruby')
+        app.supply.pick(RUBY)
         self.assertEqual(app.state.selected_tokens, {})
         self.assertFalse(app.selection.can_go)
         app.control.set('Manual')
         app.change_control()
         self.assertIsNone(app.pending_ai)
-        app.supply.pick('Ruby')
-        self.assertEqual(app.state.selected_tokens, {'Ruby': 1})
+        app.supply.pick(RUBY)
+        self.assertEqual(app.state.selected_tokens, {RUBY: 1})
         app.control.set('Greedy AI')
         app.change_control()
         app.new_game()
@@ -140,15 +141,15 @@ class PersistentUITests(unittest.TestCase):
         nobles = app.state.nobles[:2]
         card = app.state.market[1][0]
         for player, panel in zip(app.state.players, (app.player, app.computer)):
-            column = panel.columns['Gold']
+            column = panel.columns[GOLD]
             self.assertFalse(column.winfo_ismapped())
-            player.tokens['Gold'] = 5
+            player.tokens[GOLD] = 5
             app.refresh()
             self.root.update()
             self.assertTrue(column.winfo_ismapped())
             self.assertEqual(len(column.token_items), 5)
             player.nobles = list(nobles)
-            player.cards[card.token].append(card)
+            player.add_card(card)
             app.refresh()
             self.root.update()
             gem_column = panel.columns[card.token]
@@ -170,8 +171,8 @@ class PersistentUITests(unittest.TestCase):
                                 for item in column.token_items))
         app.new_game()
         self.root.update()
-        self.assertFalse(app.player.columns['Gold'].winfo_ismapped())
-        self.assertFalse(app.computer.columns['Gold'].winfo_ismapped())
+        self.assertFalse(app.player.columns[GOLD].winfo_ismapped())
+        self.assertFalse(app.computer.columns[GOLD].winfo_ismapped())
 
     def test_log_scroll_and_label_reuse(self):
         app = self.app

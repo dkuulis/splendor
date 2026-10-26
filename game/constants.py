@@ -1,1 +1,9 @@
-TOKENS = ("Diamond", "Sapphire", "Emerald", "Ruby", "Onyx", "Gold")
+GOLD = "Gold"
+DIAMOND = "Diamond"
+SAPPHIRE = "Sapphire"
+EMERALD = "Emerald"
+RUBY = "Ruby"
+ONYX = "Onyx"
+
+GEMS = (DIAMOND, SAPPHIRE, EMERALD, RUBY, ONYX)
+TOKENS = (GOLD,) + GEMS

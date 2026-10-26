@@ -14,27 +14,27 @@ ROOT = Path(__file__).resolve().parents[1]
 # Allow direct execution from tools/ while importing the project's constants.
 sys.path.insert(0, str(ROOT))
 
-from game.constants import TOKENS
+from game.constants import DIAMOND, SAPPHIRE, EMERALD, RUBY, ONYX, TOKENS
 
 SCALE = 8
 SIZE = (150 * SCALE, 150 * SCALE)
 PALETTE = {
-    "Diamond": "#e5e7eb", "Sapphire": "#2563eb", "Emerald": "#15803d",
-    "Ruby": "#be123c", "Onyx": "#334155",
+    DIAMOND: "#e5e7eb", SAPPHIRE: "#2563eb", EMERALD: "#15803d",
+    RUBY: "#be123c", ONYX: "#334155",
 }
 
 # Global numbering and requirements match prompts/noble_prompts.txt.
 NOBLES = [
-    ("noble_diamond_1", {"Diamond": 4, "Onyx": 4}),
-    ("noble_diamond_2", {"Diamond": 4, "Ruby": 4}),
-    ("noble_sapphire_3", {"Diamond": 4, "Sapphire": 4}),
-    ("noble_sapphire_4", {"Sapphire": 4, "Ruby": 4}),
-    ("noble_emerald_5", {"Emerald": 4, "Ruby": 4}),
-    ("noble_emerald_6", {"Sapphire": 3, "Emerald": 3, "Onyx": 3}),
-    ("noble_ruby_7", {"Diamond": 3, "Sapphire": 3, "Onyx": 3}),
-    ("noble_ruby_8", {"Diamond": 3, "Emerald": 3, "Ruby": 3}),
-    ("noble_onyx_9", {"Emerald": 3, "Ruby": 3, "Onyx": 3}),
-    ("noble_onyx_10", {"Diamond": 3, "Sapphire": 3, "Emerald": 3}),
+    ("noble_diamond_1", {DIAMOND: 4, ONYX: 4}),
+    ("noble_diamond_2", {DIAMOND: 4, RUBY: 4}),
+    ("noble_sapphire_3", {DIAMOND: 4, SAPPHIRE: 4}),
+    ("noble_sapphire_4", {SAPPHIRE: 4, RUBY: 4}),
+    ("noble_emerald_5", {EMERALD: 4, RUBY: 4}),
+    ("noble_emerald_6", {SAPPHIRE: 3, EMERALD: 3, ONYX: 3}),
+    ("noble_ruby_7", {DIAMOND: 3, SAPPHIRE: 3, ONYX: 3}),
+    ("noble_ruby_8", {DIAMOND: 3, EMERALD: 3, RUBY: 3}),
+    ("noble_onyx_9", {EMERALD: 3, RUBY: 3, ONYX: 3}),
+    ("noble_onyx_10", {DIAMOND: 3, SAPPHIRE: 3, EMERALD: 3}),
 ]
 
 
@@ -70,7 +70,7 @@ def generate_nobles(nobles, artwork_dir, output, font_path, high_res=None):
         costs = [(token, requirements[token]) for token in TOKENS if requirements.get(token, 0)]
         for index, (token, amount) in enumerate(costs):
             y = 120 - (len(costs) - 1 - index) * 30
-            ink = "#111827" if token == "Diamond" else "white"
+            ink = "#111827" if token == DIAMOND else "white"
             # Pillow rectangle endpoints are inclusive; subtract one pixel
             # so each square is exactly 26×26 base pixels before downsampling.
             draw.rectangle((6 * SCALE, y * SCALE, 32 * SCALE - 1, (y + 26) * SCALE - 1),

@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-from game.constants import TOKENS
+from game.constants import GOLD, TOKENS
 
 from .player_column import PlayerColumn
 
@@ -30,9 +30,8 @@ class PlayerPanel(tk.Frame):
 
         self.columns = {}
         # Nobles share the leftmost column with gold; gem columns follow canonical order.
-        column_tokens = ["Gold"] + [token for token in TOKENS if token != "Gold"]
-        for index, token in enumerate(column_tokens):
-            height = NOBLE_SIZE if token == "Gold" else MARKET_CARD_HEIGHT
+        for index, token in enumerate(TOKENS):
+            height = NOBLE_SIZE if token == GOLD else MARKET_CARD_HEIGHT
             column = PlayerColumn(self.panel, token, [], 0, height=height)
             column.grid(row=0, column=index, sticky="ew", padx=(0, PLAYER_COLUMN_GAP))
             self.columns[token] = column
@@ -42,7 +41,7 @@ class PlayerPanel(tk.Frame):
         border = ACTIVE_PLAYER_BORDER if active else INACTIVE_PLAYER_BORDER
         self.configure(highlightbackground=border, highlightcolor=border)
         for index, (token, column) in enumerate(self.columns.items()):
-            cards = (list(player.nobles) if token == "Gold" else
+            cards = (list(player.nobles) if token == GOLD else
                      player.cards[token])
             token_count = player.tokens.get(token, 0)
             column.refresh(cards, token_count)
