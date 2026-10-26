@@ -147,7 +147,8 @@ class PersistentUITests(unittest.TestCase):
             app.refresh()
             self.root.update()
             self.assertTrue(column.winfo_ismapped())
-            self.assertEqual(len(column.token_items), 5)
+            self.assertEqual(column.stack.itemcget(column.token_item, 'image'),
+                             str(load_image(column, 'gold5')))
             player.nobles = list(nobles)
             player.add_card(card)
             app.refresh()
@@ -159,16 +160,31 @@ class PersistentUITests(unittest.TestCase):
                 self.assertEqual(column.stack.itemcget(item, 'image'), str(load_image(column, noble.id)))
             self.assertEqual(column.stack.coords(column.card_items[1])[0]
                              - column.stack.coords(column.card_items[0])[0], 30)
-            for item in column.token_items:
-                self.assertEqual(column.stack.itemcget(item, 'image'), str(load_image(column, 'gold')))
-                self.assertEqual(column.stack.itemcget(item, 'state'), 'normal')
-            self.assertEqual(list(column.stack.find_all()), column.card_items + column.token_items)
+            self.assertEqual(column.stack.itemcget(column.token_item, 'state'), 'normal')
+            self.assertEqual(list(column.stack.find_all()), column.card_items + [column.token_item])
+            self.assertEqual(column.stack.bbox(column.token_item)[2:],
+                             (column.stack.winfo_width(), column.height))
+            self.assertEqual(column.stack.bbox(column.token_item)[2]
+                             - column.stack.bbox(column.card_items[-1])[2], 20)
             player.tokens.clear()
             app.refresh()
             self.root.update()
             self.assertTrue(column.winfo_ismapped())
-            self.assertTrue(all(column.stack.itemcget(item, 'state') == 'hidden'
-                                for item in column.token_items))
+            self.assertEqual(column.stack.itemcget(column.token_item, 'state'), 'hidden')
+            gem_item = gem_column.token_item
+            for count in (7, 2, 1, 0):
+                player.tokens[card.token] = count
+                app.refresh()
+                self.root.update()
+                self.assertEqual(gem_column.token_item, gem_item)
+                if count:
+                    name = card.token.lower() + (str(count) if count > 1 else '')
+                    self.assertEqual(gem_column.stack.itemcget(gem_item, 'image'),
+                                     str(load_image(gem_column, name)))
+                    self.assertEqual(gem_column.stack.bbox(gem_item)[2:],
+                                     (gem_column.stack.winfo_width(), gem_column.height))
+                else:
+                    self.assertEqual(gem_column.stack.itemcget(gem_item, 'state'), 'hidden')
         app.new_game()
         self.root.update()
         self.assertFalse(app.player.columns[GOLD].winfo_ismapped())

@@ -4,8 +4,6 @@ Outstanding tasks
   * improve card purchase by showing small cost gems on all purchasable cards
   * show broken/grayed out/damaged/dark missing gems/coins against costs for unavailable cards
 
-* show player gems in piles
-
 * allow 2 gem selection in 4 gems available
 
 * allow card reservation
