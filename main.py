@@ -5,6 +5,7 @@ from tkinter import ttk
 
 COLORS = ("Diamond", "Sapphire", "Emerald", "Ruby", "Onyx")
 PALETTE = {"Diamond": "#e5e7eb", "Sapphire": "#2563eb", "Emerald": "#15803d", "Ruby": "#be123c", "Onyx": "#334155"}
+DECK_PALETTE = {1: "#166534", 2: "#a16207", 3: "#1e40af"}
 
 
 class App:
@@ -27,10 +28,11 @@ class App:
         market.pack(fill="both", expand=True, pady=10)
         for row, tier in enumerate((3, 2, 1)):
             market.rowconfigure(row, weight=1, uniform="rows")
-            deck = ttk.LabelFrame(market, text=f"LEVEL {tier}", padding=12)
+            deck = tk.Frame(market, bg=DECK_PALETTE[tier], padx=12, pady=12)
             deck.grid(row=row, column=0, sticky="nsew", padx=(0, 8), pady=4)
-            ttk.Label(deck, text="DECK", font=("Helvetica", 12, "bold")).pack(expand=True)
-            ttk.Label(deck, text="16 cards").pack(pady=5)
+            tk.Label(deck, text=f"LEVEL {tier}", bg=DECK_PALETTE[tier], fg="white", font=("Helvetica", 11, "bold")).pack()
+            tk.Label(deck, text="◆" * tier, bg=DECK_PALETTE[tier], fg="white", font=("Helvetica", 16, "bold")).pack(expand=True)
+            tk.Label(deck, text="16 cards", bg=DECK_PALETTE[tier], fg="white").pack(pady=5)
             for slot in range(4):
                 market.columnconfigure(slot + 1, weight=1, uniform="cards")
                 bonus = COLORS[(slot + tier) % 5]
@@ -79,17 +81,44 @@ class App:
                     )
                 ttk.Button(box, text="Buy card", state="disabled").pack(fill="x", side="bottom", pady=(6, 0))
 
-        bank = ttk.LabelFrame(shell, text="GEM BANK", padding=10)
+        bank = ttk.Frame(shell, padding=10)
         bank.pack(fill="x", pady=(0, 10))
         self.selected = {}
-        self.selection_text = tk.StringVar(value="Select up to 3 different gems")
-        for color in COLORS:
+        self.gem_stacks = {}
+        self.selection_text = tk.StringVar(value="Click gems to cycle selection: 0 / 1 / 2")
+        for color, available in zip(COLORS, (4, 3, 2, 4, 1)):
             column = ttk.Frame(bank)
             column.pack(side="left", expand=True, fill="x", padx=8)
-            tk.Label(column, text="●", fg=PALETTE[color] if color != "Diamond" else "#94a3b8", font=("Helvetica", 24)).pack()
-            variable = tk.BooleanVar()
+            variable = tk.IntVar(value=0)
             self.selected[color] = variable
-            ttk.Checkbutton(column, text=f"{color} • 4", variable=variable, command=self.update_selection).pack()
+            tokens = tk.Canvas(
+                column, width=176, height=48, highlightthickness=0,
+                background=root.cget("background"),
+            )
+            tokens.pack()
+            start = (176 - available * 42) / 2
+            gem_items = []
+            for token in range(available):
+                x = start + token * 42
+                gem = tokens.create_oval(
+                    x + 2, 5, x + 40, 43,
+                    fill=PALETTE[color],
+                    outline="#94a3b8" if color == "Diamond" else PALETTE[color],
+                    width=2,
+                    tags=("gem",),
+                )
+                marker = tokens.create_text(
+                    x + 21, 24, text="✓",
+                    fill="#111827" if color == "Diamond" else "white",
+                    font=("Helvetica", 20, "bold"),
+                    state="hidden", tags=("gem",),
+                )
+                gem_items.append((gem, marker))
+            self.gem_stacks[color] = (tokens, gem_items)
+            tokens.tag_bind("gem", "<Button-1>", lambda event, selected=variable, count=available: self.toggle_gem(selected, count))
+            tokens.tag_bind("gem", "<Enter>", lambda event, canvas=tokens: canvas.configure(cursor="hand2"))
+            tokens.tag_bind("gem", "<Leave>", lambda event, canvas=tokens: canvas.configure(cursor=""))
+            ttk.Label(column, text=color).pack()
 
         self.player_panel(shell, "YOU", "Your turn", (0, 1, 2, 0, 1), (1, 0, 0, 1, 0), 0)
         actions = ttk.Frame(shell)
@@ -117,12 +146,25 @@ class App:
             ttk.Label(column, text=f"{gems[i]} gems  /  {discounts[i]} bonus").pack(anchor="w")
         ttk.Label(panel, text=f"Gems held\n{sum(gems)} / 10", justify="right").pack(side="right")
 
+    def toggle_gem(self, selected, available):
+        selected.set((selected.get() + 1) % (min(2, available) + 1))
+        self.update_selection()
+
     def update_selection(self):
-        selected = [color for color, variable in self.selected.items() if variable.get()]
+        for color, variable in self.selected.items():
+            canvas, gem_items = self.gem_stacks[color]
+            for index, (gem, marker) in enumerate(gem_items):
+                selected = index < variable.get()
+                canvas.itemconfigure(
+                    gem,
+                    outline="#f59e0b" if selected else ("#94a3b8" if color == "Diamond" else PALETTE[color]),
+                    width=4 if selected else 2,
+                )
+                canvas.itemconfigure(marker, state="normal" if selected else "hidden")
+        selected = [f"{variable.get()} {color}" for color, variable in self.selected.items() if variable.get()]
         self.selection_text.set(
-            "Choose no more than 3 colors" if len(selected) > 3
-            else "Selected: " + ", ".join(selected) if selected
-            else "Select up to 3 different gems"
+            "Selected: " + ", ".join(selected) if selected
+            else "Click gems to cycle selection: 0 / 1 / 2"
         )
 
 
