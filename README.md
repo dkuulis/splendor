@@ -42,7 +42,26 @@ transparent 60×60 PNG:
 python tools/resize_token.py images/gold.png assets/gold.png
 ```
 
+## Generating card assets
+
+With Pillow installed, compose all 90 cards from the high-resolution artwork
+and gem PNGs in `images`, using attributes from `game/initialize.py`:
+
+```sh
+python tools/generate_cards.py images assets --font /path/to/Forum-Regular.ttf
+```
+
+The input folder must contain `card_l<level>_<gem>.png` backgrounds and
+`<gem>.png` icons (lowercase gem names). Output is fixed at 150×210px, using
+card IDs as filenames. Existing output files are replaced. The Forum font
+uses synthetic bold to match the current assets.
+
+Use `--card 78` to render one card, and `--high-res images/cards` to also save
+1200×1680 versions. Original artwork and fonts must be supplied locally;
+the `images` folder is ignored by Git.
+
 ## Setup
+
 
 On macOS, use Homebrew Python with a modern Tk. Apple's system Python uses
 an obsolete Tk 8.5 that can display blank windows.
