@@ -10,7 +10,7 @@ class CardPanel(tk.Canvas):
                          highlightthickness=0, borderwidth=0, background=CARD_BACKGROUND)
         self.on_select = on_select
         self.art = self.create_image(0, 0, anchor="nw")
-        self.overlay = self.create_image(0, 0, anchor="nw", image=load_image(self, "enabled"))
+        self.overlay = self.create_image(0, 0, anchor="nw", image=load_image(self, "enabled2"))
         self.bind("<Button-1>", self.select)
         self.refresh(card, affordable, owned)
 

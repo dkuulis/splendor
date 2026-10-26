@@ -1,0 +1,5 @@
+Create a transparent 150×210px PNG overlay for an enabled, selectable playing card in a Renaissance trade game. The symbol is a compact golden-yellow citrine crystal cluster: one tall central hexagonal point surrounded by smaller angled crystals, with sharp pointed terminations and a minimal crystalline base. Use translucent honey-yellow facets, pale lemon highlights, subtle amber depths, realistic internal refraction, and luminous polished surfaces.
+
+Make the cluster slightly larger and farther inward than the original enabled checkmark: approximately 42×40px, centered at (115, 174). Balance the crystals around that center. Keep the silhouette crisp and readable at card size, with a subtle ivory outline for contrast. Bright, richly colored, clearly illuminated active appearance.
+
+Leave the top corners and bottom-left cost area unobstructed. Everything outside the cluster must be genuinely transparent, with no rendered checkerboard. No text, coins, checkmark, frame, sparkles, external glow, or cast shadow. Antialiased edges. Scale all dimensions proportionally when rendering at higher resolution; preserve the 5:7 canvas aspect ratio.
