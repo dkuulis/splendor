@@ -10,6 +10,7 @@ from .pass_only import PassOnlyAI
 from .greedy import GreedyAI
 from .greedy2 import Greedy2AI
 from .greedy_sim import GreedySimAI
+from .minimax import MinimaxAI
 
 STRATEGIES = {"pass-only": PassOnlyAI, "greedy": GreedyAI, "greedy2": Greedy2AI,
-              "greedy_sim": GreedySimAI}
+              "greedy_sim": GreedySimAI, "minimax": MinimaxAI}

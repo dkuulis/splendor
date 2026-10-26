@@ -9,6 +9,7 @@ computer strategy at launch with `--ai` (default: `greedy`):
 .venv/bin/python main.py --ai greedy
 .venv/bin/python main.py --ai greedy2
 .venv/bin/python main.py --ai greedy_sim
+.venv/bin/python main.py --ai minimax
 .venv/bin/python main.py --ai pass-only
 .venv/bin/python main.py --ai manual
 ```
@@ -76,6 +77,14 @@ reserved target, with remaining tokens breaking ties. Gold reduces target
 shortfalls. It scores every generated move, including take/return exchanges
 and reservations, using the copied deck order for market replacements. Only
 the best move is converted into a pending selection. If no moves exist, it passes.
+
+Minimax reuses Greedy_sim's simulation, evaluation, and selection conversion.
+It looks ahead two moves: its own move and the opponent's best reply. It
+maximizes the worst resulting difference between the players' Greedy_sim scores,
+with finished wins and losses taking precedence. It uses the copied deck order
+and all generated moves, like Greedy_sim. The same conversion limits apply:
+combined take/return moves and goldless reservations are not fully represented
+by the desktop selection helper.
 
 ## Selection rules
 

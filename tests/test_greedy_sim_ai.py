@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import patch
 
 from ai.greedy_sim import GreedySimAI
+from ai.simulation_search import evaluate as evaluate_state
 from game import Card, State
 from game.constants import DIAMOND, EMERALD, GOLD, ONYX, RUBY, SAPPHIRE, TOKENS
 from game.noble import Noble
@@ -37,14 +38,14 @@ class GreedySimAITests(unittest.TestCase):
         card = Card('purchase', 1, RUBY, 2, {})
         self.state.market[1] = [card]
         scores = []
-        evaluate = self.ai.evaluate
+        evaluate = evaluate_state
 
         def record(position, player_index):
             score = evaluate(position, player_index)
             scores.append(score)
             return score
 
-        with patch.object(self.ai, 'evaluate', side_effect=record):
+        with patch('ai.greedy_sim.evaluate', side_effect=record):
             self.choose()
         self.assertIn((2, 1), [score[:2] for score in scores])
         self.assertIn((0, 0), [score[:2] for score in scores])
@@ -104,8 +105,8 @@ class GreedySimAITests(unittest.TestCase):
         moves = generate_moves(SimulationState.from_game(self.state), 0)
         self.assertTrue(any(any(amount < 0 for amount in move.tokens) for move in moves))
         before = pickle.dumps(self.state)
-        with patch.object(self.ai, 'evaluate', side_effect=range(len(moves))) as evaluate, \
-                patch('ai.greedy_sim.update_selection_from_move') as update:
+        with patch('ai.greedy_sim.evaluate', side_effect=range(len(moves))) as evaluate, \
+                patch('ai.simulation_search.update_selection_from_move') as update:
             self.ai.make_selection(self.state, self.selection)
         self.assertEqual(evaluate.call_count, len(moves))
         update.assert_called_once()
@@ -122,13 +123,13 @@ class GreedySimAITests(unittest.TestCase):
     def test_evaluation_rewards_gold_and_discounts_toward_targets(self):
         self.state.market[1] = [Card('target', 1, EMERALD, 0, {RUBY: 3})]
         position = SimulationState.from_game(self.state)
-        before = self.ai.evaluate(position, 0)
+        before = evaluate_state(position, 0)
         position.players[0].tokens[TOKENS.index(GOLD)] = 1
         position.players[0].token_count = 1
-        self.assertGreater(self.ai.evaluate(position, 0), before)
-        with_gold = self.ai.evaluate(position, 0)
+        self.assertGreater(evaluate_state(position, 0), before)
+        with_gold = evaluate_state(position, 0)
         position.players[0].discounts[TOKENS.index(RUBY)] = 1
-        self.assertGreater(self.ai.evaluate(position, 0), with_gold)
+        self.assertGreater(evaluate_state(position, 0), with_gold)
 
     def test_evaluates_market_replacements_from_copied_deck(self):
         first = Card('first', 1, RUBY, 1, {})
@@ -141,6 +142,6 @@ class GreedySimAITests(unittest.TestCase):
             return max(position.cards[index].points
                        for row in position.market_indices for index in row)
 
-        with patch.object(self.ai, 'evaluate', side_effect=evaluate):
+        with patch('ai.greedy_sim.evaluate', side_effect=evaluate):
             self.choose()
         self.assertIs(self.selection.card, first)

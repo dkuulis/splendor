@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import patch
 
 import main
-from ai import GreedyAI, Greedy2AI, GreedySimAI, PassOnlyAI
+from ai import GreedyAI, Greedy2AI, GreedySimAI, MinimaxAI, PassOnlyAI
 
 
 class CommandLineTests(unittest.TestCase):
@@ -12,6 +12,7 @@ class CommandLineTests(unittest.TestCase):
         for arguments, expected in (([], GreedyAI), (['--ai', 'greedy'], GreedyAI),
                                     (['--ai', 'greedy2'], Greedy2AI),
                                     (['--ai', 'greedy_sim'], GreedySimAI),
+                                    (['--ai', 'minimax'], MinimaxAI),
                                     (['--ai', 'pass-only'], PassOnlyAI),
                                     (['--ai', 'manual'], type(None))):
             with self.subTest(arguments=arguments), patch('sys.argv', ['main.py', *arguments]), \
