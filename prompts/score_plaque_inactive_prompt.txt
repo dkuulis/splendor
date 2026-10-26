@@ -1,0 +1,11 @@
+Production game sprite: a single muted antique-brass metal score plaque cutout with TRUE TRANSPARENT ALPHA background. One small blank ornamental brass fitting for the inactive state of a Renaissance gold divider. Front-on, symmetric. Horizontal rectangular nameplate with four softly concave clipped corner recesses, short straight vertical sides, straight horizontal top and bottom edges, thin double raised bevel. Broad empty satin-metal center for dark score text to be added later.
+Material palette is desaturated olive-brown antique brass, bronze shadows, dull beige highlights: NOT bright yellow gold. Entire center is muted medium-light khaki-brass metal, light enough for dark text, consistent with the dim inactive divider. No white glints or glow. Restrained realistic material, smooth blank center, mild patina.
+Outer plaque aspect ratio about 1.88:1 before fitting to a 96x68 runtime sprite. Entire plaque visible centered with minimal transparent margins. No text or digits or icons. No rods, arrowheads, screws, gems, chains, dark inset or wooden center.
+Output actual RGBA PNG with alpha zero outside the object including corner recesses, exactly as a standalone transparent game sprite. Do not draw a transparency checkerboard, do not draw any background or backdrop, no exterior cast shadow.
+
+Generated with the built-in image tool.
+Original: images/score_plaque_inactive.png
+Source: artwork/score_plaque_inactive.webp (quality 80, alpha preserved)
+Runtime: assets/score_plaque_inactive.png (96x68, alpha preserved)
+Crop with tools.image_utils.load_cropped_rgba and resize with Lanczos.
+DividerPanel selects this image whenever its divider is inactive.

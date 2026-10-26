@@ -7,12 +7,10 @@ from game.initialize import create_initial_state
 from .supply_panel import SupplyPanel
 from .background import Background
 from .divider_panel import DividerPanel
-from .log import Log
 from .market_panel import MarketPanel
 from .nobles_panel import NoblesPanel
 from .player_panel import PlayerPanel
 from .selection_panel import SelectionPanel
-from .score_panel import ScorePanel
 from .styles import MARKET_CARD_HEIGHT, MARKET_ROW_PADDING, WINDOW_MIN_WIDTH, configure_styles
 
 
@@ -31,18 +29,8 @@ class App:
         self.background = Background(root)
 
     def create_ui(self):
-        body = ttk.Frame(self.shell)
-        body.pack(fill="both", expand=True)
-        body.columnconfigure(0, weight=1)
-        body.rowconfigure(0, weight=1)
-        self.field = ttk.Frame(body)
-        self.field.grid(row=0, column=0, sticky="nsew")
-        sidebar = ttk.Frame(body)
-        sidebar.grid(row=0, column=1, sticky="nsew", padx=(16, 0))
-        self.scores = ScorePanel(sidebar, self.state.players)
-        self.scores.pack(fill="x", padx=10, pady=(0, 12))
-        self.log = Log(sidebar)
-        self.log.pack(fill="both", expand=True)
+        self.field = ttk.Frame(self.shell)
+        self.field.pack(fill="both", expand=True)
 
         self.computer = PlayerPanel(self.field, on_select=self.select_card)
         self.computer.pack(fill="x")
@@ -75,16 +63,14 @@ class App:
         state = self.state
         self.computer.refresh(state.players[1], state.is_active_player(state.players[1]), self.manual_turn)
         self.player.refresh(state.players[0], state.is_active_player(state.players[0]), self.manual_turn)
-        self.computer_divider.refresh(state.is_active_player(state.players[1]))
-        self.player_divider.refresh(state.is_active_player(state.players[0]))
+        self.computer_divider.refresh(state.is_active_player(state.players[1]), state.players[1].points)
+        self.player_divider.refresh(state.is_active_player(state.players[0]), state.players[0].points)
         self.computer.refresh_selection(state.selected_card)
         self.player.refresh_selection(state.selected_card)
         self.market.refresh(state.market, state.decks, state.selected_card, enabled=self.manual_turn)
         self.nobles.refresh(state.nobles)
         self.supply.refresh(state.supply, state.selected_tokens, enabled=self.manual_turn)
         self.selection.refresh(state, enabled=self.manual_turn)
-        self.scores.refresh(state.players)
-        self.log.refresh(state.log)
         self.size_window(self.root)
         if self.ai_turn:
             self.pending_ai = self.root.after(500, self.run_ai)
@@ -152,7 +138,7 @@ class App:
 
     def size_window(self, root):
         # Measure the complete layout using the current platform's fonts and
-        # widget sizes, including the log, before setting window bounds.
+        # widget sizes before setting window bounds.
         root.update_idletasks()
         width = max(WINDOW_MIN_WIDTH, root.winfo_reqwidth())
         height = root.winfo_reqheight()

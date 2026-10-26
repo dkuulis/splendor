@@ -1,0 +1,11 @@
+Use case: ui-mockup.
+Production game artwork: one small solid GOLDEN BRASS score plaque, a decorative fitting attached to a polished gold divider rod in a Renaissance tabletop game. The entire plaque including its broad blank center is metal, NOT a dark enamel or wood inset. Match a warm polished yellow-gold brass rod with bright narrow specular highlights, amber-gold midtones, dark bronze bevel shadows, subtle aged patina. Restrained realistic metal, no noisy weathering. Front-on orthographic, symmetric compact horizontal rectangle with gently clipped corners and a narrow double bevel. Outer plaque aspect ratio 24:17, intended to display at 96x68 pixels. Broad flat satin-gold center for one or two large dark score digits added later; center sufficiently light and uniform for dark lettering, with no engraved markings. Narrow raised polished gold rim, gently shaded depth, highlights top-left, subtle shadow lower-right inside silhouette. Silhouette precisely symmetric and all of plaque visible. Thin rim must not consume label space.
+Isolated on genuinely transparent background, minimal transparent outer margin. No text, numbers, letters, symbols, gems, crowns, scrollwork, rod, arrowhead, screws, hanging chains, backdrop, checkerboard pattern, exterior cast shadow or watermark. A single standalone gold plaque only.
+
+Generated with the built-in image tool.
+Source original: images/score_plaque.png
+Tracked source: artwork/score_plaque.webp (quality 80 with alpha)
+Runtime asset: assets/score_plaque.png (96x68 with alpha)
+Crop transparent margins using tools.image_utils.load_cropped_rgba, then
+resize to 96x68 with Pillow Image.Resampling.LANCZOS.
+The UI overlays dark Forum 48px bold score text at the plaque center.

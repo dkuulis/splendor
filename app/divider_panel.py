@@ -1,9 +1,10 @@
 """Separate each player's holdings from the shared board."""
 
 import tkinter as tk
+from tkinter import font
 
 from .assets import load_image
-from .styles import TABLE_BACKGROUND
+from .styles import POINTS_FONT, TABLE_BACKGROUND, SCORE_CENTER_X, TEXT_COLOR
 
 
 class DividerPanel(tk.Canvas):
@@ -16,19 +17,27 @@ class DividerPanel(tk.Canvas):
             for active, name in ((True, "active"), (False, "inactive"))
         }
         self.images = {active: tk.PhotoImage(master=self) for active in self.tiles}
-        self.height = self.tiles[False][0].height()
+        self.points_font = font.Font(root=self, font=POINTS_FONT)
+        self.plaque_images = {True: load_image(self, "score_plaque"),
+                              False: load_image(self, "score_plaque_inactive")}
+        self.height = max(self.tiles[False][0].height(), self.plaque_images[False].height(),
+                          self.points_font.metrics("linespace") + 12)
         self.width = None
         self.configure(width=1, height=self.height)
-        self.divider = self.create_image(0, 0, anchor="nw", image=self.images[False])
-        self.bind("<Configure>", self.resize)
+        self.divider = self.create_image(0, self.height / 2, anchor="w", image=self.images[False])
+        self.plaque = self.create_image(SCORE_CENTER_X, self.height / 2, image=self.plaque_images[False])
+        self.points = self.create_text(SCORE_CENTER_X, self.height / 2, text="0",
+                                       font=self.points_font, fill=TEXT_COLOR)
+        self.bind("<Configure>", lambda event: self.resize())
 
-    def resize(self, event):
-        if event.width == self.width:
+    def resize(self):
+        width = self.winfo_width()
+        if width == self.width:
             return
-        self.width = event.width
+        self.width = width
         for active, (left, middle, right) in self.tiles.items():
             image = self.images[active]
-            image.configure(width=self.width, height=self.height)
+            image.configure(width=self.width, height=left.height())
             image.blank()
             right_x = max(left.width(), self.width - right.width())
             sections = [(left, 0, min(left.width(), self.width))]
@@ -42,5 +51,8 @@ class DividerPanel(tk.Canvas):
                     image.tk.call(str(image), "copy", str(tile),
                                   "-from", 0, 0, width, tile.height(), "-to", x, 0)
 
-    def refresh(self, active):
+    def refresh(self, active, points):
         self.itemconfigure(self.divider, image=self.images[active])
+        self.itemconfigure(self.plaque, image=self.plaque_images[active])
+        self.itemconfigure(self.points, text=str(points))
+        self.resize()

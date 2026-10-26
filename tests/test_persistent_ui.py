@@ -92,7 +92,22 @@ class PersistentUITests(unittest.TestCase):
                 active = index == app.state.turn.active_player
                 image = divider.images[active]
                 self.assertEqual(divider.itemcget(divider.divider, 'image'), str(image))
+                self.assertEqual(divider.itemcget(divider.plaque, 'image'),
+                                 str(divider.plaque_images[active]))
                 self.assertEqual(image.width(), divider.winfo_width())
+                score_bounds = divider.bbox(divider.points)
+                plaque_bounds = divider.bbox(divider.plaque)
+                self.assertGreater(plaque_bounds[0], 30)
+                self.assertLess(plaque_bounds[0], score_bounds[0])
+                self.assertGreater(plaque_bounds[2], score_bounds[2])
+                self.assertLess(plaque_bounds[1], score_bounds[1])
+                self.assertGreater(plaque_bounds[3], score_bounds[3])
+                self.assertLess(divider.find_all().index(divider.divider),
+                                divider.find_all().index(divider.plaque))
+                self.assertLess(divider.find_all().index(divider.plaque),
+                                divider.find_all().index(divider.points))
+                self.assertGreaterEqual(divider.bbox(divider.points)[1], 0)
+                self.assertLessEqual(divider.bbox(divider.points)[3], divider.height)
                 left, middle, right = divider.tiles[active]
                 self.assertEqual(image.get(30, 26), left.get(30, 26))
                 self.assertEqual(image.get(image.width() - 30, 26),
@@ -106,6 +121,26 @@ class PersistentUITests(unittest.TestCase):
         app.new_game()
         self.assertEqual(app.player_divider.itemcget(app.player_divider.divider, 'image'),
                          str(app.player_divider.images[True]))
+        self.assertEqual(app.player_divider.itemcget(app.player_divider.plaque, 'image'),
+                         str(app.player_divider.plaque_images[True]))
+        self.assertEqual(app.computer_divider.itemcget(app.computer_divider.plaque, 'image'),
+                         str(app.computer_divider.plaque_images[False]))
+
+    def test_divider_points_follow_cards_nobles_and_restart(self):
+        app = self.app
+        player, computer = app.state.players
+        for owner, card in zip((player, computer), app.state.market[3][:2]):
+            owner.add_card(card)
+        player.nobles.append(app.state.nobles.pop())
+        app.refresh()
+        self.root.update()
+        for owner, divider in ((player, app.player_divider), (computer, app.computer_divider)):
+            self.assertEqual(divider.itemcget(divider.points, 'text'), str(owner.points))
+            self.assertEqual([divider.itemcget(item, 'text') for item in divider.find_all()
+                              if divider.type(item) == 'text'], [str(owner.points)])
+        app.new_game()
+        for divider in (app.player_divider, app.computer_divider):
+            self.assertEqual(divider.itemcget(divider.points, 'text'), '0')
 
     def test_background_stays_aligned_after_resize_and_new_game(self):
         background = self.app.background
@@ -121,7 +156,7 @@ class PersistentUITests(unittest.TestCase):
                                  (frame.winfo_width(), frame.winfo_height()))
             for widget in (self.app.shell, self.app.player.panel,
                            self.app.supply.cells[RUBY], self.app.selection.tokens,
-                           self.app.scores, self.app.log, self.app.log.canvas):
+                           self.app.player_divider, self.app.computer_divider):
                 surface, item, image = background.surfaces[widget]
                 x = surface.winfo_rootx() - self.root.winfo_rootx()
                 y = surface.winfo_rooty() - self.root.winfo_rooty()
@@ -192,8 +227,8 @@ class PersistentUITests(unittest.TestCase):
         self.assertEqual(market_items, [panel.find_all() for panels in app.market.slots.values() for panel in panels])
         self.assertIs(app.selection.state, app.state)
         self.assertEqual(app.supply.counts, app.state.supply)
-        self.assertEqual([app.scores.itemcget(score, 'text') for score in app.scores.scores],
-                         ['0', '0'])
+        self.assertEqual([divider.itemcget(divider.points, 'text')
+                          for divider in (app.player_divider, app.computer_divider)], ['0', '0'])
         self.assertTrue(all(slot.winfo_ismapped() for slot in app.market.slots[1]))
 
     def test_ai_blocks_manual_actions_and_new_game_cancels_callback(self):
@@ -503,44 +538,6 @@ class PersistentUITests(unittest.TestCase):
         stack.event_generate('<Motion>', x=75, y=100)
         stack.event_generate('<Button-1>', x=75, y=100)
         self.assertIsNone(app.state.selected_card)
-
-    def test_log_scroll_and_text_reuse(self):
-        app = self.app
-        app.state.log.extend(f'Message {index}' for index in range(100))
-        app.log.refresh(app.state.log)
-        self.root.update()
-        self.assertGreaterEqual(app.log.canvas.yview()[1], 0.999)
-        items = list(app.log.items)
-        canvas = app.log.canvas
-        background = app.background.surfaces[canvas][1]
-        for fraction in (0, 0.5, 1):
-            canvas.yview_moveto(fraction)
-            self.root.update()
-            self.assertEqual(canvas.coords(background), [canvas.canvasx(0), canvas.canvasy(0)])
-            self.assertEqual(canvas.find_all()[0], background)
-        app.state.log.append("A long message that wraps across several lines. " * 20)
-        app.log.refresh(app.state.log)
-        self.root.update()
-        self.assertGreaterEqual(canvas.yview()[1], 0.999)
-        self.assertGreater(canvas.bbox(app.log.items[-1])[3] - canvas.bbox(app.log.items[-1])[1], 40)
-        items = list(app.log.items)
-        app.log.canvas.yview_moveto(0.3)
-        top = app.log.canvas.canvasy(0)
-        app.state.log.append('New entry')
-        app.log.refresh(app.state.log)
-        self.root.update()
-        self.assertAlmostEqual(app.log.canvas.canvasy(0), top, delta=1)
-        self.assertEqual(items, app.log.items[:-1])
-        app.new_game()
-        self.root.update()
-        self.assertEqual(items, app.log.items[:-1])
-        self.assertEqual(len(app.log.displayed_messages), 1)
-        self.assertTrue(all(app.log.canvas.itemcget(item, 'state') == 'hidden'
-                            for item in app.log.items[1:]))
-        app.perform_action()
-        self.root.update()
-        self.assertEqual(app.log.canvas.itemcget(app.log.items[1], 'state'), 'normal')
-        self.assertEqual(app.log.canvas.itemcget(app.log.items[1], 'text'), app.state.log[1])
 
     def test_reserved_cards_are_last_disabled_block_and_refresh_in_place(self):
         app = self.app

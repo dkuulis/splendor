@@ -12,7 +12,7 @@ computer strategy at launch with `--ai` (default: `greedy`):
 ```
 
 Take ends the turn without collecting when no gems are selected; two consecutive empty turns end
-the game using score and card-count tie-breaks. The log records actual actions.
+the game using score and card-count tie-breaks. Action history is retained internally without a log panel.
 Select one to three different gems and use Take to collect them. The button is
 disabled when the selection is invalid.
 Buy, Reserve, Take, and Restart are grouped in the selection panel.
