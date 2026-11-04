@@ -81,10 +81,36 @@ the best move is converted into a pending selection. If no moves exist, it passe
 Minimax reuses Greedy_sim's simulation, evaluation, and selection conversion.
 It looks ahead two moves: its own move and the opponent's best reply. It
 maximizes the worst resulting difference between the players' Greedy_sim scores,
-with finished wins and losses taking precedence. It uses the copied deck order
-and all generated moves, like Greedy_sim. The same conversion limits apply:
-combined take/return moves and goldless reservations are not fully represented
-by the desktop selection helper.
+with finished wins and losses taking precedence. It uses the copied deck order,
+like Greedy_sim. Both search strategies convert combined take/return moves into
+a legal take, then choose the required returns in a separate selection. They
+exclude reservations without available gold to follow the desktop rules.
+
+## AI self-play
+
+Run a batch of games without opening the desktop UI:
+
+```sh
+.venv/bin/python play.py --rounds 20 --ai1 greedy --ai2 greedy2
+.venv/bin/python play.py --rounds 10 --ai1 greedy2 --ai2 greedy2 --seed 42
+```
+
+`--rounds` (also `--games`) sets the number of games, defaulting to 10.
+`--ai1` and `--ai2` accept the same registered strategies as `main.py`, except
+manual, and default to greedy and greedy2. Starting AI alternates each game;
+use an even count to give both AIs the same number of starts. Each game uses
+a fresh pair of strategy instances. The report includes each game's score,
+winner, player turns, starter, and deal seed, followed by total wins, draws,
+win percentages, and average scores and turns for completed games. Winners
+use the game's normal score and card-count tie-breaks.
+
+The printed batch seed can be supplied with `--seed` to repeat the deals;
+each game's seed is the batch seed plus its zero-based game index.
+`--max-turns` defaults to 1000 player turns per game to stop cycles. Unfinished
+games are reported separately and excluded from win rates and averages.
+Choices use the same selection permissions and actions as the desktop game.
+Invalid AI choices and strategy exceptions stop that game, are reported
+separately, and cause exit status 1; the remaining games still run.
 
 ## Selection rules
 

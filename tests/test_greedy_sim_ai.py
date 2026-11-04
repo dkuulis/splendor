@@ -3,6 +3,8 @@ import unittest
 from unittest.mock import patch
 
 from ai.greedy_sim import GreedySimAI
+from ai.minimax import MinimaxAI
+from ai.move_selection import update_selection_from_move
 from ai.simulation_search import evaluate as evaluate_state
 from game import Card, State
 from game.constants import DIAMOND, EMERALD, GOLD, ONYX, RUBY, SAPPHIRE, TOKENS
@@ -117,6 +119,56 @@ class GreedySimAITests(unittest.TestCase):
 
     def test_passes_when_no_moves_are_generated(self):
         self.state.supply = {}
+        self.choose()
+        self.assertEqual(self.selection.action_kind, 'pass')
+
+    def test_search_strategies_choose_legal_returns_without_changing_state(self):
+        for strategy in (GreedySimAI(), MinimaxAI()):
+            with self.subTest(strategy=type(strategy).__name__):
+                state = State()
+                state.current_player.tokens = {ONYX: 10, RUBY: 1}
+                state.market[1] = [Card('target', 1, EMERALD, 0, {RUBY: 1})]
+                selection = Selection()
+                selection.returning = True
+                before = pickle.dumps(state)
+                strategy.make_selection(state, selection)
+                self.assertEqual(pickle.dumps(state), before)
+                self.assertEqual(selection.action_kind, 'return')
+                self.assertTrue(selection.can_perform_action(state))
+                selection.perform_action(state)
+                self.assertEqual(state.players[0].token_count, 10)
+                self.assertEqual(state.turn.active_player, 1)
+
+    def test_net_take_transfers_convert_to_legal_take_and_return(self):
+        for owned in (0, 8, 10):
+            source = State()
+            source.current_player.tokens = {ONYX: owned}
+            position = SimulationState.from_game(source)
+            for move in generate_moves(position, 0):
+                if move.kind != 'take':
+                    continue
+                with self.subTest(owned=owned, transfer=move.tokens):
+                    state = State()
+                    state.current_player.tokens = {ONYX: owned}
+                    selection = Selection()
+                    update_selection_from_move(move, state, {}, selection)
+                    self.assertTrue(selection.can_perform_action(state))
+                    selection.perform_action(state)
+                    desired = {token: source.current_player.tokens.get(token, 0) + delta
+                               for token, delta in zip(TOKENS, move.tokens)}
+                    if selection.returning:
+                        for token in TOKENS:
+                            returned = state.current_player.tokens.get(token, 0) - desired[token]
+                            for _ in range(returned):
+                                selection.select_return_token(token, state)
+                        self.assertTrue(selection.can_perform_action(state))
+                        selection.perform_action(state)
+                    self.assertEqual([state.players[0].tokens.get(token, 0) for token in TOKENS],
+                                     list(desired.values()))
+
+    def test_goldless_reservation_is_not_converted_into_purchase(self):
+        self.state.supply = {GOLD: 0}
+        self.state.market[1] = [Card('unaffordable', 1, RUBY, 1, {ONYX: 3})]
         self.choose()
         self.assertEqual(self.selection.action_kind, 'pass')
 

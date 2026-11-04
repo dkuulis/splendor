@@ -1,8 +1,9 @@
 """Shared simulation evaluation and move selection."""
 
-from game.constants import MAX_TAKE
-from simulation import State as SimulationState, generate_moves
-from simulation.constants import GEM_INDICES, GOLD_INDEX
+from game.constants import GOLD, MAX_TAKE, TOKENS
+from simulation import Move, State as SimulationState, generate_moves
+from simulation.constants import EMPTY_TOKENS, GEM_INDICES, GOLD_INDEX
+from simulation.generate import completed_transfers, nobles_by_bonus
 
 from .move_selection import update_selection_from_move
 
@@ -52,7 +53,16 @@ def make_selection(state, selection, score_move):
 
     best_move = None
     best_score = None
-    for move in generate_moves(position, player_index):
+    if selection.returning:
+        noble = nobles_by_bonus(position.players[player_index], position.nobles)[GOLD_INDEX]
+        moves = [Move("take", tokens=delta, noble_index=noble)
+                 for delta in completed_transfers(position.players[player_index], EMPTY_TOKENS)]
+    else:
+        moves = generate_moves(position, player_index)
+    for move in moves:
+        # The desktop rules require available gold for a reservation.
+        if move.kind == "reserve" and not state.supply.get(GOLD, 0):
+            continue
         move.make(position, player_index)
         try:
             score = score_move(position, player_index)
@@ -64,4 +74,9 @@ def make_selection(state, selection, score_move):
     if best_move is None:
         return
 
-    update_selection_from_move(best_move, state, cards, selection)
+    if selection.returning:
+        for token, amount in zip(TOKENS, best_move.tokens):
+            for _ in range(-amount):
+                selection.select_return_token(token, state)
+    else:
+        update_selection_from_move(best_move, state, cards, selection)
