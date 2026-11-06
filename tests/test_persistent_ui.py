@@ -169,23 +169,17 @@ class PersistentUITests(unittest.TestCase):
                 self.assertEqual(divider.find_all(), items[index])
                 active = index == app.state.turn.active_player
                 image = divider.images[active]
+                plaque_name = 'score_plaque' if active else 'score_plaque_inactive'
                 self.assertEqual(divider.itemcget(divider.divider, 'image'), str(image))
                 self.assertEqual(divider.itemcget(divider.plaque, 'image'),
-                                 str(divider.plaque_images[active]))
+                                 str(load_image(divider, f'{plaque_name}0')))
                 self.assertEqual(image.width(), divider.winfo_width())
-                score_bounds = divider.bbox(divider.points)
                 plaque_bounds = divider.bbox(divider.plaque)
                 self.assertGreater(plaque_bounds[0], 30)
-                self.assertLess(plaque_bounds[0], score_bounds[0])
-                self.assertGreater(plaque_bounds[2], score_bounds[2])
-                self.assertLess(plaque_bounds[1], score_bounds[1])
-                self.assertGreater(plaque_bounds[3], score_bounds[3])
                 self.assertLess(divider.find_all().index(divider.divider),
                                 divider.find_all().index(divider.plaque))
-                self.assertLess(divider.find_all().index(divider.plaque),
-                                divider.find_all().index(divider.points))
-                self.assertGreaterEqual(divider.bbox(divider.points)[1], 0)
-                self.assertLessEqual(divider.bbox(divider.points)[3], divider.height)
+                self.assertGreaterEqual(plaque_bounds[1], 0)
+                self.assertLessEqual(plaque_bounds[3], divider.height)
                 left, middle, right = divider.tiles[active]
                 self.assertEqual(image.get(30, 26), left.get(30, 26))
                 self.assertEqual(image.get(image.width() - 30, 26),
@@ -200,9 +194,9 @@ class PersistentUITests(unittest.TestCase):
         self.assertEqual(app.player_divider.itemcget(app.player_divider.divider, 'image'),
                          str(app.player_divider.images[True]))
         self.assertEqual(app.player_divider.itemcget(app.player_divider.plaque, 'image'),
-                         str(app.player_divider.plaque_images[True]))
+                         str(load_image(app.player_divider, "score_plaque0")))
         self.assertEqual(app.computer_divider.itemcget(app.computer_divider.plaque, 'image'),
-                         str(app.computer_divider.plaque_images[False]))
+                         str(load_image(app.computer_divider, "score_plaque_inactive0")))
 
     def test_winner_laurels_and_highlight_preserve_height_and_reset(self):
         app = self.app
@@ -222,10 +216,12 @@ class PersistentUITests(unittest.TestCase):
                 self.root.update()
                 for index, divider in enumerate(dividers):
                     highlighted = index == winner
+                    plaque_name = 'score_plaque' if highlighted else 'score_plaque_inactive'
+                    points = app.state.players[index].points
                     self.assertEqual(divider.itemcget(divider.divider, 'image'),
                                      str(divider.images[highlighted]))
                     self.assertEqual(divider.itemcget(divider.plaque, 'image'),
-                                     str(divider.plaque_images[highlighted]))
+                                     str(load_image(divider, f'{plaque_name}{points}')))
                     self.assertEqual(divider.itemcget(divider.laurels, 'state'),
                                      'normal' if highlighted else 'hidden')
                     self.assertEqual(divider.winfo_height(), heights[index])
@@ -240,6 +236,17 @@ class PersistentUITests(unittest.TestCase):
             self.assertEqual(divider.itemcget(divider.divider, 'image'),
                              str(divider.images[index == 0]))
 
+    def test_divider_displays_every_rendered_score_in_both_states(self):
+        divider = self.app.player_divider
+        items = divider.find_all()
+        for active, name in ((True, 'score_plaque'), (False, 'score_plaque_inactive')):
+            for score in range(24):
+                with self.subTest(active=active, score=score):
+                    divider.refresh(active, score, False)
+                    self.assertEqual(divider.itemcget(divider.plaque, 'image'),
+                                     str(load_image(divider, f'{name}{score}')))
+                    self.assertEqual(divider.find_all(), items)
+
     def test_divider_points_follow_cards_nobles_and_restart(self):
         app = self.app
         player, computer = app.state.players
@@ -249,12 +256,15 @@ class PersistentUITests(unittest.TestCase):
         app.refresh()
         self.root.update()
         for owner, divider in ((player, app.player_divider), (computer, app.computer_divider)):
-            self.assertEqual(divider.itemcget(divider.points, 'text'), str(owner.points))
-            self.assertEqual([divider.itemcget(item, 'text') for item in divider.find_all()
-                              if divider.type(item) == 'text'], [str(owner.points)])
+            name = 'score_plaque' if owner is player else 'score_plaque_inactive'
+            self.assertEqual(divider.itemcget(divider.plaque, 'image'),
+                             str(load_image(divider, f'{name}{owner.points}')))
+            self.assertFalse(any(divider.type(item) == 'text' for item in divider.find_all()))
         app.new_game()
-        for divider in (app.player_divider, app.computer_divider):
-            self.assertEqual(divider.itemcget(divider.points, 'text'), '0')
+        for divider, name in ((app.player_divider, 'score_plaque'),
+                              (app.computer_divider, 'score_plaque_inactive')):
+            self.assertEqual(divider.itemcget(divider.plaque, 'image'),
+                             str(load_image(divider, f'{name}0')))
 
     def test_background_stays_aligned_after_resize_and_new_game(self):
         background = self.app.background
@@ -348,8 +358,10 @@ class PersistentUITests(unittest.TestCase):
         self.assertIs(app.selection_panel.state, app.state)
         self.assertIs(app.selection_panel.selection, app.selection)
         self.assertEqual(app.supply.counts, app.state.supply)
-        self.assertEqual([divider.itemcget(divider.points, 'text')
-                          for divider in (app.player_divider, app.computer_divider)], ['0', '0'])
+        for divider, name in ((app.player_divider, 'score_plaque'),
+                              (app.computer_divider, 'score_plaque_inactive')):
+            self.assertEqual(divider.itemcget(divider.plaque, 'image'),
+                             str(load_image(divider, f'{name}0')))
         self.assertTrue(all(slot.winfo_ismapped() for slot in app.market.slots[1]))
 
     def test_ai_blocks_manual_actions_and_new_game_cancels_callback(self):

@@ -1,10 +1,9 @@
 """Separate each player's holdings from the shared board."""
 
 import tkinter as tk
-from tkinter import font
 
 from .assets import load_image
-from .styles import POINTS_FONT, TABLE_BACKGROUND, SCORE_CENTER_X, TEXT_COLOR
+from .styles import TABLE_BACKGROUND, SCORE_CENTER_X
 
 
 class DividerPanel(tk.Canvas):
@@ -17,19 +16,14 @@ class DividerPanel(tk.Canvas):
             for active, name in ((True, "active"), (False, "inactive"))
         }
         self.images = {active: tk.PhotoImage(master=self) for active in self.tiles}
-        self.points_font = font.Font(root=self, font=POINTS_FONT)
-        self.plaque_images = {True: load_image(self, "score_plaque"),
-                              False: load_image(self, "score_plaque_inactive")}
-        self.height = max(self.tiles[False][0].height(), self.plaque_images[False].height(),
-                          self.points_font.metrics("linespace") + 12)
+        self.plaque_image = load_image(self, "score_plaque_inactive0")
+        self.height = max(self.tiles[False][0].height(), self.plaque_image.height())
         self.width = None
         self.configure(width=1, height=self.height)
         self.divider = self.create_image(0, self.height / 2, anchor="w", image=self.images[False])
-        self.plaque = self.create_image(SCORE_CENTER_X, self.height / 2, image=self.plaque_images[False])
+        self.plaque = self.create_image(SCORE_CENTER_X, self.height / 2, image=self.plaque_image)
         self.laurels = self.create_image(SCORE_CENTER_X, self.height / 2,
                                          image=load_image(self, "victory_laurels"), state="hidden")
-        self.points = self.create_text(SCORE_CENTER_X, self.height / 2, text="0",
-                                       font=self.points_font, fill=TEXT_COLOR)
         self.bind("<Configure>", lambda event: self.resize())
 
     def resize(self):
@@ -55,7 +49,8 @@ class DividerPanel(tk.Canvas):
 
     def refresh(self, active, points, winner):
         self.itemconfigure(self.divider, image=self.images[active])
-        self.itemconfigure(self.plaque, image=self.plaque_images[active])
-        self.itemconfigure(self.points, text=str(points))
+        name = "score_plaque" if active else "score_plaque_inactive"
+        self.plaque_image = load_image(self, f"{name}{points}")
+        self.itemconfigure(self.plaque, image=self.plaque_image)
         self.itemconfigure(self.laurels, state="normal" if winner else "hidden")
         self.resize()

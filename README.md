@@ -264,6 +264,21 @@ Disabled result assets are also available in both sizes: `Win` has gold letters,
 `Loose` has silver letters, and `Tie` uses the usual disabled label color.
 Generate them with `--buttons win loose tie`, adding `--variant 2` for tall assets.
 
+## Generating score plaques
+
+Generate active and inactive score plaques for every score from 0 through 23:
+
+```sh
+.venv/bin/python tools/generate_score_plaques.py --preview images/score_plaques_preview.png
+```
+
+The tool overlays centered, bold Forum numerals on the blank
+`assets/score_plaque.png` and `assets/score_plaque_inactive.png`, preserving
+their 96×68 size and transparency. It writes `score_plaque0.png` through
+`score_plaque23.png` and `score_plaque_inactive0.png` through
+`score_plaque_inactive23.png`. Matching outputs are overwritten; use `--source`,
+`--output`, or `--font` to override the default paths. Pillow is required.
+
 ## Setup
 
 
