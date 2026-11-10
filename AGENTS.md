@@ -1,6 +1,6 @@
 # Project overview
 
-Splendor is a two-player desktop game built with Python, Tkinter, and ttk.
+Splendor is a two-player desktop game built with Python and a single Tkinter Canvas.
 The human starts; `--ai` selects the computer strategy or manual control.
 Follow the simplified rules in `RULES.md`; do not introduce full Splendor
 rules without a request.
@@ -42,16 +42,22 @@ rules without a request.
   one legal selection without mutating State or executing an action.
   App displays the selection, then dispatches the action in a delayed callback.
   Register them in `ai/__init__.py`.
-- `app/app.py` owns separate `state` and `selection` models, assembles panels,
+- `app/app.py` owns separate `state` and `selection` models, the root Canvas,
   delegates action dispatch to Selection, and schedules AI callbacks.
-  `selection_panel` is the widget; Restart replaces both models.
+  Restart replaces both models but retains the Canvas and its image items.
   AI runs on the UI thread: keep strategies quick and cancel pending callbacks
   on Restart and window destruction.
-- `app/selection_panel.py` contains one action button and a separate Restart.
-  The action button follows `Selection.action_kind`: Buy, Reserve, Take,
-  Return, or Pass. Pass ends the turn without collecting.
-- `app/divider_panel.py` shows scores and turn/result highlights. A winner
-  stays highlighted with laurels; a draw leaves both dividers inactive.
+- `app/layout.py` owns the pure `layout(...)` function for every element's
+  coordinates, visibility, image, drawing order, and permitted click action.
+  Keep geometry decisions here, independent of Tk. It also returns minimum
+  window dimensions; artwork stays at native size.
+- `app/renderer.py` reuses Canvas image items by stable role/slot keys, hides
+  unused items, and resolves clicks through current descriptions. Never embed
+  widgets in the Canvas. Rendering does not reschedule AI callbacks.
+- The action image follows `Selection.action_kind`: Buy, Reserve, Take,
+  Return, or Pass. Pass ends the turn without collecting. Restart is separate.
+  Scores and turn/result highlights use divider images; a winner stays
+  highlighted with laurels and a draw leaves both dividers inactive.
   There is no header, separate score panel, or log panel.
 - Keep shared visual constants in `app/styles.py`. Use `app/assets.py` to
   load and cache images; retain Python references to Tk PhotoImage objects.

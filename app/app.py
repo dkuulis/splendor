@@ -1,19 +1,13 @@
-"""Assemble the game UI components."""
+"""Own game interaction and render it on a single root Canvas."""
 
-from tkinter import ttk
+import tkinter as tk
 
 from game.initialize import create_initial_state
 from game.selection import Selection
-
-from .supply_panel import SupplyPanel
-from .background import Background
-from .divider_panel import DividerPanel
-from .market_panel import MarketPanel
-from .nobles_panel import NoblesPanel
-from .player_panel import PlayerPanel
-from .selection_panel import SelectionPanel
-from .styles import MARKET_CARD_HEIGHT, MARKET_ROW_PADDING, WINDOW_MIN_WIDTH, configure_styles
-
+from .assets import ImageSizes
+from .layout import layout
+from .renderer import Renderer
+from .styles import TABLE_BACKGROUND
 
 AI_DELAY_MS = 500
 
@@ -25,105 +19,46 @@ class App:
         self.selection = Selection()
         self.strategy = strategy
         self.state.players[1].is_ai = strategy is not None
-
         self.pending_ai = None
-
+        self.pending_layout = None
+        self.minimum = None
         root.title("Splendor")
+        root.configure(background=TABLE_BACKGROUND)
+        self.canvas = tk.Canvas(root, background=TABLE_BACKGROUND,
+                                highlightthickness=0, borderwidth=0)
+        self.canvas.pack(fill="both", expand=True)
+        self.renderer = Renderer(self.canvas, self)
+        self.image_sizes = ImageSizes(root)
+        self.canvas.bind("<Configure>", self.schedule_layout)
         root.bind("<Destroy>", self.on_destroy, add="+")
-        configure_styles(root)
-
-        self.create_ui()
-
-        self.background = Background(root)
-
-    def create_ui(self):
-        self.create_panels()
-        self.assemble_panels()
         self.refresh()
 
-    def create_panels(self):
-        self.field = ttk.Frame(self.root)
-        self.table = ttk.Frame(self.field)
+    def schedule_layout(self, event=None):
+        if self.pending_layout is None:
+            self.pending_layout = self.root.after_idle(self.render)
 
-        can_select_card = lambda card: self.selection.can_select_card(card, self.state)
-        can_return_token = lambda token: self.selection.can_select_return_token(token, self.state)
-        self.computer = PlayerPanel(self.field, on_select=self.select_card,
-                                    can_select=can_select_card, on_token=self.select_return_token,
-                                    can_select_token=can_return_token)
-        self.computer_divider = DividerPanel(self.field)
-
-        self.nobles = NoblesPanel(self.table)
-        self.market = MarketPanel(self.table, self.select_card, lambda card: self.state.can_buy(card))
-        self.supply = SupplyPanel(
-            self.table, self.select_token,
-            lambda token: self.selection.can_select_token(token, self.state))
-
-        self.selection_panel = SelectionPanel(
-            self.table, self.perform_action, self.select_card, self.deselect_token, self.new_game,
-        )
-
-        self.player_divider = DividerPanel(self.field)
-        self.player = PlayerPanel(self.field, on_select=self.select_card,
-                                 can_select=can_select_card, on_token=self.select_return_token,
-                                 can_select_token=can_return_token)
-
-    def assemble_panels(self):
-        self.field.configure(padding=20)
-        self.field.pack(fill="both", expand=True)
-
-        self.computer.pack(fill="x")
-        self.computer_divider.pack(fill="x")
-
-        for row in range(3):
-            self.table.rowconfigure(row, minsize=MARKET_CARD_HEIGHT + 2 * MARKET_ROW_PADDING)
-        self.table.pack(pady=4)
-
-        self.nobles.grid(row=0, column=0, rowspan=3, padx=(0, 12))
-        self.supply.grid(row=0, column=1, rowspan=2, sticky="nsew", padx=(0, 12))
-        self.selection_panel.grid(row=2, column=1, sticky="ew", padx=(0, 12), pady=MARKET_ROW_PADDING)
-        self.market.grid(row=0, column=2, rowspan=3, sticky="n")
-
-        self.player_divider.pack(fill="x")
-        self.player.pack(fill="x")
+    def render(self):
+        if self.pending_layout is not None:
+            self.root.after_cancel(self.pending_layout)
+            self.pending_layout = None
+        elements, minimum = layout(self.state, self.selection,
+                                   self.canvas.winfo_width(), self.canvas.winfo_height(),
+                                   self.image_sizes, self.manual_turn)
+        if self.minimum != minimum:
+            self.minimum = minimum
+            self.root.minsize(*minimum)
+            self.root.geometry(f"{max(minimum[0], self.root.winfo_width())}x"
+                               f"{max(minimum[1], self.root.winfo_height())}")
+        self.renderer.render(elements)
 
     def refresh(self):
         self.cancel_ai()
-        state = self.state
-        for index, panel in enumerate((self.player, self.computer)):
-            player = state.players[index]
-            selected = (self.selection.tokens if self.selection.returning
-                        and index == state.turn.active_player else {})
-            panel.refresh(player, state.is_active_player(player), self.manual_turn,
-                          self.selection.card, selected)
-        for index, divider in enumerate((self.player_divider, self.computer_divider)):
-            winner = state.turn.finished and state.turn.winner == index
-            active = winner if state.turn.finished else state.is_active_player(state.players[index])
-            divider.refresh(active, state.players[index].points, winner)
-        self.market.refresh(state.market, state.decks, self.selection.card,
-                            enabled=self.manual_turn and not state.return_required)
-        self.nobles.refresh(state.nobles)
-        self.refresh_supply_selection()
-        self.selection_panel.refresh(state, self.selection, enabled=self.manual_turn)
-        self.size_window(self.root)
+        self.render()
         if self.ai_turn:
             self.pending_ai = self.root.after(AI_DELAY_MS, self.perform_ai_selection)
 
     def refresh_selection(self):
-        self.refresh_supply_selection()
-        self.market.refresh_selection(self.selection.card)
-        self.refresh_player_selection()
-        self.selection_panel.refresh(self.state, self.selection, enabled=self.manual_turn)
-
-    def refresh_supply_selection(self):
-        selected = {} if self.selection.returning else self.selection.tokens
-        self.supply.refresh(self.state.supply, selected,
-                            enabled=self.manual_turn and not self.state.return_required)
-
-    def refresh_player_selection(self):
-        for index, panel in enumerate((self.player, self.computer)):
-            selected = (self.selection.tokens if self.selection.returning
-                        and index == self.state.turn.active_player else {})
-            panel.refresh_selection(self.selection.card, selected)
+        self.render()
 
     @property
     def ai_turn(self):
@@ -156,6 +91,9 @@ class App:
     def on_destroy(self, event):
         if event.widget is self.root:
             self.cancel_ai()
+            if self.pending_layout is not None:
+                self.root.after_cancel(self.pending_layout)
+                self.pending_layout = None
 
     def new_game(self):
         self.cancel_ai()
@@ -185,16 +123,7 @@ class App:
             self.refresh_selection()
 
     def perform_action(self):
-        if not self.manual_turn:
+        if not self.manual_turn or not self.selection.can_perform_action(self.state):
             return
         self.selection.perform_action(self.state)
         self.refresh()
-
-    def size_window(self, root):
-        # Measure the complete layout using the current platform's fonts and
-        # widget sizes before setting window bounds.
-        root.update_idletasks()
-        width = max(WINDOW_MIN_WIDTH, root.winfo_reqwidth())
-        height = root.winfo_reqheight()
-        root.minsize(width, height)
-        root.geometry(f"{max(width, root.winfo_width())}x{max(height, root.winfo_height())}")

@@ -183,6 +183,73 @@ registry automatically.
 Strategies should run quickly because they execute on the UI thread; a future
 search-based AI will need background execution.
 
+## Canvas UI
+
+The root window contains one Canvas; every game element is an image item.
+`app/layout.py` provides the pure `layout(...)` function, which returns keyed
+image descriptions and minimum window dimensions. Panel helpers lay out player
+holdings, dividers, nobles, market, supply, and selection within the bounds
+assigned by `layout(...)`. Together they calculate every element's
+top-left coordinates, visibility, drawing order, and permitted click action using State
+and Selection. Artwork remains at native size as the window grows.
+
+`app/renderer.py` reconciles descriptions with persistent Canvas items. Keys
+identify slots rather than cards, so replacements and Restart reuse items.
+Dynamic player stacks grow an item pool as needed; unused items are hidden and
+reused. Clicks resolve against the current description, including card overlays.
+Source images are cached per Tk interpreter by `app/assets.py`; background and
+divider composites are rebuilt only when their dimensions change.
+
+App owns game and AI callbacks. Selection and resize redraws do not restart the
+AI delay; Restart and window destruction cancel pending callbacks.
+
+### Scene layout and image keys
+
+Each box below is a logical panel within the same Canvas. Labels show scene
+keys rather than asset filenames.
+
+```mermaid
+flowchart TB
+    subgraph Canvas["Root Canvas · background: ('background',)"]
+        direction TB
+
+        Computer["Computer holdings · _layout_player<br/>('player-card', 1, token, slot)<br/>('player-overlay', 1, slot)<br/>('player-token', 1, token)"]
+
+        TopDivider["Computer divider · _layout_divider<br/>('divider', 1) · ('score', 1) · ('laurels', 1)"]
+
+        subgraph Board["Shared board"]
+            direction LR
+
+            Nobles["Nobles · _layout_nobles<br/>('noble', slot)"]
+
+            subgraph Middle["Supply and selection"]
+                direction TB
+                Supply["Supply · _layout_supply<br/>('supply', token)"]
+                Selection["Selection · _layout_selection<br/>('selected-token', token)<br/>('selected-card',)<br/>('selected-overlay',)<br/>('action',) · ('restart',)"]
+                Supply ~~~ Selection
+            end
+
+            Market["Market · _layout_market<br/>Tiers: 3 → 2 → 1<br/>('deck', tier)<br/>('market', tier, slot)<br/>('market-overlay', tier, slot)"]
+
+            Nobles ~~~ Middle
+            Middle ~~~ Market
+        end
+
+        BottomDivider["Human divider · _layout_divider<br/>('divider', 0) · ('score', 0) · ('laurels', 0)"]
+
+        Human["Human holdings · _layout_player<br/>('player-card', 0, token, slot)<br/>('player-overlay', 0, slot)<br/>('player-token', 0, token)"]
+
+        Computer ~~~ TopDivider
+        TopDivider ~~~ Board
+        Board ~~~ BottomDivider
+        BottomDivider ~~~ Human
+    end
+```
+
+`slot` is zero-based. In player-card keys, `token=None` identifies reserved
+cards and `token=Gold` identifies nobles. Player overlays cover reserved cards.
+Hidden images retain their Canvas items for reuse.
+
 ## Background assets
 
 The app loads nine `assets/background_<row>_<column>.png` fragments separately.

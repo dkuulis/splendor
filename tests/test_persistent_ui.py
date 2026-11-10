@@ -1,945 +1,224 @@
 """Run with SPLENDOR_GUI_TESTS=1 when Tk has window-server access."""
 import os
 import tkinter as tk
-from tkinter import ttk
 import unittest
 from unittest.mock import patch
 
 from ai import GreedyAI
 from app.app import App
 from app.assets import load_image
-from game.constants import RUBY, GOLD, SAPPHIRE, DIAMOND
+from game.constants import GOLD, RUBY, DIAMOND, SAPPHIRE
 from game.initialize import create_initial_state
 
 
 @unittest.skipUnless(os.environ.get('SPLENDOR_GUI_TESTS') == '1', 'Requires a GUI session')
 class PersistentUITests(unittest.TestCase):
     def setUp(self):
-        self.create_app(None)
-
-    def create_app(self, strategy):
         self.root = tk.Tk()
-        self.callback_errors = []
-        self.root.report_callback_exception = lambda kind, error, traceback: self.callback_errors.append(error)
-        self.app = App(self.root, create_initial_state(), strategy)
+        self.errors = []
+        self.root.report_callback_exception = lambda kind, error, tb: self.errors.append(error)
+        self.app = App(self.root, create_initial_state(), None)
         self.root.update()
 
     def tearDown(self):
-        self.root.destroy()
-        self.assertEqual(self.callback_errors, [])
+        if self.root.winfo_exists():
+            self.root.destroy()
+        self.assertEqual(self.errors, [])
 
-    @property
-    def action_button(self):
-        return self.app.selection_panel.action_button
+    def item(self, key):
+        return self.app.renderer.items[key]
 
-    def widgets(self, widget):
-        return [widget] + [child for item in widget.winfo_children() for child in self.widgets(item)]
+    def image(self, key):
+        return self.app.renderer.descriptions[key]['image']
 
-    def test_action_buttons_fit_and_keep_positions_across_selection_and_restart(self):
+    def click(self, key, dx=None, dy=None):
+        canvas = self.app.canvas
+        x1, y1, x2, y2 = canvas.bbox(self.item(key))
+        x, y = int((x1 + x2) / 2 if dx is None else x1 + dx), int((y1 + y2) / 2 if dy is None else y1 + dy)
+        canvas.event_generate('<Motion>', x=x, y=y)
+        canvas.event_generate('<Button-1>', x=x, y=y)
+        self.root.update_idletasks()
+
+    def test_one_canvas_and_only_images(self):
+        self.assertEqual(self.root.winfo_children(), [self.app.canvas])
+        self.assertEqual(self.app.canvas.winfo_children(), [])
+        self.assertTrue(all(self.app.canvas.type(item) == 'image' for item in self.app.canvas.find_all()))
+
+    def test_unchanged_render_does_not_touch_items_or_rebuild_images(self):
         app = self.app
-        panel = app.selection_panel
-        action = panel.action_button
-        restart = panel.restart_button
-        buttons = (action, restart)
-        self.assertEqual([child for child in panel.actions.winfo_children()
-                          if isinstance(child, ttk.Button)], list(buttons))
-        positions = []
-        for button, height in zip(buttons, (120, 42)):
-            self.assertTrue(button.winfo_ismapped())
-            self.assertEqual((button.winfo_width(), button.winfo_height()), (140, height))
-            self.assertGreaterEqual(button.winfo_y(), 0)
-            self.assertLessEqual(button.winfo_y() + button.winfo_height(), 210)
-            positions.append((button.winfo_x(), button.winfo_y()))
-        self.assertLess(action.winfo_y() + action.winfo_height(), restart.winfo_y())
-        self.assertEqual(panel.actions.winfo_height(), 210)
-        self.assertEqual(action.winfo_y(), 0)
-        self.assertEqual(restart.winfo_y() + restart.winfo_height(), panel.actions.winfo_height())
-        self.assertFalse(action.instate(['disabled']))
-        self.assertEqual(action.cget('text'), 'Pass')
-        self.assertEqual(action.cget('image')[0], str(load_image(panel, 'button_pass_enabled2')))
-        app.select_token(RUBY)
-        self.assertTrue(action.instate(['disabled']))
-        app.select_token(RUBY)
-        self.assertEqual(action.cget('text'), 'Take')
-        self.assertEqual(action.cget('image')[0], str(load_image(panel, 'button_take_enabled2')))
-        action.invoke()
+        with patch.object(app.canvas, 'coords', wraps=app.canvas.coords) as coords, \
+                patch.object(app.canvas, 'itemconfigure', wraps=app.canvas.itemconfigure) as configure, \
+                patch.object(app.canvas, 'create_image', wraps=app.canvas.create_image) as create, \
+                patch.object(app.canvas, 'tag_raise', wraps=app.canvas.tag_raise) as raise_item, \
+                patch.object(app.renderer.background, 'resize') as background:
+            app.render()
+            coords.assert_not_called()
+            configure.assert_not_called()
+            create.assert_not_called()
+            raise_item.assert_not_called()
+            background.assert_not_called()
+
+    def test_action_permissions_buy_reserve_pass_and_restart(self):
+        app = self.app
+        self.assertEqual(self.image(('action',)), 'button_pass_enabled2')
+        self.click(('supply', RUBY))
+        self.assertEqual(self.image(('action',)), 'button_take_disabled2')
+        self.click(('action',))
+        self.assertEqual(app.state.players[0].tokens, {})
+        self.click(('supply', RUBY))
+        self.click(('action',))
         self.assertEqual(app.state.players[0].tokens, {RUBY: 2})
-        self.assertEqual(action.cget('text'), 'Pass')
-        action.invoke()
-        self.assertEqual(app.state.players[1].tokens, {})
-        self.assertEqual(app.state.turn.active_player, 0)
-        self.assertEqual(app.state.turn.consecutive_passes, 1)
-        card = app.state.market[1][0]
-        card.cost = {RUBY: 1}
-        app.select_card(card)
-        self.assertEqual(action.cget('text'), 'Buy')
-        self.assertEqual(action.cget('image')[0], str(load_image(panel, 'button_buy_enabled2')))
-        self.assertFalse(action.instate(['disabled']))
-        app.select_token(GOLD)
-        self.assertEqual(action.cget('text'), 'Reserve')
-        self.assertEqual(action.cget('image')[0], str(load_image(panel, 'button_reserve_enabled2')))
-        self.assertFalse(action.instate(['disabled']))
-        self.assertIs(panel.action_button, action)
-        self.assertEqual(positions, [(button.winfo_x(), button.winfo_y()) for button in buttons])
-        app.state.turn.finished = True
-        app.refresh()
-        self.assertTrue(action.instate(['disabled']))
-        self.assertFalse(restart.instate(['disabled']))
-        old_state = app.state
-        restart.invoke()
-        self.root.update()
-        self.assertIsNot(app.state, old_state)
-        self.assertFalse(app.state.turn.finished)
-        self.assertIs(panel.action_button, action)
-        self.assertEqual(action.cget('text'), 'Pass')
-        self.assertEqual(positions, [(button.winfo_x(), button.winfo_y()) for button in buttons])
-
-    def test_finished_action_shows_result_and_restart_restores_play(self):
-        app = self.app
-        panel = app.selection_panel
-        action = panel.action_button
-        restart = panel.restart_button
-        for winner, result in ((0, 'win'), (1, 'loose'), (None, 'tie')):
-            with self.subTest(result=result):
-                if winner is not None:
-                    app.state.players[winner].nobles.append(app.state.nobles.pop())
-                app.perform_action()
-                app.perform_action()
-                self.root.update()
-                self.assertTrue(app.state.turn.finished)
-                self.assertEqual(app.state.turn.winner, winner)
-                self.assertEqual(action.cget('text'), result.capitalize())
-                self.assertEqual(action.cget('image')[0],
-                                 str(load_image(panel, f'button_{result}_disabled2')))
-                self.assertTrue(action.instate(['disabled']))
-                with patch.object(app, 'refresh') as refresh:
-                    action.invoke()
-                    panel.go()
-                refresh.assert_not_called()
-                self.assertFalse(restart.instate(['disabled']))
-                old_state = app.state
-                restart.invoke()
-                self.root.update()
-                self.assertIsNot(app.state, old_state)
-                self.assertFalse(app.state.turn.finished)
-                self.assertIs(panel.action_button, action)
-                self.assertEqual(action.cget('text'), 'Pass')
-                self.assertEqual(action.cget('image')[0],
-                                 str(load_image(panel, 'button_pass_enabled2')))
-                self.assertFalse(action.instate(['disabled']))
-                app.select_token(RUBY)
-                app.select_token(RUBY)
-                action.invoke()
-                self.assertEqual(app.state.players[0].tokens, {RUBY: 2})
-                app.new_game()
-
-    def test_gold_requires_a_market_card_and_reservation_toggles_off(self):
-        app = self.app
+        self.click(('action',))
         card = app.state.market[1][0]
         card.cost = {}
-        app.select_token(GOLD)
-        self.assertEqual(app.selection.action_kind, 'pass')
-        self.assertFalse(self.action_button.instate(['disabled']))
-        app.select_card(card)
-        app.select_token(GOLD)
+        app.refresh()
+        self.click(('market-overlay', 1, 0))
         self.assertIs(app.selection.card, card)
-        self.assertEqual(app.selection.tokens, {GOLD: 1})
-        self.assertFalse(self.action_button.instate(['disabled']))
-        app.selection_panel.card.select(None)
-        self.assertEqual(app.selection.action_kind, 'pass')
+        self.assertEqual(self.image(('action',)), 'button_buy_enabled2')
+        self.click(('selected-overlay',))
         self.assertIsNone(app.selection.card)
-        self.assertEqual(app.selection.tokens, {})
-        app.select_card(card)
-        app.select_token(GOLD)
-        self.action_button.invoke()
+        self.click(('market-overlay', 1, 0))
+        self.click(('supply', GOLD))
+        self.assertEqual(self.image(('action',)), 'button_reserve_enabled2')
+        self.click(('action',))
         self.assertIn(card, app.state.players[0].reserved_cards)
-        self.assertEqual(app.state.players[0].tokens, {GOLD: 1})
+        old_state, old_selection = app.state, app.selection
+        self.click(('restart',))
+        self.assertIsNot(app.state, old_state)
+        self.assertIsNot(app.selection, old_selection)
+        self.assertFalse(any(player.is_ai for player in app.state.players))
 
-    def test_dividers_tile_across_resizes_and_switch_with_turns(self):
+    def test_items_survive_turn_resize_restart_and_cached_images(self):
         app = self.app
-        dividers = (app.player_divider, app.computer_divider)
-        items = [divider.find_all() for divider in dividers]
-        for width in (1900, 2207, 1800):
-            self.root.geometry(f"{width}x1400")
-            self.root.update()
-            for index, divider in enumerate(dividers):
-                self.assertEqual(divider.winfo_width(),
-                                 app.field.winfo_width() - 2 * divider.winfo_x())
-                self.assertEqual(divider.winfo_height(), divider.height)
-                self.assertEqual(divider.find_all(), items[index])
-                active = index == app.state.turn.active_player
-                image = divider.images[active]
-                plaque_name = 'score_plaque' if active else 'score_plaque_inactive'
-                self.assertEqual(divider.itemcget(divider.divider, 'image'), str(image))
-                self.assertEqual(divider.itemcget(divider.plaque, 'image'),
-                                 str(load_image(divider, f'{plaque_name}0')))
-                self.assertEqual(image.width(), divider.winfo_width())
-                plaque_bounds = divider.bbox(divider.plaque)
-                self.assertGreater(plaque_bounds[0], 30)
-                self.assertLess(divider.find_all().index(divider.divider),
-                                divider.find_all().index(divider.plaque))
-                self.assertGreaterEqual(plaque_bounds[1], 0)
-                self.assertLessEqual(plaque_bounds[3], divider.height)
-                left, middle, right = divider.tiles[active]
-                self.assertEqual(image.get(30, 26), left.get(30, 26))
-                self.assertEqual(image.get(image.width() - 30, 26),
-                                 right.get(right.width() - 30, 26))
-                for x in range(left.width(), image.width() - right.width()):
-                    self.assertEqual(image.get(x, 26),
-                                     middle.get((x - left.width()) % middle.width(), 26))
-            app.select_token(RUBY)
-            app.perform_action()
-            self.root.update()
-        app.new_game()
-        self.assertEqual(app.player_divider.itemcget(app.player_divider.divider, 'image'),
-                         str(app.player_divider.images[True]))
-        self.assertEqual(app.player_divider.itemcget(app.player_divider.plaque, 'image'),
-                         str(load_image(app.player_divider, "score_plaque0")))
-        self.assertEqual(app.computer_divider.itemcget(app.computer_divider.plaque, 'image'),
-                         str(load_image(app.computer_divider, "score_plaque_inactive0")))
-
-    def test_winner_laurels_and_highlight_preserve_height_and_reset(self):
-        app = self.app
-        dividers = (app.player_divider, app.computer_divider)
-        heights = [divider.winfo_height() for divider in dividers]
-        items = [divider.find_all() for divider in dividers]
-        for winner in (0, 1, None):
-            with self.subTest(winner=winner):
-                app.new_game()
-                if winner is not None:
-                    app.state.players[winner].nobles.append(app.state.nobles.pop())
-                app.perform_action()
-                app.perform_action()
-                self.assertTrue(app.state.turn.finished)
-                self.assertEqual(app.state.turn.winner, winner)
-                app.refresh()
-                self.root.update()
-                for index, divider in enumerate(dividers):
-                    highlighted = index == winner
-                    plaque_name = 'score_plaque' if highlighted else 'score_plaque_inactive'
-                    points = app.state.players[index].points
-                    self.assertEqual(divider.itemcget(divider.divider, 'image'),
-                                     str(divider.images[highlighted]))
-                    self.assertEqual(divider.itemcget(divider.plaque, 'image'),
-                                     str(load_image(divider, f'{plaque_name}{points}')))
-                    self.assertEqual(divider.itemcget(divider.laurels, 'state'),
-                                     'normal' if highlighted else 'hidden')
-                    self.assertEqual(divider.winfo_height(), heights[index])
-                    self.assertEqual(divider.find_all(), items[index])
-                    if highlighted:
-                        bounds = divider.bbox(divider.laurels)
-                        self.assertGreaterEqual(bounds[1], 0)
-                        self.assertLessEqual(bounds[3], heights[index])
-        app.new_game()
-        for index, divider in enumerate(dividers):
-            self.assertEqual(divider.itemcget(divider.laurels, 'state'), 'hidden')
-            self.assertEqual(divider.itemcget(divider.divider, 'image'),
-                             str(divider.images[index == 0]))
-
-    def test_divider_displays_every_rendered_score_in_both_states(self):
-        divider = self.app.player_divider
-        items = divider.find_all()
-        for active, name in ((True, 'score_plaque'), (False, 'score_plaque_inactive')):
-            for score in range(24):
-                with self.subTest(active=active, score=score):
-                    divider.refresh(active, score, False)
-                    self.assertEqual(divider.itemcget(divider.plaque, 'image'),
-                                     str(load_image(divider, f'{name}{score}')))
-                    self.assertEqual(divider.find_all(), items)
-
-    def test_divider_points_follow_cards_nobles_and_restart(self):
-        app = self.app
-        player, computer = app.state.players
-        for owner, card in zip((player, computer), app.state.market[3][:2]):
-            owner.add_card(card)
-        player.nobles.append(app.state.nobles.pop())
-        app.refresh()
-        self.root.update()
-        for owner, divider in ((player, app.player_divider), (computer, app.computer_divider)):
-            name = 'score_plaque' if owner is player else 'score_plaque_inactive'
-            self.assertEqual(divider.itemcget(divider.plaque, 'image'),
-                             str(load_image(divider, f'{name}{owner.points}')))
-            self.assertFalse(any(divider.type(item) == 'text' for item in divider.find_all()))
-        app.new_game()
-        for divider, name in ((app.player_divider, 'score_plaque'),
-                              (app.computer_divider, 'score_plaque_inactive')):
-            self.assertEqual(divider.itemcget(divider.plaque, 'image'),
-                             str(load_image(divider, f'{name}0')))
-
-    def test_background_stays_aligned_after_resize_and_new_game(self):
-        background = self.app.background
-        for width, height in ((1900, 1300), (2560, 1600), (2100, 1450)):
-            self.root.geometry(f"{width}x{height}")
-            self.root.update()
-            self.assertEqual(background.size,
-                             (self.root.winfo_width(), self.root.winfo_height()))
-            for frame in (self.app.field, self.app.player.panel, self.app.supply):
-                surface, _, _ = background.surfaces[frame]
-                self.assertEqual((surface.winfo_x(), surface.winfo_y()), (0, 0))
-                self.assertEqual((surface.winfo_width(), surface.winfo_height()),
-                                 (frame.winfo_width(), frame.winfo_height()))
-            for widget in (self.app.field, self.app.player.panel,
-                           self.app.supply.cells[RUBY], self.app.selection_panel.tokens,
-                           self.app.player_divider, self.app.computer_divider):
-                surface, item, image = background.surfaces[widget]
-                x = surface.winfo_rootx() - self.root.winfo_rootx()
-                y = surface.winfo_rooty() - self.root.winfo_rooty()
-                self.assertEqual(image.get(10, 10), background.image.get(x + 10, y + 10))
-                if item is not None:
-                    self.assertEqual(surface.find_all()[0], item)
-            # Every corner retains its original pixels and proportions even
-            # when the middle of the window is stretched in either direction.
-            w, h = background.size
-            for dx, dy in ((10, 10), (80, 150), (230, 30), (30, 230), (259, 259)):
-                for column, x in ((0, dx), (2, w - 1 - dx)):
-                    for row, y in ((0, dy), (2, h - 1 - dy)):
-                        corner = background.fragments[row, column]
-                        sx = dx if column == 0 else corner.width() - 1 - dx
-                        sy = dy if row == 0 else corner.height() - 1 - dy
-                        self.assertEqual(background.image.get(x, y), corner.get(sx, sy))
-            center = background.fragments[1, 1]
-            self.assertEqual(background.image.get(w // 2, h // 2),
-                             center.get(center.width() // 2, center.height() // 2))
-            self.assertNotIn("background", self.root._splendor_images)
-        surfaces = dict(background.surfaces)
-        self.app.new_game()
-        self.root.update()
-        self.assertEqual(background.surfaces, surfaces)
-
-    def test_widgets_and_canvas_items_survive_selection_turns_and_reset(self):
-        app = self.app
-        widgets = self.widgets(app.field)
-        selection_items = app.selection_panel.tokens.find_all()
-        market_items = [panel.find_all() for panels in app.market.slots.values() for panel in panels]
+        original = dict(app.renderer.items)
         app.select_token(RUBY)
-        app.deselect_token(RUBY)
-        with patch('app.assets.tk.PhotoImage', side_effect=AssertionError('Reloaded cached image')):
-            load_image(app.selection_panel, 'ruby')
-            app.select_token(RUBY)
+        with patch('app.assets.tk.PhotoImage', side_effect=AssertionError('Reloaded image')):
+            load_image(app.canvas, 'ruby')
             app.deselect_token(RUBY)
+            app.select_token(RUBY)
         app.select_token(RUBY)
-        app.select_token(RUBY)
-        self.action_button.invoke()
-        self.assertEqual(app.state.players[0].tokens[RUBY], 2)
-        self.action_button.invoke()  # Computer passes in manual mode.
-        card = app.state.market[1][0]
-        for token, count in card.cost.items():
-            needed = max(0, count - app.state.current_player.tokens.get(token, 0))
-            app.state.current_player.tokens[token] = app.state.current_player.tokens.get(token, 0) + needed
-            app.state.supply[token] -= needed
-        app.refresh()
-        panel = app.market.slots[1][0]
-        panel.select(None)
+        app.perform_action()
+        for width in (1900, 2207, 1800):
+            self.root.geometry(f'{width}x1400')
+            self.root.update()
+        app.new_game()
         self.root.update()
-        self.assertIs(app.selection.card, card)
-        self.assertFalse(panel.winfo_ismapped())
-        app.selection_panel.card.select(None)
-        self.assertIsNone(app.selection.card)
-        panel.select(None)
-        self.action_button.invoke()
-        self.assertIn(card, app.state.players[0].cards[card.token])
-        replacement = app.state.market[1][0]
-        self.assertIs(panel.card, replacement)
+        for key, item in original.items():
+            self.assertEqual(app.renderer.items[key], item)
+        self.assertEqual(app.canvas.itemcget(self.item(('selected-token', RUBY)), 'state'), 'hidden')
+
+    def test_dynamic_card_pool_reuses_hidden_slots_and_updates_actions(self):
+        app = self.app
+        cards = app.state.market[1][:3]
+        for card in cards:
+            card.cost = {}
+        player = app.state.players[0]
+        player.reserved_cards = list(cards)
+        app.refresh()
+        slots = [self.item(('player-card', 0, None, i)) for i in range(3)]
+        for index, card in enumerate(cards):
+            self.click(('player-overlay', 0, index), dx=10, dy=100)
+            self.assertIs(app.selection.card, card)
+            self.assertEqual(app.canvas.itemcget(slots[index], 'state'), 'hidden')
+            self.click(('selected-card',), dx=75, dy=150)
+            self.assertIsNone(app.selection.card)
+        player.reserved_cards.pop(0)
+        app.refresh()
+        self.assertEqual(self.item(('player-card', 0, None, 0)), slots[0])
+        self.click(('player-overlay', 0, 0), dx=10, dy=100)
+        self.assertIs(app.selection.card, cards[1])
+        app.selection.clear()
+        player.reserved_cards.clear()
+        app.refresh()
+        self.assertTrue(all(app.canvas.itemcget(item, 'state') == 'hidden' for item in slots))
+        player.reserved_cards = list(cards)
+        app.refresh()
+        self.assertEqual(slots, [self.item(('player-card', 0, None, i)) for i in range(3)])
+
+    def test_returns_select_owned_piles_and_require_exact_excess(self):
+        app = self.app
+        app.state.players[0].tokens = {RUBY: 4, GOLD: 2, DIAMOND: 4, SAPPHIRE: 2}
+        for token, count in app.state.players[0].tokens.items():
+            app.state.supply[token] -= count
+        app.selection.returning = True
+        app.refresh()
+        supply = self.image(('supply', RUBY))
+        self.click(('player-token', 0, RUBY))
+        self.assertEqual(app.selection.tokens, {RUBY: 1})
+        self.assertEqual(self.image(('action',)), 'button_return_disabled2')
+        self.click(('player-token', 0, GOLD))
+        self.assertEqual(self.image(('action',)), 'button_return_enabled2')
+        self.assertEqual(self.image(('supply', RUBY)), supply)
+        self.click(('selected-token', GOLD))
+        self.assertEqual(app.selection.tokens, {RUBY: 1})
+        self.click(('player-token', 0, GOLD))
+        self.click(('action',))
+        self.assertEqual(app.state.players[0].token_count, 10)
+        self.assertEqual(app.state.turn.active_player, 1)
+
+    def test_decks_results_and_restart_restore_visibility(self):
+        app = self.app
+        position = app.canvas.coords(self.item(('market', 1, 0)))
         app.state.decks[1].clear()
         app.state.market[1].clear()
         app.refresh()
-        self.root.update()
-        self.assertTrue(all(not slot.winfo_ismapped() for slot in app.market.slots[1]))
-        app.select_token(RUBY)
-        previous_selection = app.selection
-        app.new_game()
-        self.root.update()
-        self.assertIsNot(app.selection, previous_selection)
-        self.assertIsNone(app.selection.card)
-        self.assertEqual(app.selection.tokens, {})
-        self.assertEqual(widgets, self.widgets(app.field))
-        self.assertEqual(selection_items, app.selection_panel.tokens.find_all())
-        self.assertEqual(market_items, [panel.find_all() for panels in app.market.slots.values() for panel in panels])
-        self.assertIs(app.selection_panel.state, app.state)
-        self.assertIs(app.selection_panel.selection, app.selection)
-        self.assertEqual(app.supply.counts, app.state.supply)
-        for divider, name in ((app.player_divider, 'score_plaque'),
-                              (app.computer_divider, 'score_plaque_inactive')):
-            self.assertEqual(divider.itemcget(divider.plaque, 'image'),
-                             str(load_image(divider, f'{name}0')))
-        self.assertTrue(all(slot.winfo_ismapped() for slot in app.market.slots[1]))
+        self.assertEqual(app.canvas.itemcget(self.item(('deck', 1)), 'state'), 'hidden')
+        self.assertEqual(app.canvas.coords(self.item(('market', 1, 0))), position)
+        for winner, result in ((0, 'win'), (1, 'loose'), (None, 'tie')):
+            app.state.turn.finished = True
+            app.state.turn.winner = winner
+            app.refresh()
+            self.assertEqual(self.image(('action',)), f'button_{result}_disabled2')
+            for index in range(2):
+                self.assertEqual(app.canvas.itemcget(self.item(('laurels', index)), 'state'),
+                                 'normal' if index == winner else 'hidden')
+            self.click(('action',))
+            self.assertTrue(app.state.turn.finished)
+            self.click(('restart',))
+            self.assertFalse(app.state.turn.finished)
+            self.assertEqual(app.canvas.itemcget(self.item(('deck', 1)), 'state'), 'normal')
 
-    def test_ai_blocks_manual_actions_and_new_game_cancels_callback(self):
-        self.root.destroy()
-        strategy = GreedyAI()
-        self.create_app(strategy)
+    def test_background_dividers_and_native_images_resize(self):
         app = self.app
-        app.perform_action()
-        self.assertIsNotNone(app.pending_ai)
-        app.supply.pick(RUBY)
-        self.assertEqual(app.selection.tokens, {})
-        self.assertFalse(app.selection_panel.can_go)
-        app.market.slots[1][0].select(None)
-        self.assertIsNone(app.selection.card)
-        pending = app.pending_ai
-        app.selection_panel.restart_button.invoke()
-        self.assertIsNone(app.pending_ai)
-        self.assertNotIn(pending, self.root.tk.call('after', 'info'))
-        self.assertIs(app.strategy, strategy)
-        app.perform_action()
-        app.cancel_ai()
-        app.perform_ai_selection()
-        self.assertEqual(app.state.turn.active_player, 1)
-        app.cancel_ai()
-        app.perform_ai_action()
-        self.assertEqual(app.state.turn.active_player, 0)
+        for width in (1900, 2207):
+            self.root.geometry(f'{width}x1400')
+            self.root.update()
+            bg = app.renderer.background
+            self.assertEqual(bg.size, (app.canvas.winfo_width(), app.canvas.winfo_height()))
+            self.assertEqual(bg.image.get(10, 10), bg.fragments[0, 0].get(10, 10))
+            for index in (0, 1):
+                name = self.image(('divider', index))
+                image = app.renderer.images[name]
+                left = load_image(app.canvas, name + '_left')
+                right = load_image(app.canvas, name + '_right')
+                middle = load_image(app.canvas, name + '_middle')
+                self.assertEqual(image.width(), width - 40)
+                self.assertEqual(image.get(30, 26), left.get(30, 26))
+                self.assertEqual(image.get(image.width() - 30, 26), right.get(right.width() - 30, 26))
+                self.assertEqual(image.get(300, 26), middle.get((300-left.width()) % middle.width(), 26))
+            bounds = app.canvas.bbox(self.item(('market', 1, 0)))
+            self.assertEqual((bounds[2] - bounds[0], bounds[3] - bounds[1]), (150, 210))
+            self.assertEqual(app.canvas.find_all()[0], self.item(('background',)))
 
-    def test_ai_selection_is_visible_before_scheduled_execution(self):
+    def test_ai_callbacks_survive_render_and_cancel_on_restart_and_destroy(self):
         app = self.app
-        card = app.state.market[1][0]
-        card.cost = {}
-        app.state.market = {1: [card], 2: [], 3: []}
+        app.strategy = GreedyAI()
+        app.state.players[1].is_ai = True
         app.state.turn.active_player = 1
-        app.strategy = GreedyAI()
-        app.state.players[1].is_ai = True
         app.refresh()
-        app.cancel_ai()
-        with patch('app.app.AI_DELAY_MS', 50):
-            app.perform_ai_selection()
-        self.root.update_idletasks()
-
-        self.assertIs(app.selection.card, card)
-        self.assertTrue(app.selection_panel.card.winfo_ismapped())
-        self.assertFalse(app.market.slots[1][0].winfo_ismapped())
-        self.assertEqual(self.action_button.cget('text'), 'Buy')
-        self.assertTrue(self.action_button.instate(['disabled']))
-        self.assertEqual(app.state.turn.active_player, 1)
-        self.assertEqual(app.state.players[1].cards[card.token], [])
-        self.assertIsNotNone(app.pending_ai)
-        app.select_token(RUBY)
-        app.selection_panel.card.select(None)
-        app.perform_action()
-        self.assertIs(app.selection.card, card)
-        self.assertEqual(app.state.turn.active_player, 1)
-
-        # Let Tk execute the delayed action through its normal event loop.
-        self.root.after(100, self.root.quit)
-        self.root.mainloop()
-        self.assertEqual(app.state.players[1].cards[card.token], [card])
-        self.assertEqual(app.state.turn.active_player, 0)
-        self.assertIsNone(app.selection.card)
-        self.assertIsNone(app.pending_ai)
-
-    def test_restart_and_destroy_cancel_pending_ai_execution(self):
-        app = self.app
-        app.strategy = GreedyAI()
-        app.state.players[1].is_ai = True
-        app.perform_action()
-        app.cancel_ai()
+        pending = app.pending_ai
+        app.render()
+        self.assertEqual(app.pending_ai, pending)
+        self.root.after_cancel(pending)
         app.perform_ai_selection()
         pending = app.pending_ai
-        self.assertIn(pending, self.root.tk.call('after', 'info'))
-        app.selection_panel.restart_button.invoke()
+        app.render()
+        self.assertEqual(app.pending_ai, pending)
+        app.new_game()
+        self.assertNotIn(pending, self.root.tk.call('after', 'info'))
+        app.state.turn.active_player = 1
+        app.refresh()
+        pending = app.pending_ai
+        app.on_destroy(type('Event', (), {'widget': self.root})())
         self.assertIsNone(app.pending_ai)
         self.assertNotIn(pending, self.root.tk.call('after', 'info'))
-        self.assertEqual(app.state.turn.active_player, 0)
-        self.assertEqual(app.selection.action_kind, 'pass')
-
-        app.perform_action()
-        app.cancel_ai()
-        app.perform_ai_selection()
-        self.assertIsNotNone(app.pending_ai)
-        self.root.destroy()
-        self.assertIsNone(app.pending_ai)
-        self.assertEqual(self.callback_errors, [])
-        self.create_app(None)
-
-    def test_unaffordable_card_selects_reserve_and_can_switch_back_to_buy(self):
-        app = self.app
-        panel = app.market.slots[1][0]
-        card = panel.card
-        card.cost = {RUBY: 2}
-        app.refresh()
-        panel.event_generate('<Button-1>')
-        self.root.update()
-        self.assertIs(app.selection.card, card)
-        self.assertFalse(panel.winfo_ismapped())
-        self.assertTrue(app.selection_panel.card.winfo_ismapped())
-        self.assertEqual(app.selection.tokens, {GOLD: 1})
-        self.assertEqual(self.action_button.cget('text'), 'Reserve')
-        self.assertFalse(self.action_button.instate(['disabled']))
-        overlay = app.selection_panel.disabled_overlay
-        self.assertEqual(app.selection_panel.card.itemcget(overlay, 'image'),
-                         str(load_image(app.selection_panel, 'disabled')))
-        self.assertEqual(app.selection_panel.card.itemcget(overlay, 'state'), 'normal')
-        self.assertEqual(app.state.turn.active_player, 0)
-        self.assertIn(card, app.state.market[1])
-        app.selection_panel.card.event_generate('<Button-1>')
-        self.root.update()
-        self.assertIsNone(app.selection.card)
-        self.assertTrue(panel.winfo_ismapped())
-        panel.event_generate('<Button-1>')
-        app.deselect_token(GOLD)
-        self.assertEqual(self.action_button.cget('text'), 'Reserve')
-        self.assertEqual(app.selection.tokens, {GOLD: 1})
-        app.state.current_player.tokens[RUBY] = 2
-        app.state.supply[RUBY] -= 2
-        app.refresh()
-        app.deselect_token(GOLD)
-        self.assertEqual(self.action_button.cget('text'), 'Buy')
-        self.assertFalse(self.action_button.instate(['disabled']))
-        self.assertEqual(app.selection_panel.card.itemcget(overlay, 'state'), 'hidden')
-        self.action_button.invoke()
-        self.assertIn(card, app.state.players[0].cards[card.token])
-        self.assertEqual(app.state.players[0].tokens, {})
-        self.assertEqual(app.state.turn.active_player, 1)
-
-    def test_owned_gold_enables_buy_and_clears_disabled_overlay(self):
-        app = self.app
-        card = app.state.market[1][0]
-        card.cost = {RUBY: 2}
-        app.select_card(card)
-        self.assertEqual(self.action_button.cget('text'), 'Reserve')
-        app.deselect_token(GOLD)
-        self.assertEqual(app.selection.tokens, {GOLD: 1})
-        app.state.current_player.tokens[GOLD] = 2
-        app.state.supply[GOLD] -= 2
-        app.refresh()
-        app.deselect_token(GOLD)
-        self.assertEqual(self.action_button.cget('text'), 'Buy')
-        self.assertFalse(self.action_button.instate(['disabled']))
-        self.assertEqual(app.selection_panel.card.itemcget(app.selection_panel.disabled_overlay, 'state'), 'hidden')
-        self.action_button.invoke()
-        self.assertIn(card, app.state.players[0].cards[card.token])
-        self.assertEqual(app.state.players[0].tokens, {})
-
-    def test_nobles_follow_state_and_are_centered_left_of_supply(self):
-        app = self.app
-        panel = app.nobles
-        slots = list(panel.slots)
-        self.assertEqual(len(slots), 3)
-        self.assertIs(panel.master, app.supply.master)
-        for neighbor in (app.supply, app.selection_panel):
-            self.assertLess(panel.winfo_rootx() + panel.winfo_width(), neighbor.winfo_rootx())
-        self.assertAlmostEqual(panel.winfo_y() + panel.winfo_height() / 2,
-                               panel.master.winfo_height() / 2, delta=1)
-        top_card = app.market.slots[3][0]
-        next_card = app.market.slots[2][0]
-        card_gap = next_card.winfo_rooty() - top_card.winfo_rooty() - top_card.winfo_height()
-        self.assertEqual(slots[1].winfo_rooty() - slots[0].winfo_rooty()
-                         - slots[0].winfo_height(), card_gap)
-        for tile, noble in zip(slots, app.state.nobles):
-            self.assertEqual(tile.itemcget(1, 'image'), str(load_image(tile, noble.id)))
-            self.assertEqual(tile.winfo_width(), 150)
-            self.assertEqual(tile.winfo_height(), 150)
-        app.state.nobles.pop(0)
-        app.refresh()
-        self.root.update()
-        self.assertEqual(slots[0].itemcget(1, 'image'),
-                         str(load_image(slots[0], app.state.nobles[0].id)))
-        self.assertFalse(slots[-1].winfo_ismapped())
-        self.assertAlmostEqual(panel.winfo_y() + panel.winfo_height() / 2,
-                               panel.master.winfo_height() / 2, delta=1)
-        app.state.nobles.clear()
-        app.refresh()
-        self.root.update()
-        self.assertTrue(all(not tile.winfo_ismapped() for tile in slots))
-        app.new_game()
-        self.root.update()
-        self.assertEqual(slots, panel.slots)
-        self.assertTrue(all(tile.winfo_ismapped() for tile in slots))
-
-    def test_player_nobles_and_gold_share_leftmost_column(self):
-        app = self.app
-        nobles = app.state.nobles[:2]
-        card = app.state.market[1][0]
-        for player, panel in zip(app.state.players, (app.player, app.computer)):
-            column = panel.columns[GOLD]
-            self.assertFalse(column.winfo_ismapped())
-            player.tokens[GOLD] = 5
-            app.refresh()
-            self.root.update()
-            self.assertTrue(column.winfo_ismapped())
-            self.assertEqual(column.stack.itemcget(column.token_item, 'image'),
-                             str(load_image(column, 'gold5')))
-            player.nobles = list(nobles)
-            player.add_card(card)
-            app.refresh()
-            self.root.update()
-            gem_column = panel.columns[card.token]
-            self.assertLess(column.winfo_rootx() + column.winfo_width(), gem_column.winfo_rootx())
-            self.assertEqual(column.stack.winfo_height(), 150)
-            for item, noble in zip(column.card_items, nobles):
-                self.assertEqual(column.stack.itemcget(item, 'image'), str(load_image(column, noble.id)))
-            self.assertEqual(column.stack.coords(column.card_items[1])[0]
-                             - column.stack.coords(column.card_items[0])[0], 30)
-            self.assertEqual(column.stack.itemcget(column.token_item, 'state'), 'normal')
-            self.assertEqual(list(column.stack.find_withtag("!background")),
-                             column.card_items + [column.token_item])
-            self.assertEqual(column.stack.bbox(column.token_item)[2:],
-                             (column.stack.winfo_width(), column.height))
-            self.assertEqual(column.stack.bbox(column.token_item)[2]
-                             - column.stack.bbox(column.card_items[-1])[2], 20)
-            player.tokens.clear()
-            app.refresh()
-            self.root.update()
-            self.assertTrue(column.winfo_ismapped())
-            self.assertEqual(column.stack.itemcget(column.token_item, 'state'), 'hidden')
-            gem_item = gem_column.token_item
-            for count in (7, 2, 1, 0):
-                player.tokens[card.token] = count
-                app.refresh()
-                self.root.update()
-                self.assertEqual(gem_column.token_item, gem_item)
-                if count:
-                    name = card.token.lower() + (str(count) if count > 1 else '')
-                    self.assertEqual(gem_column.stack.itemcget(gem_item, 'image'),
-                                     str(load_image(gem_column, name)))
-                    self.assertEqual(gem_column.stack.bbox(gem_item)[2:],
-                                     (gem_column.stack.winfo_width(), gem_column.height))
-                else:
-                    self.assertEqual(gem_column.stack.itemcget(gem_item, 'state'), 'hidden')
-        app.new_game()
-        self.root.update()
-        self.assertFalse(app.player.columns[GOLD].winfo_ismapped())
-        self.assertFalse(app.computer.columns[GOLD].winfo_ismapped())
-
-    def test_selected_color_piles_grow_shrink_and_disable_invalid_takes(self):
-        app = self.app
-        panel = app.selection_panel
-        canvas = panel.tokens
-        item = panel.items[RUBY]
-        original_items = canvas.find_all()
-        app.supply.pick(RUBY)
-        app.supply.pick(RUBY)
-        self.root.update()
-        image = load_image(panel, 'ruby2')
-        self.assertEqual(canvas.itemcget(item, 'image'), str(image))
-        self.assertGreaterEqual(canvas.winfo_width(), image.width())
-        self.assertGreaterEqual(canvas.winfo_height(), image.height())
-        self.assertEqual(app.supply.counts[RUBY], 2)
-        self.assertFalse(self.action_button.instate(['disabled']))
-        app.state.current_player.tokens = {GOLD: 5, SAPPHIRE: 4}
-        app.refresh()
-        self.assertFalse(self.action_button.instate(['disabled']))
-        app.state.current_player.tokens.clear()
-        app.supply.pick(RUBY)
-        self.assertTrue(self.action_button.instate(['disabled']))
-        self.assertEqual(canvas.itemcget(item, 'image'), str(load_image(panel, 'ruby3')))
-        for expected in (2, 1, 0):
-            x, y = canvas.coords(item)
-            canvas.event_generate('<Motion>', x=int(x), y=int(y))
-            canvas.event_generate('<Button-1>', x=int(x), y=int(y))
-            self.root.update()
-            self.assertEqual(app.selection.tokens.get(RUBY, 0), expected)
-            self.assertEqual(app.supply.counts[RUBY], 4 - expected)
-        self.assertEqual(canvas.itemcget(item, 'state'), 'hidden')
-        self.assertEqual(canvas.find_all(), original_items)
-
-    def test_return_from_player_piles_for_both_manual_players(self):
-        app = self.app
-        for active in (0, 1):
-            with self.subTest(active=active):
-                app.new_game()
-                app.state.turn.active_player = active
-                player = app.state.current_player
-                player.tokens = {GOLD: 4, DIAMOND: 3, SAPPHIRE: 3}
-                for token, count in player.tokens.items():
-                    app.state.supply[token] -= count
-                app.refresh()
-                inactive = app.computer if active == 0 else app.player
-                panel = app.player if active == 0 else app.computer
-                # Player token piles have no effect outside the return phase.
-                panel.select_token(GOLD)
-                self.assertEqual(app.selection.tokens, {})
-                app.supply.pick(RUBY)
-                app.supply.pick(RUBY)
-                self.action_button.invoke()
-                self.root.update()
-                self.assertEqual(player.token_count, 12)
-                self.assertEqual(app.state.turn.active_player, active)
-                self.assertEqual(self.action_button.cget('text'), 'Return')
-                self.assertTrue(self.action_button.instate(['disabled']))
-                self.assertFalse(app.supply.enabled)
-                self.assertTrue(all(not slot.enabled for row in app.market.slots.values()
-                                    for slot in row))
-                supply = dict(app.state.supply)
-                inactive.select_token(GOLD)
-                self.assertEqual(app.selection.tokens, {})
-
-                def click_player_pile(token):
-                    column = panel.columns[token]
-                    left, top, right, bottom = column.stack.bbox(column.token_item)
-                    x, y = (left + right) // 2, (top + bottom) // 2
-                    column.stack.event_generate('<Motion>', x=x, y=y)
-                    column.stack.event_generate('<Button-1>', x=x, y=y)
-                    self.root.update()
-
-                click_player_pile(GOLD)
-                self.assertEqual(app.selection.tokens, {GOLD: 1})
-                gold_column = panel.columns[GOLD]
-                self.assertEqual(gold_column.stack.itemcget(gold_column.token_item, 'image'),
-                                 str(load_image(panel, 'gold3')))
-                self.assertTrue(self.action_button.instate(['disabled']))
-                click_player_pile(RUBY)
-                self.assertFalse(self.action_button.instate(['disabled']))
-                self.assertEqual(app.supply.counts, supply)
-                self.assertEqual(app.state.supply, supply)
-                self.assertEqual(player.tokens[GOLD], 4)
-                app.selection_panel.deselect(GOLD)
-                self.root.update()
-                self.assertEqual(gold_column.stack.itemcget(gold_column.token_item, 'image'),
-                                 str(load_image(panel, 'gold4')))
-                self.assertTrue(self.action_button.instate(['disabled']))
-                click_player_pile(GOLD)
-                click_player_pile(GOLD)
-                self.assertTrue(self.action_button.instate(['disabled']))
-                app.selection_panel.deselect(GOLD)
-                self.action_button.invoke()
-                self.root.update()
-                self.assertEqual(player.token_count, 10)
-                self.assertEqual(app.state.turn.active_player, 1 - active)
-                self.assertEqual(app.state.supply[GOLD], supply[GOLD] + 1)
-                self.assertEqual(app.state.supply[RUBY], supply[RUBY] + 1)
-                self.assertEqual(self.action_button.cget('text'), 'Pass')
-
-    def test_reservation_overflow_return_can_be_restarted(self):
-        app = self.app
-        app.state.current_player.tokens = {GOLD: 2, DIAMOND: 4, SAPPHIRE: 4}
-        card = app.state.market[1][0]
-        app.select_card(card)
-        if app.state.can_buy(card):
-            app.select_token(GOLD)
-        app.refresh()
-        self.assertFalse(self.action_button.instate(['disabled']))
-        self.action_button.invoke()
-        self.root.update()
-        self.assertEqual(self.action_button.cget('text'), 'Return')
-        app.player.select_token(GOLD)
-        self.assertFalse(self.action_button.instate(['disabled']))
-        self.assertEqual(app.selection.tokens, {GOLD: 1})
-        app.selection_panel.restart_button.invoke()
-        self.root.update()
-        self.assertFalse(app.state.return_required)
-        self.assertFalse(app.selection.returning)
-        self.assertEqual(app.selection.tokens, {})
-        self.assertEqual(self.action_button.cget('text'), 'Pass')
-        self.assertIsNone(app.pending_ai)
-
-    def test_manual_players_require_three_distinct_or_two_matching_gems(self):
-        app = self.app
-        for active in (0, 1):
-            with self.subTest(active=active):
-                app.new_game()
-                app.state.turn.active_player = active
-                app.refresh()
-                self.assertFalse(app.state.current_player.is_ai)
-                app.supply.pick(RUBY)
-                self.assertTrue(self.action_button.instate(['disabled']))
-                self.action_button.invoke()
-                self.assertEqual(app.state.turn.active_player, active)
-                app.supply.pick(SAPPHIRE)
-                self.assertTrue(self.action_button.instate(['disabled']))
-                app.supply.pick(DIAMOND)
-                self.assertFalse(self.action_button.instate(['disabled']))
-                app.deselect_token(DIAMOND)
-                app.deselect_token(SAPPHIRE)
-                app.supply.pick(RUBY)
-                self.assertFalse(self.action_button.instate(['disabled']))
-                app.state.supply[RUBY] = 3
-                app.refresh()
-                self.assertTrue(self.action_button.instate(['disabled']))
-
-    def test_gold_pile_selection_requires_one_gold_to_reserve(self):
-        app = self.app
-        card = app.state.market[1][0]
-        card.cost = {}
-        app.select_card(card)
-        panel = app.selection_panel
-        item = panel.items[GOLD]
-        for count in range(1, 6):
-            app.supply.pick(GOLD)
-            self.root.update()
-            name = 'gold' + (str(count) if count > 1 else '')
-            self.assertEqual(panel.tokens.itemcget(item, 'image'), str(load_image(panel, name)))
-            self.assertEqual(app.supply.counts[GOLD], 5 - count)
-            self.assertEqual(self.action_button.instate(['disabled']), count != 1)
-        for count in range(4, 0, -1):
-            x, y = panel.tokens.coords(item)
-            panel.tokens.event_generate('<Motion>', x=int(x), y=int(y))
-            panel.tokens.event_generate('<Button-1>', x=int(x), y=int(y))
-            self.root.update()
-            self.assertEqual(app.selection.tokens, {GOLD: count})
-            self.assertEqual(self.action_button.instate(['disabled']), count != 1)
-        self.action_button.invoke()
-        self.assertIn(card, app.state.players[0].reserved_cards)
-        self.assertEqual(app.state.players[0].tokens, {GOLD: 1})
-        self.assertEqual(app.state.supply[GOLD], 4)
-
-    def test_gold_without_a_card_preserves_pass_and_gem_collection(self):
-        app = self.app
-        cell = app.supply.cells[GOLD]
-        x, y = cell.coords('gem')
-        cell.event_generate('<Motion>', x=int(x), y=int(y))
-        cell.event_generate('<Button-1>', x=int(x), y=int(y))
-        self.root.update()
-        self.assertEqual(app.selection.tokens, {})
-        self.assertEqual(self.action_button.cget('text'), 'Pass')
-        app.select_token(RUBY)
-        app.select_token(GOLD)
-        self.assertEqual(app.selection.tokens, {RUBY: 1})
-        self.assertEqual(app.selection_panel.tokens.itemcget(app.selection_panel.items[GOLD], 'state'), 'hidden')
-        self.assertEqual(self.action_button.cget('text'), 'Take')
-        self.assertTrue(self.action_button.instate(['disabled']))
-        app.select_token(RUBY)
-        self.assertFalse(self.action_button.instate(['disabled']))
-        self.action_button.invoke()
-        self.assertEqual(app.state.players[0].tokens, {RUBY: 2})
-
-    def test_gold_and_selected_card_are_visible_together(self):
-        app = self.app
-        card = app.state.market[1][0]
-        card.cost = {}
-        app.select_card(card)
-        app.supply.pick(GOLD)
-        self.root.update()
-        self.assertIs(app.selection.card, card)
-        self.assertFalse(app.market.slots[1][0].winfo_ismapped())
-        self.assertTrue(app.selection_panel.card.winfo_ismapped())
-        self.assertTrue(app.selection_panel.tokens.winfo_ismapped())
-        self.assertLess(app.selection_panel.tokens.winfo_rootx() + app.selection_panel.tokens.winfo_width(),
-                        app.selection_panel.card.winfo_rootx())
-        left = app.selection_panel.tokens.winfo_rootx()
-        right = app.selection_panel.card.winfo_rootx() + app.selection_panel.card.winfo_width()
-        x, y, width, height = app.selection_panel.grid_bbox(0, 0)
-        self.assertAlmostEqual((left + right) / 2,
-                               app.selection_panel.winfo_rootx() + x + width / 2, delta=1)
-        self.assertAlmostEqual(app.selection_panel.tokens.winfo_rooty() + 30,
-                               app.selection_panel.card.winfo_rooty() + app.selection_panel.card.winfo_height() / 2,
-                               delta=1)
-        self.assertEqual(self.action_button.cget('text'), 'Reserve')
-        self.assertFalse(self.action_button.instate(['disabled']))
-        app.selection_panel.deselect(GOLD)
-        self.root.update()
-        self.assertIs(app.selection.card, card)
-        self.assertFalse(app.selection_panel.tokens.winfo_ismapped())
-        self.assertAlmostEqual(app.selection_panel.card.winfo_rootx() + app.selection_panel.card.winfo_width() / 2,
-                               app.selection_panel.winfo_rootx() + x + width / 2, delta=1)
-        self.assertFalse(self.action_button.instate(['disabled']))
-        app.select_token(GOLD)
-        self.action_button.invoke()
-        self.root.update()
-        self.assertIn(card, app.state.players[0].reserved_cards)
-        self.assertEqual(app.state.players[0].tokens[GOLD], 1)
-        self.assertTrue(app.player.reserved.winfo_ismapped())
-        self.assertEqual(app.state.turn.active_player, 1)
-
-    def test_reserve_button_obeys_reservation_limit(self):
-        app = self.app
-        card = app.state.market[1][0]
-        app.select_card(card)
-        app.select_token(GOLD)
-        player = app.state.current_player
-        player.reserved_cards = app.state.market[2][:3]
-        app.refresh()
-        self.assertEqual(self.action_button.cget('text'), 'Reserve')
-        self.assertTrue(self.action_button.instate(['disabled']))
-        self.action_button.invoke()
-        self.assertIs(app.selection.card, card)
-        self.assertEqual(app.state.turn.active_player, 0)
-        player.reserved_cards.clear()
-        app.refresh()
-        self.assertFalse(self.action_button.instate(['disabled']))
-
-    def test_reserved_stack_selects_each_card_and_buys_without_market_refill(self):
-        app = self.app
-        player = app.state.current_player
-        cards = app.state.market[1][:3]
-        del app.state.market[1][:3]
-        player.reserved_cards.extend(cards)
-        for card in cards:
-            card.cost = {RUBY: 1}
-        player.tokens = {GOLD: 1}
-        app.state.supply[GOLD] -= 1
-        other = app.state.market[2].pop()
-        app.state.players[1].reserved_cards.append(other)
-        app.refresh()
-        self.root.update()
-        stack = app.computer.reserved.stack
-        stack.event_generate('<Motion>', x=75, y=100)
-        stack.event_generate('<Button-1>', x=75, y=100)
-        self.assertIsNone(app.selection.card)
-        stack = app.player.reserved.stack
-        for index, card in enumerate(cards):
-            x, y = stack.coords(app.player.reserved.card_items[index])
-            stack.event_generate('<Motion>', x=int(x) + 10, y=int(y) + 100)
-            stack.event_generate('<Button-1>', x=int(x) + 10, y=int(y) + 100)
-            self.assertIs(app.selection.card, card)
-            self.assertEqual(self.action_button.cget('text'), 'Buy')
-            self.assertFalse(self.action_button.instate(['disabled']))
-            for slot, item in enumerate(app.player.reserved.card_items):
-                expected = 'hidden' if slot == index else 'normal'
-                self.assertEqual(stack.itemcget(item, 'state'), expected)
-                self.assertEqual(stack.itemcget(app.player.reserved.overlay_items[slot], 'state'), expected)
-            app.refresh()
-            self.assertEqual(stack.itemcget(app.player.reserved.card_items[index], 'state'), 'hidden')
-            app.selection_panel.card.select(None)
-            self.assertIsNone(app.selection.card)
-            self.assertEqual(stack.itemcget(app.player.reserved.card_items[index], 'state'), 'normal')
-            app.select_card(card)
-            app.select_token(GOLD)
-            self.assertEqual(app.selection.tokens, {})
-        market = {tier: list(row) for tier, row in app.state.market.items()}
-        decks = {tier: list(row) for tier, row in app.state.decks.items()}
-        self.action_button.invoke()
-        self.assertEqual(player.reserved_cards, cards[:2])
-        self.assertIn(cards[-1], player.cards[cards[-1].token])
-        self.assertEqual(app.state.market, market)
-        self.assertEqual(app.state.decks, decks)
-        app.strategy = GreedyAI()
-        app.state.players[1].is_ai = True
-        app.refresh()
-        stack = app.computer.reserved.stack
-        stack.event_generate('<Motion>', x=75, y=100)
-        stack.event_generate('<Button-1>', x=75, y=100)
-        self.assertIsNone(app.selection.card)
-
-    def test_reserved_cards_are_last_disabled_block_and_refresh_in_place(self):
-        app = self.app
-        cards = app.state.market[1][:3]
-        for player, panel in zip(app.state.players, (app.player, app.computer)):
-            reserved = panel.reserved
-            self.assertFalse(reserved.winfo_ismapped())
-            player.add_card(cards[0])
-            player.reserved_cards.extend(cards)
-            for card in cards:
-                card.cost = {RUBY: 2}
-            app.refresh()
-            self.root.update()
-            self.assertTrue(reserved.winfo_ismapped())
-            owned = panel.columns[cards[0].token]
-            self.assertLess(owned.winfo_rootx() + owned.winfo_width(), reserved.winfo_rootx())
-            items = list(reserved.stack.find_all())
-            for card, item, overlay in zip(cards, reserved.card_items, reserved.overlay_items):
-                self.assertEqual(reserved.stack.itemcget(item, 'image'), str(load_image(reserved, card.id)))
-                self.assertEqual(reserved.stack.itemcget(overlay, 'image'),
-                                 str(load_image(reserved, 'disabled')))
-                self.assertEqual(reserved.stack.coords(item), reserved.stack.coords(overlay))
-                self.assertEqual(items.index(overlay), items.index(item) + 1)
-                self.assertEqual(reserved.stack.itemcget(overlay, 'state'), 'normal')
-            reserved.stack.event_generate('<Button-1>', x=75, y=100)
-            self.assertIsNone(app.selection.card)
-            player.reserved_cards.pop(0)
-            app.refresh()
-            self.assertEqual(reserved.stack.itemcget(reserved.card_items[0], 'image'),
-                             str(load_image(reserved, cards[1].id)))
-            self.assertEqual(reserved.stack.itemcget(reserved.card_items[-1], 'state'), 'hidden')
-            self.assertEqual(reserved.stack.itemcget(reserved.overlay_items[-1], 'state'), 'hidden')
-            player.reserved_cards.clear()
-            app.refresh()
-            self.root.update()
-            self.assertFalse(reserved.winfo_ismapped())
-            player.reserved_cards.extend(cards)
-            app.refresh()
-            self.root.update()
-            self.assertTrue(reserved.winfo_ismapped())
-            self.assertEqual(set(reserved.stack.find_all()), set(items))
-        app.new_game()
-        self.root.update()
-        self.assertFalse(app.player.reserved.winfo_ismapped())
-        self.assertFalse(app.computer.reserved.winfo_ismapped())
